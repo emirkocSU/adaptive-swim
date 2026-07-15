@@ -1,0 +1,59 @@
+[project]
+name = "adaptive-swim"
+version = "0.1.0"
+description = "Adaptive Swim Pacing Platform - Phase 1 headless core vertical slice"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "import-linter>=2.0",
+    "pytest-socket>=0.7",
+]
+
+# Phase 1 dependency allow-list is deliberately tiny.
+# FORBIDDEN in Phase 1 (see CLAUDE.md): fastapi, sqlalchemy, sqlite-backed ORMs,
+# lightgbm/sklearn/torch, react/vite toolchains, boto3, requests/httpx, mlflow.
+# Adding any of these requires an ADR.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "unit: fast pure-domain tests",
+    "property: hypothesis invariant tests",
+    "replay: golden replay determinism tests",
+    "simulator: scenario tests",
+    "architecture: dependency and scope conformance tests",
+    "e2e: headless end-to-end vertical slice (network disabled)",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# Kod yorumlari ve docstring'ler Turkce; RUF001/002/003 Turkce harfleri "belirsiz" isaretliyor.
+# Bilincli tercih; kapatildi.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+plugins = ["pydantic.mypy"]

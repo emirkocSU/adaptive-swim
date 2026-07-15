@@ -1,0 +1,54 @@
+[importlinter]
+root_packages =
+    contracts
+    swimcore
+    persistence
+    simulator
+    swimtools
+
+[importlinter:contract:layers]
+name = Phase 1 layering (higher may import lower; never the reverse)
+type = layers
+layers =
+    swimtools
+    simulator
+    persistence
+    swimcore
+    contracts
+
+[importlinter:contract:external-data-boundary]
+name = swimcore must never import external-data plan contracts (ADR-032)
+type = forbidden
+source_modules =
+    swimcore
+forbidden_modules =
+    contracts.external_data
+
+[importlinter:contract:swimcore-purity]
+name = swimcore must not import infrastructure, simulator or tools
+type = forbidden
+source_modules =
+    swimcore
+forbidden_modules =
+    persistence
+    simulator
+    swimtools
+
+[importlinter:contract:contracts-purity]
+name = contracts must not import any internal package
+type = forbidden
+source_modules =
+    contracts
+forbidden_modules =
+    swimcore
+    persistence
+    simulator
+    swimtools
+
+[importlinter:contract:simulator-independence]
+name = simulator must not depend on developer tooling
+type = forbidden
+source_modules =
+    simulator
+forbidden_modules =
+    swimtools
