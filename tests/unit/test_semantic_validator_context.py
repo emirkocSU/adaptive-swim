@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contracts.enums import FeedbackCapability
 from contracts.workout import WorkoutTemplateVersion
 from swimcore.workout import (
     RuleCode,
@@ -50,7 +51,7 @@ def test_context_is_all_explicit_inputs() -> None:
         maxTotalWorkoutDistanceM=3000,
         completedSessionIds=frozenset({"s1"}),
         knownCoachBenchmarkProfileRefs=frozenset({"p1"}),
-        supportedFeedbackCapabilities=frozenset({"showGhost"}),
+        supportedFeedbackCapabilities=frozenset({FeedbackCapability.SHOW_GHOST}),
         strictSegmentBoundaryMode=True,
     )
     assert ctx.maxTotalWorkoutDistanceM == 3000

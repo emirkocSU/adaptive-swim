@@ -88,6 +88,22 @@ so `fastestAllowedPaceSecPer100M <= targetPaceSecPer100M <= slowestAllowedPaceSe
 - **Commit 4 pace math is not written yet.** Rule-009 uses an isolated rest estimate to be
   replaced by the real pace engine in Commit 4.
 
+## Pace math engine (Commit 4, done — `swimcore/pacing/`)
+
+Pure, deterministic, clock-independent active-swimming pace math. Files: `types.py`
+(`EPSILON=1e-9`, frozen `PacePoint/PaceInterval/PaceTimeline/DistanceAtTimeResult/`
+`TimeAtDistanceResult`), `math.py` (`duration_for_distance`/`distance_for_duration` +
+NaN/inf guards), `curves.py` (linear pace curve, exact integral + quadratic inverse,
+`ControlledStartProfile`, `resolve_curve_endpoints`), `timeline.py`
+(`compile_pace_timeline`, `target_active_time_at_distance`,
+`ghost_distance_at_active_time(clamp=...)`, wall helpers), `errors.py` (domain exceptions).
+
+Rules: no I/O, no clock, no randomness, no global state, immutable inputs (never mutate
+contract models), imports only `contracts` + stdlib. Timeline carries **active swim time
+only** — rest/StopPause/real-elapsed excluded. No second pace formula may exist in the
+simulator. StopPause freeze, pacing-reset runtime, ML pace, and SafetyController are NOT
+in this commit.
+
 ## Commands / test expectations
 
 `make ci` must stay green. Every change tests the invariant it touches. Generated JSON

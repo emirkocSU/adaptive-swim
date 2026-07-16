@@ -29,3 +29,12 @@
   versions, max total distance, completed-session ids, coach-benchmark refs, supported
   feedback capabilities, strict-boundary mode). Absent context → context rules degrade to a
   documented WARNING.
+- **Pace timeline** — the Commit 4 compilation of a workout into ordered pace intervals in
+  global distance, carrying **active swimming time only** (rest/StopPause excluded).
+- **Active-time pace math** — pure functions mapping distance ↔ active time along the
+  timeline. `target_active_time_at_distance` and `ghost_distance_at_active_time` are exact
+  inverses (linear pace ⇒ quadratic time integral).
+- **Linear pace curve** — `p(x) = p0 + (p1−p0)·x/L` per segment; even/negative-split are
+  constant, controlled_start runs start→target, progressive runs target→end.
+- **Wall boundary** — a pool-length multiple; helpers (`is/previous/next_wall_boundary`)
+  are pure and never move the ghost or mutate state.

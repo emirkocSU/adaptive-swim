@@ -30,6 +30,12 @@ class PaceMode(_StrEnum):
     negative_split_part = "negative_split_part"
 
 
+class FeedbackCapability(_StrEnum):
+    SHOW_GHOST = "SHOW_GHOST"
+    SHOW_GAP_AT_WALL = "SHOW_GAP_AT_WALL"
+    SHOW_CONTINUOUS_GAP = "SHOW_CONTINUOUS_GAP"
+
+
 class SetLabel(_StrEnum):
     warmup = "warmup"
     main = "main"

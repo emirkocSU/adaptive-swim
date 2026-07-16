@@ -215,6 +215,20 @@
         "mode": {
           "$ref": "#/$defs/PaceMode"
         },
+        "startPaceSecPer100M": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 30,
+              "maximum": 300,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startpacesecper100M"
+        },
         "targetPaceSecPer100M": {
           "exclusiveMinimum": 30,
           "maximum": 300,

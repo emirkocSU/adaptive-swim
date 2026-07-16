@@ -51,6 +51,25 @@ future migrations exist.
 (even/controlled/negative: `distance * targetPace / 100`; progressive: the mean of start
 and end pace) that will be swapped for the real pace engine in Commit 4.
 
+## Pace math engine (Commit 4, `swimcore/pacing/`)
+
+A pure, deterministic, clock-independent module that turns a workout into a target pace
+timeline over **active swimming time only** (rest excluded; StopPause and real elapsed time
+are later-commit runtime concerns). Every segment mode reduces to a linear pace curve
+`p(x) = p0 + (p1 - p0)·x/L` (sec/100m, smaller = faster): even/negative-split → constant,
+controlled_start → start→target, progressive → target→end. Active time is the exact
+integral `T(x) = (p0·x + (p1−p0)·x²/2L)/100`; the inverse `x(T)` uses the true quadratic
+root, never a linear time/distance-ratio guess.
+
+Public API: `compile_pace_timeline(workout)`, `target_active_time_at_distance(timeline, d)`,
+`ghost_distance_at_active_time(timeline, t, clamp=False)`, the constant-pace helpers
+`duration_for_distance` / `distance_for_duration`, and wall helpers `is_wall_boundary` /
+`previous_wall_boundary` / `next_wall_boundary`. `EPSILON = 1e-9` is the single tolerance.
+NaN/infinity are rejected; explicit domain errors live in `pacing/errors.py`. The engine
+imports only `contracts` + the standard library (enforced by import-linter and the
+`arch_check` AST purity scan). In `20.00 +15.00`, the `20.00` active part comes from here;
+the `+15.00` stopped part is future StopPause runtime accounting.
+
 ## Ghost / StopPause model (supersedes the earlier "re-anchor-only-at-wall" idea)
 
 Three separate behaviours:

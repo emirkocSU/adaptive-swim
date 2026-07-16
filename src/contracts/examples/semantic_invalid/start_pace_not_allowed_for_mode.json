@@ -1,0 +1,3 @@
+{ "schemaVersion":"1.0","name":"start not allowed","poolLengthM":25,"stroke":"freestyle",
+  "blocks":[{"type":"repeat","repetitions":1,"distanceM":100,"rest":{"type":"none"},
+    "segments":[{"fromM":0,"toM":100,"mode":"even_pace","targetPaceSecPer100M":80.0,"startPaceSecPer100M":85.0}]}]}

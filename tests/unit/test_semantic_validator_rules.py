@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from contracts.enums import IssueSeverity
+from contracts.enums import FeedbackCapability, IssueSeverity
 from contracts.workout import WorkoutTemplateVersion
 from swimcore.workout import (
     RuleCode,
@@ -93,6 +93,15 @@ def test_first_segment_not_zero() -> None:
 def test_last_segment_not_block_distance() -> None:
     w = _workout([_block(100, segments=[_segment(0, 75)])])
     assert RuleCode.SEGMENT_END_NOT_BLOCK_DISTANCE in _codes(w, CTX)
+
+
+def test_segment_reversed_is_error() -> None:
+    w = _workout([_block(50, segments=[_segment(50, 25)])])
+    result = validate_workout(w, CTX)
+    reversed_issues = [i for i in result.issues if i.rule == RuleCode.SEGMENT_REVERSED]
+    assert reversed_issues
+    assert all(i.severity is IssueSeverity.ERROR for i in reversed_issues)
+    assert not result.isValid
 
 
 # --------------------------------------------------------------------------- RULE-002
@@ -233,19 +242,48 @@ def test_adaptation_bounds_no_room_warning() -> None:
 def test_unsupported_continuous_feedback_capability() -> None:
     block = _block(100, feedback={"showGhost": True, "showContinuousGap": True})
     ctx = WorkoutValidationContext(
-        supportedFeedbackCapabilities=frozenset({"showGhost", "showGapAtWall"})
+        supportedFeedbackCapabilities=frozenset(
+            {FeedbackCapability.SHOW_GHOST, FeedbackCapability.SHOW_GAP_AT_WALL}
+        )
     )
     result = validate_workout(_workout([block]), ctx)
-    hits = [i for i in result.issues if i.rule == RuleCode.FEEDBACK_CAPABILITY_UNSUPPORTED]
+    hits = [i for i in result.issues if i.rule == RuleCode.UNSUPPORTED_FEEDBACK_CAPABILITY]
     assert hits and any("showContinuousGap" in i.path for i in hits)
+    cont = [i for i in hits if "showContinuousGap" in i.path]
+    assert all(i.severity is IssueSeverity.WARNING for i in cont)
 
 
 def test_supported_feedback_capability_is_valid() -> None:
     block = _block(100, feedback={"showGhost": True, "showGapAtWall": True})
     ctx = WorkoutValidationContext(
-        supportedFeedbackCapabilities=frozenset({"showGhost", "showGapAtWall"})
+        supportedFeedbackCapabilities=frozenset(
+            {FeedbackCapability.SHOW_GHOST, FeedbackCapability.SHOW_GAP_AT_WALL}
+        )
     )
     assert validate_workout(_workout([block]), ctx).isValid
+
+
+def test_feedback_capability_not_verified_without_context() -> None:
+    block = _block(100, feedback={"showGhost": True, "showContinuousGap": True})
+    result = validate_workout(_workout([block]), None)  # no context
+    nv = [i for i in result.issues if i.rule == RuleCode.FEEDBACK_CAPABILITY_NOT_VERIFIED]
+    assert nv and all(i.severity is IssueSeverity.WARNING for i in nv)
+    assert result.isValid
+
+
+def test_unsupported_required_ghost_capability_is_error() -> None:
+    block = _block(100, feedback={"showGhost": True})
+    ctx = WorkoutValidationContext(
+        supportedFeedbackCapabilities=frozenset({FeedbackCapability.SHOW_GAP_AT_WALL})
+    )
+    result = validate_workout(_workout([block]), ctx)
+    ghost = [
+        i
+        for i in result.issues
+        if i.rule == RuleCode.UNSUPPORTED_FEEDBACK_CAPABILITY and "showGhost" in i.path
+    ]
+    assert ghost and all(i.severity is IssueSeverity.ERROR for i in ghost)
+    assert not result.isValid
 
 
 # --------------------------------------------------------------------------- RULE-007
@@ -318,6 +356,57 @@ def test_unsupported_schema_version() -> None:
     assert RuleCode.UNSUPPORTED_SCHEMA_VERSION in _codes(w, ctx)
 
 
+# --------------------------------------------------------------------------- RULE-011
+def test_valid_controlled_start() -> None:
+    block = _block(
+        100,
+        segments=[_segment(0, 100, mode="controlled_start", startPaceSecPer100M=88.0)],
+    )
+    assert validate_workout(_workout([block]), CTX).isValid
+
+
+def test_controlled_start_missing_start_pace() -> None:
+    block = _block(100, segments=[_segment(0, 100, mode="controlled_start")])
+    assert RuleCode.CONTROLLED_START_PACE_REQUIRED in _codes(_workout([block]), CTX)
+
+
+def test_controlled_start_direction_invalid() -> None:
+    # start faster than target (numerically smaller) is invalid
+    block = _block(
+        100,
+        segments=[_segment(0, 100, mode="controlled_start", startPaceSecPer100M=78.0)],
+    )
+    assert RuleCode.CONTROLLED_START_DIRECTION_INVALID in _codes(_workout([block]), CTX)
+
+
+def test_start_pace_not_allowed_for_non_controlled_mode() -> None:
+    block = _block(100, segments=[_segment(0, 100, startPaceSecPer100M=88.0)])
+    assert RuleCode.START_PACE_NOT_ALLOWED_FOR_MODE in _codes(_workout([block]), CTX)
+
+
+# --------------------------------------------------------------------------- RULE-012
+def test_negative_split_valid_ordering() -> None:
+    block = _block(
+        200,
+        segments=[
+            _segment(0, 100, mode="negative_split_part", targetPaceSecPer100M=82.0),
+            _segment(100, 200, mode="negative_split_part", targetPaceSecPer100M=78.0),
+        ],
+    )
+    assert validate_workout(_workout([block]), CTX).isValid
+
+
+def test_negative_split_invalid_ordering() -> None:
+    block = _block(
+        200,
+        segments=[
+            _segment(0, 100, mode="negative_split_part", targetPaceSecPer100M=78.0),
+            _segment(100, 200, mode="negative_split_part", targetPaceSecPer100M=82.0),
+        ],
+    )
+    assert RuleCode.NEGATIVE_SPLIT_ORDER_INVALID in _codes(_workout([block]), CTX)
+
+
 # --------------------------------------------------------------------------- result semantics
 def test_multiple_issues_returned_in_deterministic_order() -> None:
     # Two blocks, each with a defect; ordering must be stable across runs.
@@ -377,6 +466,7 @@ def test_no_duplicate_issues() -> None:
 _EXPECTED_FILE_CODE = {
     "gap_in_segments": RuleCode.SEGMENT_GAP,
     "segment_overlap": RuleCode.SEGMENT_OVERLAP,
+    "segment_reversed": RuleCode.SEGMENT_REVERSED,
     "first_segment_not_zero": RuleCode.SEGMENT_START_NOT_ZERO,
     "last_segment_not_block_distance": RuleCode.SEGMENT_END_NOT_BLOCK_DISTANCE,
     "distance_not_multiple_of_pool": RuleCode.DISTANCE_NOT_MULTIPLE_OF_POOL,
@@ -388,6 +478,10 @@ _EXPECTED_FILE_CODE = {
     "adaptation_bounds_reversed": RuleCode.ADAPTATION_BOUNDS_REVERSED,
     "bounded_auto_missing_fields": RuleCode.BOUNDED_AUTO_MISSING_FIELDS,
     "interval_negative_rest": RuleCode.REST_INTERVAL_NEGATIVE,
+    "controlled_start_missing_pace": RuleCode.CONTROLLED_START_PACE_REQUIRED,
+    "controlled_start_direction_invalid": RuleCode.CONTROLLED_START_DIRECTION_INVALID,
+    "start_pace_not_allowed_for_mode": RuleCode.START_PACE_NOT_ALLOWED_FOR_MODE,
+    "negative_split_order_invalid": RuleCode.NEGATIVE_SPLIT_ORDER_INVALID,
 }
 
 

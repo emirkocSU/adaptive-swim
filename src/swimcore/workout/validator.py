@@ -40,6 +40,8 @@ _ALL_RULES = (
     rules.rule_008_ghost_source_references,
     rules.rule_009_rest_interval_sanity,
     rules.rule_010_schema_version,
+    rules.rule_011_controlled_start,
+    rules.rule_012_negative_split_order,
 )
 
 

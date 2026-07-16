@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 from contracts._base import FLOAT_TOLERANCE, approx_equal
-from contracts.enums import AdaptationMode, IssueSeverity, PaceMode
+from contracts.enums import AdaptationMode, FeedbackCapability, IssueSeverity, PaceMode
 from contracts.errors import ValidationIssue
 from contracts.workout import (
     PaceSegment,
@@ -48,7 +48,8 @@ class RuleCode(StrEnum):
     ADAPTATION_BOUNDS_NO_ROOM = "ADAPTATION_BOUNDS_NO_ROOM"
     ADAPTATION_OFF_REDUNDANT_FIELDS = "ADAPTATION_OFF_REDUNDANT_FIELDS"
     # RULE-006 feedback capability
-    FEEDBACK_CAPABILITY_UNSUPPORTED = "FEEDBACK_CAPABILITY_UNSUPPORTED"
+    UNSUPPORTED_FEEDBACK_CAPABILITY = "UNSUPPORTED_FEEDBACK_CAPABILITY"
+    FEEDBACK_CAPABILITY_NOT_VERIFIED = "FEEDBACK_CAPABILITY_NOT_VERIFIED"
     # RULE-007 total distance
     TOTAL_DISTANCE_NON_POSITIVE = "TOTAL_DISTANCE_NON_POSITIVE"
     TOTAL_DISTANCE_EXCEEDS_MAX = "TOTAL_DISTANCE_EXCEEDS_MAX"
@@ -60,6 +61,12 @@ class RuleCode(StrEnum):
     REST_INTERVAL_TIGHT = "REST_INTERVAL_TIGHT"
     # RULE-010 schema version
     UNSUPPORTED_SCHEMA_VERSION = "UNSUPPORTED_SCHEMA_VERSION"
+    # RULE-011 controlled start
+    CONTROLLED_START_PACE_REQUIRED = "CONTROLLED_START_PACE_REQUIRED"
+    CONTROLLED_START_DIRECTION_INVALID = "CONTROLLED_START_DIRECTION_INVALID"
+    START_PACE_NOT_ALLOWED_FOR_MODE = "START_PACE_NOT_ALLOWED_FOR_MODE"
+    # RULE-012 negative split ordering
+    NEGATIVE_SPLIT_ORDER_INVALID = "NEGATIVE_SPLIT_ORDER_INVALID"
 
 
 def _issue(path: str, rule: RuleCode, message: str, severity: IssueSeverity) -> ValidationIssue:
@@ -315,26 +322,51 @@ def rule_005_adaptation_bounds_consistency(
 
 
 # --------------------------------------------------------------------------- RULE-006
+#: Feedback flag (contract) -> typed capability.
+_FEEDBACK_FLAG_TO_CAPABILITY = {
+    "showGhost": FeedbackCapability.SHOW_GHOST,
+    "showGapAtWall": FeedbackCapability.SHOW_GAP_AT_WALL,
+    "showContinuousGap": FeedbackCapability.SHOW_CONTINUOUS_GAP,
+}
+#: Essential capabilities error out when unsupported; the rest can fall back → WARNING.
+_ESSENTIAL_CAPABILITIES = frozenset({FeedbackCapability.SHOW_GHOST})
+
+
 def rule_006_feedback_capability(
     workout: WorkoutTemplateVersion,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
-    # Essential features error out when unsupported; the rest can fall back → WARNING.
-    essential = {"showGhost"}
     for b, block in enumerate(workout.blocks):
         fb = block.feedback
         if fb is None:
             continue
-        for flag in ("showGhost", "showGapAtWall", "showContinuousGap"):
-            if getattr(fb, flag) and flag not in ctx.supportedFeedbackCapabilities:
-                sev = IssueSeverity.ERROR if flag in essential else IssueSeverity.WARNING
+        for flag, capability in _FEEDBACK_FLAG_TO_CAPABILITY.items():
+            if not getattr(fb, flag):
+                continue
+            path = f"blocks[{b}].feedback.{flag}"
+            if not has_context:
+                # No context: we cannot confirm the target supports this — warn, don't fail.
+                issues.append(
+                    _warn(
+                        path,
+                        RuleCode.FEEDBACK_CAPABILITY_NOT_VERIFIED,
+                        f"feedback capability {capability.value} cannot be verified "
+                        "without a validation context",
+                    )
+                )
+            elif capability not in ctx.supportedFeedbackCapabilities:
+                sev = (
+                    IssueSeverity.ERROR
+                    if capability in _ESSENTIAL_CAPABILITIES
+                    else IssueSeverity.WARNING
+                )
                 issues.append(
                     _issue(
-                        f"blocks[{b}].feedback.{flag}",
-                        RuleCode.FEEDBACK_CAPABILITY_UNSUPPORTED,
-                        f"feedback capability {flag} is not supported by the target",
+                        path,
+                        RuleCode.UNSUPPORTED_FEEDBACK_CAPABILITY,
+                        f"feedback capability {capability.value} is not supported by the target",
                         sev,
                     )
                 )
@@ -467,6 +499,8 @@ def _segment_duration_sec(seg: PaceSegment) -> float:
     distance = seg.toM - seg.fromM
     if seg.mode is PaceMode.progressive and seg.endPaceSecPer100M is not None:
         pace = (seg.targetPaceSecPer100M + seg.endPaceSecPer100M) / 2.0
+    elif seg.mode is PaceMode.controlled_start and seg.startPaceSecPer100M is not None:
+        pace = (seg.startPaceSecPer100M + seg.targetPaceSecPer100M) / 2.0
     else:
         pace = seg.targetPaceSecPer100M
     return distance * pace / 100.0
@@ -488,3 +522,72 @@ def rule_010_schema_version(
             )
         ]
     return []
+
+
+# --------------------------------------------------------------------------- RULE-011
+def rule_011_controlled_start(
+    workout: WorkoutTemplateVersion,
+    ctx: WorkoutValidationContext,
+    has_context: bool,
+) -> list[ValidationIssue]:
+    issues: list[ValidationIssue] = []
+    for b, block in enumerate(workout.blocks):
+        for s, seg in enumerate(block.segments):
+            path = f"blocks[{b}].segments[{s}].startPaceSecPer100M"
+            if seg.mode is PaceMode.controlled_start:
+                if seg.startPaceSecPer100M is None:
+                    issues.append(
+                        _err(
+                            path,
+                            RuleCode.CONTROLLED_START_PACE_REQUIRED,
+                            "controlled_start segment requires startPaceSecPer100M",
+                        )
+                    )
+                elif seg.startPaceSecPer100M < seg.targetPaceSecPer100M - _TOL:
+                    # start must be slower-or-equal (numerically >=) than target
+                    issues.append(
+                        _err(
+                            path,
+                            RuleCode.CONTROLLED_START_DIRECTION_INVALID,
+                            f"controlled_start startPace {seg.startPaceSecPer100M} must be "
+                            f">= target {seg.targetPaceSecPer100M} (start no faster than target)",
+                        )
+                    )
+            elif seg.startPaceSecPer100M is not None:
+                issues.append(
+                    _err(
+                        path,
+                        RuleCode.START_PACE_NOT_ALLOWED_FOR_MODE,
+                        f"startPaceSecPer100M is only valid for controlled_start "
+                        f"(mode={seg.mode.value})",
+                    )
+                )
+    return issues
+
+
+# --------------------------------------------------------------------------- RULE-012
+def rule_012_negative_split_order(
+    workout: WorkoutTemplateVersion,
+    ctx: WorkoutValidationContext,
+    has_context: bool,
+) -> list[ValidationIssue]:
+    """Consecutive negative_split_part segments may not get slower (numerically larger)."""
+    issues: list[ValidationIssue] = []
+    for b, block in enumerate(workout.blocks):
+        prev_pace: float | None = None
+        prev_index: int | None = None
+        for s, seg in enumerate(block.segments):
+            if seg.mode is not PaceMode.negative_split_part:
+                continue
+            if prev_pace is not None and seg.targetPaceSecPer100M > prev_pace + _TOL:
+                issues.append(
+                    _err(
+                        f"blocks[{b}].segments[{s}].targetPaceSecPer100M",
+                        RuleCode.NEGATIVE_SPLIT_ORDER_INVALID,
+                        f"negative-split segment {s} ({seg.targetPaceSecPer100M}) is slower "
+                        f"than segment {prev_index} ({prev_pace}); later parts must not slow down",
+                    )
+                )
+            prev_pace = seg.targetPaceSecPer100M
+            prev_index = s
+    return issues

@@ -46,3 +46,19 @@ unverified or normal pace loss must not reposition the ghost mid-length.
   `REFERENCE_NOT_FOUND` (ERROR). Migration registry exposes only the `1.0 → 1.0` no-op.
 - JSON Schema remains structural-only; semantic defects are never encoded as schema
   keywords. **Commit 4 pace math is not written yet** — Rule-009 uses an isolated estimate.
+
+## Commit 4 (this commit) — deterministic pace math
+
+- `swimcore/pacing/` is pure: covered by the `arch_check` AST purity scan (no
+  `open`/`eval`/`exec`/I/O/network/db/framework) plus import-linter (imports `contracts` +
+  stdlib only). `make ci` now runs `python -m swimtools.arch_check`.
+- Unit files by mode: `test_pace_math_even`, `_controlled_start`, `_progressive`,
+  `_negative_split`, `_timeline`; property invariants in `test_pace_math_properties`
+  (Hypothesis): round-trips, monotonicity, timeline totals, pace within endpoint range,
+  wall multiples, NaN/inf rejected.
+- Verified numerics: `100 m @ 80 = 80 s`, `50 m @ 80 = 40 s`, `10×100 timeline = 1000 m`,
+  rest excluded from active timeline, progressive distance/time round-trip, negative-split
+  ordering, deterministic bit-identical repeated calls.
+- New semantic rules (RULE-011 controlled start, RULE-012 negative-split order) have valid +
+  invalid tests and semantic-invalid goldens; the `controlled_start` valid golden exercises
+  the new optional `startPaceSecPer100M` schema field.

@@ -31,6 +31,8 @@ class PaceSegment(StrictModel):
     toM: Annotated[float, Field(gt=0)]
     mode: PaceMode
     targetPaceSecPer100M: PaceValue
+    #: Required for controlled_start (slower-or-equal start, i.e. >= target); forbidden else.
+    startPaceSecPer100M: PaceValue | None = None
     endPaceSecPer100M: PaceValue | None = None
 
 
