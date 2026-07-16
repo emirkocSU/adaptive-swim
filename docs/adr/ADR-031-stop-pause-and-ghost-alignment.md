@@ -1,190 +1,96 @@
-# ADR-031 — Stop Pause and Ghost Alignment Policy
+# ADR-031 — StopPause and Controlled Ghost Alignment
 
-**Statü:** ACTIVE (bu ürün için)
-**Faz:** 1
-**Tarih:** 2026-07-14 (rev. 2026-07-15)
-**Supersedes:** "Ghost Recovery / Re-Anchor" taslağı **ve** ilk "Incident Pause" adlandırması.
+- **Status:** NEW (Phase 1 scope)
+- **Date:** 2026-07-16
+- **Supersedes:** the earlier "Ghost Recovery and Re-Anchor Policy (re-anchor only at the
+  next valid wall)" design. The general behaviour is now **StopPause**; `MANUAL_INCIDENT`
+  survives only as a *trigger*.
 
-## Context
+## Context / Problem
 
-Ghost'un "yüzücü durursa her koşulda ilerlemeye devam etmesi" davranışı, dışsal/uzun kesintilerde
-anlamsız bir "gap" biriktiriyordu. Önceki taslaklar önce bir re-anchor komutu, sonra "Incident
-Pause" getirdi. Ancak **"incident" kelimesi core'un durmanın nedenine karar verdiğini ima ediyordu** —
-oysa sistem nedeni bilmez ve bilmemeli. Bu ADR terminolojiyi nötrleştirir: genel kavram **StopPause**;
-"incident" yalnızca StopPause'u başlatan bir **trigger türü**dür.
-
-## Problem
-
-Üç kavramsal olarak farklı durum vardır; core bunları **karıştırmamalı** ve durmanın nedenine
-**karar vermemelidir**:
-
-1. Yüzücü yorulup yavaşlar (normal veya büyük tempo kaybı) — bu ölçmek istediğimiz **performanstır**.
-2. Koç, kalan seti anlamlı kılmak için **pacing reseti** ister — geçmiş silinmemeli, yalnızca ileri
-   referans güvenli duvarda tazelenmeli.
-3. Uzun/dışsal bir durma olur — pacing hesabını bozmamalı ama gizlenmemeli.
-
-Fiziksel sınır: gerçek havuzda yalnızca duvar splitleri varsa sistem yüzücünün orta length'teki
-**kesin konumunu bilemez**; "330. metrede durdu" gibi kesin etikete bağımlı tasarım kırılgandır.
+"Ghost continues under all conditions" collapsed two different realities into one
+behaviour: (a) the swimmer tiring and slowing — *this is performance and must be
+measured*; (b) an external interruption (collision, lane obstruction, goggle adjustment)
+that is not performance but, if the ghost keeps moving, accrues an artificial, meaningless
+gap. Pausing the whole session instead destroys set/repetition context. The earlier
+re-anchor design also forbade any mid-pool alignment, which felt unnatural: the swimmer and
+ghost should be able to wait together where the swimmer actually is.
 
 ## Considered options
 
-1. Her durumda ghost devam (eski) — dışsal/uzun durmada metrikleri kirletir.
-2. Session PAUSED — set/repetition bağlamını ve koç iş akışını bozar.
-3. GhostSuspend + sonraki duvarda re-anchor — gereksiz karmaşık; basit pause/resume'un yerine geçmişti.
-4. **Seçilen — StopPause + havuz-ortası ghost alignment + duvarda reconcile:** durma doğrulanınca
-   mantıksal saatler durur, ghost havuz ortasında yüzücünün takip edilen noktasına hizalanır ve
-   birlikte bekler; resmi workout muhasebesi **bir sonraki duvarda** reconcile edilir.
+1. Ghost always continues — pollutes metrics on external interruptions.
+2. Session `PAUSED` on interruption — context loss, "session restarted" feel.
+3. Teleport the ghost to the swimmer instantly, uncontrolled — confusing, and it makes
+   deterministic replay depend on a mid-length position estimate.
+4. **Selected:** three explicit behaviours (normal/large pace loss, coach pacing reset,
+   StopPause). During a *verified* StopPause the ghost performs **controlled** alignment
+   to the swimmer's tracked position (mid-pool allowed), the logical workout clock freezes
+   from the moment the stop began, and official length/set/rest accounting is reconciled
+   at the next valid wall.
 
 ## Decision
 
-**Üç durum kesin ayrılır. Core durmanın nedenine karar vermez.**
+The session state machine does not change; the session stays `RUNNING` during a StopPause.
+A small ghost operational state (`ACTIVE`, `STOP_PAUSED`) plus a `GhostReference` carries
+the alignment. Three behaviours:
 
-**A) Normal / büyük tempo kaybı (performans).** Ghost ilerler, workout clock ilerler, fark korunur,
-veri performans analizine dahildir. StopPause **uygulanmaz**.
+- **Normal / large pace loss:** ghost `ACTIVE`, workout clock runs, gap preserved, counts
+  toward performance. Never treated or hidden as a StopPause.
+- **Coach pacing reset:** a separate command; previous poor performance stays in the
+  report; a new pacing reference starts only at the next valid wall; the workout clock is
+  **not** frozen. Not a StopPause.
+- **StopPause:** triggered manually (`MANUAL_INCIDENT`, `COACH_STOP`) or by exceeding the
+  long-stop threshold (default 10s, coach-configurable → `LONG_STOP_THRESHOLD`,
+  `SENSOR_STOP`). The logical workout clock freezes retroactively from the stop start; the
+  ghost aligns to the swimmer's currently tracked position and waits; on resume both
+  continue from the same point on the same target pace; length/set/rest are finalized at
+  the next wall.
 
-**B) Koç pacing reseti.** Ayrı manuel komut (`CoachPacingReset`). Önceki kötü performans (gap dahil)
-raporda kalır; yalnızca **sonraki güvenli duvar boundary'sinde** yeni pacing referansı başlar; workout
-clock **durmaz**. Bu bir StopPause **değildir**.
-
-**C) LongStop / Incident / Coach Stop → StopPause.** Trigger türleri (`StopTrigger`):
-`MANUAL_INCIDENT`, `LONG_STOP_THRESHOLD`, `COACH_STOP`, `SENSOR_STOP`. Bu trigger'lardan biri
-doğrulanınca:
-
-* **Mantıksal saatler birlikte durur:** workout clock, ghost clock, target pace schedule, rest
-  countdown. **Session RUNNING kalır. Real clock çalışır.**
-* Durdurma, durmanın **başladığı ana geri dönüktür** (`stopStartedAtMs`) — eşiğin aşıldığı ana değil.
-  18 sn beklendiyse stop süresi 18 sn'dir.
-* **Havuz ortası ghost alignment:** ghost, yüzücünün o an takip edilen noktasına hizalanır ve birlikte
-  beklerler. Bu **kontrollü** bir hizalamadır ve yalnızca doğrulanmış StopPause sırasında izinlidir.
-  İlk eşik-süresi ghost farkı **silinir**.
-* **Duvarda reconcile:** havuz ortasında set, repetition, length sayacı, split, pace segmenti ve
-  planlı dinlenme hesabı **yeniden yazılmaz**. Yüzücü bir sonraki duvara geldiğinde resmi workout
-  akışı reconcile edilir: length tamamlanır, split kesinleşir, set/repetition ilerler, dinlenme ve
-  pace segmentleri normal bağlamından devam eder. Sistem yüzücünün "tam kaçıncı metrede durduğunu"
-  hesaplamak, saklamak veya raporlamak **zorunda değildir**.
-* **Resume:** ghost aynı noktadan aynı hedef tempoyla devam eder; workout clock kaldığı saniyeden;
-  planlı dinlenmeler korunur (StopPause, sonraki duvardaki dinlenmeden düşülmez; dinlenme sırasında
-  StopPause olursa dinlenme sayacı da durur).
-
-**Kontrollü vs kontrolsüz hizalama (kural).**
-> Controlled mid-length ghost alignment is allowed **only** during confirmed StopPause.
-> Official workout accounting is reconciled at the next valid wall boundary.
-
-Yani **kontrolsüz** teleport (rastgele/mid-length atlama, konum tahminine dayalı ani sıçrama)
-yasaktır; **kontrollü** havuz-ortası hizalama (doğrulanmış StopPause'da yüzücünün takip edilen
-noktasına) izinlidir.
-
-**Nedeni kaydedilmez.** Sistem "yoruldu / çarpıştı / gözlük" kararı vermez; yalnızca durmayı, süresini
-ve bağlamını kaydeder ve koça iletir. Nedeni **koç** değerlendirir, isterse sonradan not ekler.
-
-## Stop detection: kaynak ve kalite (mod ayrımı)
-
-Otomatik durma algılaması ancak **güvenilir stop detection sinyali** varsa çalışır.
-
-* **Manual mode (Faz 1/MVP varsayılanı):** koç `MarkStopPause` / STOP-RESUME komutu verir; stop süresi
-  koç komutundan hesaplanır; otomatik sensör **varsayılmaz**.
-* **Sensor-assisted mode (ileride):** wearable/IMU hareketten durmayı algılayabilir.
-  `longStopThresholdSec = 10` **varsayılan hipotezdir** (koç değiştirebilir). Sistem 10 sn'de karar
-  verse bile stop süresi **hareketin ilk kesildiği andan** hesaplanır. Sensör kalitesi düşükse
-  otomatik StopPause **başlatılmaz** veya düşük güvenle raporlanır.
+The system does **not** try to decide *why* the swimmer stopped. It records
+`StopDetected{start, end, duration, set/length, sensor snapshot}`, sent live to the coach,
+who may annotate it. ML may later produce an advisory `performanceRelatedStopProbability`
+only; it never controls the ghost, the clock, or StopPause behaviour.
 
 ## Commands
 
-```
-MarkStopPause(trigger, occurredAtMs?, notes?, clientCommandId)
-    trigger ∈ {MANUAL_INCIDENT, LONG_STOP_THRESHOLD, COACH_STOP, SENSOR_STOP}
-    occurredAtMs verilmezse durmanin algilandigi an; retroaktif dondurmede stopStartedAtMs kullanilir.
-
-ResolveStopPause(resumedAtMs, clientCommandId)
-    Yuzucu devam etti. stoppedDurationSec = resumedAtMs - stopStartedAtMs.
-
-CoachPacingReset(reason, clientCommandId)         # DURUM B — ayri komut, StopPause DEGIL
-    Sonraki guvenli duvarda yeni pacing referansi; workout clock durmaz; gecmis gap raporda kalir.
-```
-
-Tüm komutlar **idempotent**tir: aynı `clientCommandId` ikinci StopPause açmaz, saati ikinci kez
-düşmez, ikinci reset uygulamaz. Açık bir StopPause varken ikinci `MarkStopPause` yeni pause açmaz.
+`MarkStopPause{trigger, occurredAtMs, notes?, detectionSource, ...}` ·
+`ResolveStopPause{intervalId, endedAtMs, alignmentSource, ...}` ·
+`CoachPacingReset{reason?}` (separate; not a StopPause). All carry `clientCommandId` and
+are idempotent.
 
 ## Events
 
-```
-StopDetected      {stopStartedAtMs, setIndex, lengthIndex, sensorSnapshot?,
-                   detectionSource: COACH|SENSOR|ESTIMATOR|THRESHOLD,
-                   detectionQuality: HIGH|MEDIUM|LOW|UNKNOWN,
-                   stopStartTimeQuality: HIGH|MEDIUM|LOW|UNKNOWN}
-LongStopConfirmed {stopStartedAtMs, confirmedAtMs, trigger, longStopThresholdSec}
-StopPauseStarted  {stopPauseId, trigger, stopStartedAtMs, atLengthIndex,
-                   alignedGhostDistanceM?, alignmentSource: SENSOR|COACH|ESTIMATE|NONE,
-                   alignmentQuality: HIGH|MEDIUM|LOW|UNKNOWN, notes?}
-StopPauseResolved {stopPauseId, resumedAtMs, stoppedDurationSec,
-                   reconciledAtWallLengthIndex?, affectedLengthIndices[],
-                   lengthAnalyzable: bool, analyticsEligible, mlLabelEligible}
-CoachPacingReset  {resetId, requestedAtMs, effectiveBoundaryLengthIndex, reason}
-```
-
-`stoppedDurationSec` event payload'ında saklanır → replay, mantıksal saat düşümünü kayan nokta yeniden
-hesabı yapmadan birebir uygular; fold yine de yeniden hesaplayıp **doğrular**, uyuşmazlıkta
-`ReplayMismatch` fırlatır.
+`StopDetected`, `LongStopConfirmed`, `StopPauseStarted`, `StopPauseResolved`,
+`CoachPacingResetRequested`, `CoachPacingResetApplied`. `IncidentStarted` /
+`IncidentResolved` are banned as general event names.
 
 ## State changes
 
-Session state machine **değişmez** (RUNNING kalır). Ayrı, küçük bir **ghost/workout timing sub-state**:
+`ACTIVE --verified StopPause--> STOP_PAUSED --resume/next wall--> ACTIVE`. Normal/large pace
+loss produces no ghost transition. Session abort/complete closes any open StopPause interval
+(`endedAtMs` written).
 
-```
-ACTIVE
-  ├── kisa durma (< longStopThresholdSec) ve devam    → ACTIVE (saat durmaz; Durum A)
-  ├── MarkStopPause / durma >= threshold (güvenilir)   → STOP_PAUSED (Durum C)
-  └── CoachPacingReset                                 → ACTIVE (Durum B; saat durmaz, referans
-                                                            sonraki duvarda)
-STOP_PAUSED
-  ├── ResolveStopPause / yuzucu devam etti             → ACTIVE (saat kaldigi yerden)
-  └── SessionCompleted / SessionAborted                → terminal cleanup (pause kapatilir)
-```
+## Analytics consequences
 
-State verisi: `longStopThresholdSec`, `stopStartedAtMs?`, `openStopPauseId?`, `cumulativeStoppedMs`,
-`alignedGhostDistanceM?`. STOP_PAUSED iken workout/ghost/pace/rest saatleri donuktur; real clock akar.
+Reliable StopPause: the length is not discarded; `activeDurationSec` and
+`stoppedDurationSec` are kept separate and stopped time is removed from active pace but
+shown explicitly (`active +stopped`). Unreliable stop timing/alignment: the length may be
+excluded (`AnalyticsExclusionReason`). Two session-end axes: active swimming performance
+(stops removed) and training efficiency (stops included).
 
-## Consequences
+## ML consequences
 
-**Süre muhasebesi (üç alan).** Her length ve seans üç süreyi ayrı taşır:
-
-```
-activeDurationSec   — aktif yüzme süresi (stop çıkarılmış)
-stoppedDurationSec  — StopPause süresi
-elapsedDurationSec  — gerçek geçen süre = active + stopped
-```
-
-Ekran/rapor gösterimi: `20.00 +15.00` (20.00 aktif, +15.00 stop); gerektiğinde toplam `35.00` ayrıca.
-
-**Length'i otomatik çöpe atma YOK.** Stop başlangıcı ve bitişi **güvenilir** biliniyorsa length tamamen
-atılmaz: aktif süre ve stop süresi ayrı tutulur, pace hesabından stop süresi çıkarılır, stop süresi
-verim raporunda ayrıca gösterilir (`lengthAnalyzable = true`). **Yalnızca** zaman/stop bilgisi
-güvenilir değilse (`stopStartTimeQuality` düşük veya `alignmentQuality` düşük) length analiz dışı
-bırakılır (`lengthAnalyzable = false`, `exclusionReason = STOP_TIME_UNRELIABLE`). `Split.qualityFlag`
-StopPause nedeniyle **asla** INVALID yapılmaz.
-
-**ML (gate sonrası, yalnızca yardımcı).** ML durma davranışını **kontrol etmez**; ghost'u durdurmaz,
-clock'u durdurmaz, StopPause başlatmaz. Yalnızca koça bir çıktı sunar:
-`performanceRelatedStopProbability`. Girdiler: nabız + trend, pace sürekliliği, pace düşüşü, stroke
-rate/count, SWOLF, yüksek tempoda kalma süresi, stop öncesi/sonrası performans, önceki splitler,
-sensör kalitesi.
-
-**affectedLengthIndices sınır anlamı.** StopPause'un başladığı **in-progress length dahil**; reconcile
-edildiği duvarın kapattığı length **dahil**; o duvardan **sonra başlayan** length **temizdir**. Yüzücü
-duvardayken başlayıp aynı duvarda reconcile edilen StopPause hiçbir length'i dışlamaz (`[]`).
+Lengths inside an unreliable StopPause are not ML-label eligible — independent of split
+measurement quality. `Split.qualityFlag` is never set to `INVALID` because of a StopPause.
 
 ## Reversibility
 
-ORTA. Timing sub-state ve event'ler eklemedir; session sözleşmesi kırılmaz. Ancak süre muhasebesi ve
-"saat durdurma" semantiği geri alınırsa geçmiş raporlar yeniden yorumlanır; Faz 1'de kilitlenir. Eski
-re-anchor ve "Incident Pause" adlandırmaları bu ADR ile supersede edilmiştir.
+MEDIUM. Ghost state and events are additive; reverting means ignoring the new event types.
+Because the analytics-exclusion semantics reinterpret past reports if reverted, this is
+locked in Phase 1 at the contract level.
 
-## Validation
+## Validation tests
 
-* Değişmez testleri (`docs/testing/invariants.md`): A'da ghost durmaz; C'de saatler birlikte durur;
-  frozen süre geri dönük; kontrollü hizalama yalnızca StopPause'da; duvarda reconcile; idempotency;
-  StopPause ≠ INVALID; güvenilir stop → length atılmaz, güvenilmez → analiz dışı; üç süre alanı.
-* Simulator senaryoları: normal tempo kaybı; eşik-aşımı long stop; koç-işaretli stop; iki kez işaret
-  (idempotency); dinlenme sırasında stop; konum/zaman güvenilmez → length analiz dışı + duvarda
-  reconcile; paused iken session completed; coach pacing reset.
-* Golden replay: StopPause + resume zinciri bit-identical; `stoppedDurationSec` doğrulaması.
+Ghost operational-state transitions; workout-clock freeze/resume; mid-pool alignment
+allowed only when verified; reconciliation deferred to the next wall; idempotent
+StopPause/resolve; split quality unaffected by StopPause; replay determinism.

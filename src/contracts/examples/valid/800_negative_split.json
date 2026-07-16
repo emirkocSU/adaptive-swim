@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "name": "800m Controlled Negative Split",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "blocks": [
+    {
+      "type": "repeat",
+      "label": "main",
+      "repetitions": 1,
+      "distanceM": 800,
+      "rest": {"type": "none"},
+      "segments": [
+        {"fromM": 0, "toM": 200, "mode": "controlled_start", "targetPaceSecPer100M": 85.0},
+        {"fromM": 200, "toM": 600, "mode": "even_pace", "targetPaceSecPer100M": 83.0},
+        {"fromM": 600, "toM": 800, "mode": "negative_split_part", "targetPaceSecPer100M": 81.0}
+      ],
+      "adaptation": {
+        "mode": "bounded_auto",
+        "adaptationSource": "rule_based",
+        "maxChangePercentPerLength": 1.0,
+        "minModelConfidence": 0.8,
+        "fastestAllowedPaceSecPer100M": 78.0,
+        "slowestAllowedPaceSecPer100M": 88.0
+      },
+      "feedback": {"showGhost": true, "showGapAtWall": true, "showContinuousGap": false},
+      "ghostSource": {"type": "plan"}
+    }
+  ]
+}

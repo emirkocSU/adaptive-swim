@@ -1,16 +1,18 @@
-# Split Kalite Modeli (ADR-027)
+# Split Quality (five classes)
 
-Manuel split (COACH_TAP, BUTTON) **ground truth degildir**. Her split kaynagi + kalitesiyle dogar;
-ML ve arastirma yalnizca uygun siniflari tuketir.
+Manual splits are not ground truth. Quality is a measurement axis only; it is separate
+from StopPause exclusion.
 
-| qualityFlag | Tanim | Canli pacing | ML egitimi | Arastirma birincil |
+| qualityFlag | Meaning | Live pacing | ML training | Research primary |
 |---|---|---|---|---|
-| VERIFIED_HIGH | Bagimsiz kaynakla dogrulanmis (touchpad/video/cift zamanlayici) | evet | evet | evet |
-| RELIABLE | Otomatik guvenilir kaynak (touchpad dogrudan; kalibre wearable) | evet | evet | evet (duyarlilik) |
-| MANUAL_UNVERIFIED | COACH_TAP/BUTTON, dogrulamasiz | evet | hayir (varsayilan) | hayir (yalnizca ikincil) |
-| ESTIMATED | Sistem tahmini (interpolasyon, gec split normalizasyonu) | evet (dusuk guven) | hayir | hayir |
-| INVALID | Duplicate artigi, sira disi, sanity ihlali | hayir | hayir | hayir |
+| VERIFIED_HIGH | Independently verified (touchpad, video frame, dual-timer agreement) | yes | yes | yes |
+| RELIABLE | Automatic reliable source (touchpad/timing; wearable if calibrated) | yes | yes | yes (with sensitivity) |
+| MANUAL_UNVERIFIED | Coach-tap / button, unverified | yes | no (default) | no (secondary only) |
+| ESTIMATED | System estimate (interpolation, late-split normalization) | yes (low confidence) | no | no |
+| INVALID | Duplicate remnant, out-of-order, sanity violation | ignored | no | no |
 
-**Onemli:** `qualityFlag` yalnizca OLCUM kalitesidir. Incident dislamasi AYRI eksendir
-(`AnalyticsExclusionReason.STOP_TIME_UNRELIABLE`). Guvenilir stop varsa VERIFIED_HIGH bir split StopPause icinde olabilir ve
-yine VERIFIED_HIGH kalir; length atilmaz (active/stopped ayri). Guvenilmez stop -> length analiz disi. `mlEligible = quality_ok AND NOT in_stop_interval`.
+`SIMULATED` source is always labelled separately and used only for engineering/leakage
+testing.
+
+**A StopPause never turns a split INVALID.** StopPause exclusion is carried on the length
+outcome via `AnalyticsExclusionReason`, not on `Split.qualityFlag`.

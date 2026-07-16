@@ -1,35 +1,16 @@
-# ADR-NNN — Başlık
+# ADR-NNN — Title
 
-**Statü:** PROPOSED | ACTIVE | REVISED | DEFERRED | SUPERSEDED
-**Faz:** N
-**Tarih:** YYYY-MM-DD
+- **Status:** PROPOSED | ACTIVE | REVISED | DEFERRED | SUPERSEDED
+- **Date:**
+- **Supersedes / Superseded by:**
 
-## Context
-Kararın alındığı bağlam; hangi kısıtlar ve gerçekler geçerli.
-
-## Problem
-Çözülmesi gereken kesin problem.
-
+## Context / Problem
 ## Considered options
-Değerlendirilen seçenekler ve her birinin artı/eksileri.
-
 ## Decision
-Seçilen karar, net ve tek anlamlı.
-
-## Commands (varsa)
-Bu kararın getirdiği komutlar ve idempotency kuralları.
-
-## Events (varsa)
-Üretilen event tipleri ve zorunlu payload alanları.
-
-## State changes (varsa)
-State machine / sub-state geçişleri.
-
-## Consequences
-Analitik, ML, operasyon ve geliştirme sonuçları.
-
+## Commands
+## Events
+## State changes
+## Analytics consequences
+## ML consequences
 ## Reversibility
-KOLAY | ORTA | ZOR — ve geri almanın eşiği/maliyeti.
-
-## Validation
-Bu kararı doğrulayan testler ve kabul kriterleri.
+## Validation tests

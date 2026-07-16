@@ -1,69 +1,53 @@
-.PHONY: setup lint format typecheck test test-unit test-property test-replay test-simulator \
-        test-architecture schema-check e2e-headless ci clean
+.PHONY: setup lint typecheck test test-unit test-property test-replay test-simulator \
+        test-architecture schema-check e2e-headless ci
+
+export PYTHONPATH := $(CURDIR)/src
 
 PY := python
-VENV := .venv
-
-# Test suites arrive commit by commit (see docs/plan/first-10-commits.md).
-# Targets whose directory does not exist yet are reported as PENDING rather than
-# failing, so that `make ci` is green at the end of every single commit.
-define run_suite
-	@if [ -d "$(1)" ]; then \
-		pytest $(1) $(2); \
-	else \
-		echo "PENDING: $(1) (arrives in a later Phase 1 commit)"; \
-	fi
-endef
+PYTEST := $(PY) -m pytest
 
 setup:
-	$(PY) -m venv $(VENV)
-	$(VENV)/bin/pip install --upgrade pip
-	$(VENV)/bin/pip install -e ".[dev]"
+	$(PY) -m venv .venv && .venv/bin/pip install -e ".[dev]"
 
 lint:
-	ruff check src tests
-	ruff format --check src tests
-
-format:
-	ruff format src tests
-	ruff check --fix src tests
+	ruff check src tests && ruff format --check src tests
 
 typecheck:
-	mypy
+	mypy --strict src
 
 test:
-	pytest
+	$(PYTEST) -q
 
 test-unit:
-	$(call run_suite,tests/unit,)
+	$(PYTEST) -q tests/unit
 
+# --- The targets below become active in later commits. Until a test dir has ---
+# --- tests, they print PENDING and succeed so `make ci` stays green.        ---
 test-property:
-	$(call run_suite,tests/property,--hypothesis-profile=ci)
+	@if ls tests/property/test_*.py >/dev/null 2>&1; then \
+		$(PYTEST) -q tests/property ; \
+	else echo "PENDING (property tests arrive in a later commit)"; fi
 
 test-replay:
-	$(call run_suite,tests/replay,)
+	@if ls tests/replay/test_*.py >/dev/null 2>&1; then \
+		$(PYTEST) -q tests/replay ; \
+	else echo "PENDING (replay tests arrive in a later commit)"; fi
 
 test-simulator:
-	$(call run_suite,tests/simulator,)
+	@if ls tests/simulator/test_*.py >/dev/null 2>&1; then \
+		$(PYTEST) -q tests/simulator ; \
+	else echo "PENDING (simulator tests arrive in a later commit)"; fi
 
 test-architecture:
-	lint-imports --config .importlinter
-	$(call run_suite,tests/architecture,)
+	lint-imports && $(PYTEST) -q tests/architecture
 
-# Regenerates JSON Schema from pydantic and fails if the committed schema differs.
-# Becomes active in Commit 2, when contracts and the generator exist.
 schema-check:
-	@if [ -f src/swimtools/gen_schemas.py ]; then \
-		$(PY) -m swimtools.gen_schemas --check; \
-	else \
-		echo "PENDING: schema generator (arrives in Commit 2)"; \
-	fi
+	$(PY) -m swimtools.gen_schemas --check
 
 e2e-headless:
-	$(call run_suite,tests/e2e,--disable-socket)
+	@if ls tests/e2e/test_*.py >/dev/null 2>&1; then \
+		$(PYTEST) -q tests/e2e --disable-socket ; \
+	else echo "PENDING (e2e headless vertical slice arrives in Commit 10)"; fi
 
-# Single-command Phase 1 verification.
 ci: lint typecheck test-architecture schema-check test-unit test-property test-replay test-simulator e2e-headless
-
-clean:
-	rm -rf .pytest_cache .mypy_cache .ruff_cache .hypothesis out
+	@echo "CI OK"

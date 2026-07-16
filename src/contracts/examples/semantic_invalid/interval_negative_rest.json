@@ -1,0 +1,3 @@
+{ "schemaVersion":"1.0","name":"neg rest","poolLengthM":25,"stroke":"freestyle",
+  "blocks":[{"type":"repeat","repetitions":1,"distanceM":100,"rest":{"type":"interval","startIntervalSec":30},
+    "segments":[{"fromM":0,"toM":100,"mode":"even_pace","targetPaceSecPer100M":83.0}]}]}

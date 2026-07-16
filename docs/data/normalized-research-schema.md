@@ -1,13 +1,7 @@
-# Normalized Research Schema (ADR-032)
+# Normalized Research Schema (provider-independent, plan-level)
 
-Provider-bagimsiz `NormalizedSwimmingRecord`. Her kaynak tum alanlari tasimak zorunda degildir;
-**missingness korunur, sahte doldurma yapilmaz**.
-
-Alanlar: source_id, source_record_id, athlete_pseudonym, session_or_race_id, data_domain, stroke,
-pool_length_m, event_or_set_distance_m, length_or_split_index, cumulative_time_sec,
-length_or_split_time_sec, target_pace_sec_per_100m, rest_before_sec, stroke_rate, stroke_count, swolf,
-heart_rate, heart_rate_trend, sensor_quality, incident_like_flag, quality_flag, synthetic,
-provenance_ref.
-
-`data_domain` degerleri: ELITE_RACE | TRAINING_EXPORT | WEARABLE_SENSOR | ADAPTIVE_SWIM_SESSION |
-SYNTHETIC_SIMULATION. Race split ile training session **`data_domain` olmadan sessizce birlestirilemez**.
+`NormalizedSwimmingRecord` is a provider-independent research schema draft. It always
+carries a `data_domain`; records from different domains cannot be merged without it.
+Missingness is preserved (Optional fields; no fake filling). Synthetic records carry
+`synthetic=true` and a provenance reference. No production-eligibility flag exists on any
+external record.

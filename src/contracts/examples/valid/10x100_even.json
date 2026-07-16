@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "name": "10x100 Even Pace",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "blocks": [
+    {
+      "type": "repeat",
+      "label": "main",
+      "repetitions": 10,
+      "distanceM": 100,
+      "rest": {"type": "fixed", "restSec": 20},
+      "segments": [
+        {"fromM": 0, "toM": 100, "mode": "even_pace", "targetPaceSecPer100M": 83.0}
+      ],
+      "feedback": {"showGhost": true, "showGapAtWall": true, "showContinuousGap": false}
+    }
+  ]
+}

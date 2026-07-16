@@ -5,9 +5,10 @@ root_packages =
     persistence
     simulator
     swimtools
+include_external_packages = True
 
-[importlinter:contract:layers]
-name = Phase 1 layering (higher may import lower; never the reverse)
+[importlinter:contract:1]
+name = Layered architecture (swimtools > simulator > persistence > swimcore > contracts)
 type = layers
 layers =
     swimtools
@@ -16,26 +17,16 @@ layers =
     swimcore
     contracts
 
-[importlinter:contract:external-data-boundary]
-name = swimcore must never import external-data plan contracts (ADR-032)
+[importlinter:contract:2]
+name = swimcore must not import external-data plan contracts
 type = forbidden
 source_modules =
     swimcore
 forbidden_modules =
     contracts.external_data
 
-[importlinter:contract:swimcore-purity]
-name = swimcore must not import infrastructure, simulator or tools
-type = forbidden
-source_modules =
-    swimcore
-forbidden_modules =
-    persistence
-    simulator
-    swimtools
-
-[importlinter:contract:contracts-purity]
-name = contracts must not import any internal package
+[importlinter:contract:3]
+name = contracts must not import inner packages
 type = forbidden
 source_modules =
     contracts
@@ -45,10 +36,16 @@ forbidden_modules =
     simulator
     swimtools
 
-[importlinter:contract:simulator-independence]
-name = simulator must not depend on developer tooling
+[importlinter:contract:4]
+name = swimcore and contracts must not import IO frameworks
 type = forbidden
 source_modules =
-    simulator
+    swimcore
+    contracts
 forbidden_modules =
-    swimtools
+    fastapi
+    sqlalchemy
+    sqlite3
+    socket
+    requests
+    httpx

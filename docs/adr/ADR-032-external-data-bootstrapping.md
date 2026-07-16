@@ -1,65 +1,50 @@
 # ADR-032 — External Data Bootstrapping Strategy
 
-**Statü:** ACTIVE (Faz 1'de yalnızca doküman + plan-level contract; pipeline sonraki research epic)
-**Faz:** 1 (doküman/contract), sonra ayrı research epic
-**Tarih:** 2026-07-14
+- **Status:** NEW (Phase 1: document + plan-level contract draft only)
+- **Date:** 2026-07-16
 
-## Context
-ML ve simulator çalışmaları yalnızca kendi donanımından gelecek veriyi beklememelidir. Ancak dış
-kaynaklar final production adaptive model ile aynı değerde/amaçta kabul edilemez. Rolleri katı
-ayrılmalıdır.
+## Context / Problem
 
-## Problem
-Dış veriyi kullanmak istiyoruz (cold-start, simulator gerçekçiliği, baseline hazırlığı) ama (a) race
-verisini training verisi sanmak, (b) synthetic'i performans kanıtı yapmak, (c) lisanssız/izinsiz
-kullanmak, (d) gate'i zayıflatmak risklerinden kaçınmalıyız.
+Real Adaptive Swim training data does not exist yet. External data can bootstrap
+simulator realism, cold-start priors, and non-production baselines — but must never be
+mistaken for, or blended into, the final production adaptive model. A strict role
+taxonomy prevents leakage and false performance claims.
 
-## Considered options
-1. Sadece kendi verisi — cold-start yavaş, simulator az gerçekçi.
-2. Dış veriyi serbestçe karıştır — bilimsel ve hukuki felaket.
-3. **Seçilen — katı rol taksonomisi (5 katman) + provenance registry + gate ayrımı.**
+## Decision
 
-## Decision — Data role taxonomy
+Five-layer taxonomy with hard role boundaries; none equals the final production model.
 
-| Katman | Rol | Kesin sınır |
+| Layer | Role | Hard boundary |
 |---|---|---|
-| L1 Race Pacing Prior | Mesafe/stile göre pacing eğrileri, split-index etkisi, split profilleri, simulator gerçekçiliği, cold-start prior | **Antrenman verisi değildir.** Ghost feedback tepkisi, koç hedefi uyumu, bounded adaptation, dinlenme yapısı, incident etkisi bundan öğretilemez |
-| L2 Wearable Sensor Pretraining | swim/rest ayrımı, turn/transition detection, lap segmentation, sensor quality scoring, incident-**benzeri** kesinti *önerisi*, split reliability tahmini | Final pacing modelinin yerine geçmez |
-| L3 User-Consented Training Exports | Gerçek antrenman length/lap, stroke count/rate, pace, rest, SWOLF, HR trend, next-length **baseline**, pilot öncesi training-context feature pipeline | Açık izin + provenance + amaç zorunlu |
-| L4 Simulator Synthetic | Controller edge case, replay, abstain, bad/delayed split, incident stop, sensor dropout, state machine + failure injection | Performans kanıtı **değildir**; kaynağı gizlenerek gerçek veriyle birleştirilemez; her zaman `synthetic=true` + scenario provenance |
-| L5 Adaptive Swim Proprietary | **Final production adaptive model için esas kaynak** | Final model bununla fine-tune + athlete-grouped/time-aware validate; **iddia yalnızca bunun üzerinden** |
+| L1 — Race Pacing Prior | Natural pacing curves by distance/stroke, split-index effect, simulator realism, cold-start prior | Not training data; behavioural response to ghost, coach-target adherence, adaptation effect cannot be learned from it |
+| L2 — Wearable Sensor Pretraining | swim/rest split, turn/transition detection, lap segmentation, sensor-quality scoring, stop-like suggestion, split reliability | Not a substitute for the final pacing model |
+| L3 — User-Consented Training Exports | Real training length/lap datasets, stroke count/rate, pace, rest, SWOLF, HR trends, next-length baselines, pre-pilot feature pipeline | Explicit consent + provenance + purpose required |
+| L4 — Simulator Synthetic | Controller edge cases, replay, abstain, bad/delayed split, StopPause, ghost alignment, sensor dropout, failure injection | Not sporting-performance evidence; never claims production accuracy; never merged with real data by hiding source; always `synthetic=true` + scenario provenance |
+| L5 — Adaptive Swim Proprietary | **Primary source for the final production adaptive model** | Final claims only via athlete-grouped + time-aware validation on this data |
 
-## Consequences
+## Commands / Events / State
 
-**Gate ile ilişki.** v1.1'deki G1–G7 ML Activation Gate **korunur**. İki faaliyet ayrılır:
-*Pre-gate research* (kaynak araştırması, lisans/erişim doğrulama, parser prototipi, cleaning, schema
-mapping, normalized research schema, pacing prior analizi, simulator kalibrasyonu, non-production
-baseline, wearable task-specific araştırma) — edge runtime'a bağlanamaz, `bounded_auto`'yu kontrol
-edemez, production artefact paketleyemez, ürün performansı iddiası oluşturamaz. *Production
-activation* (production feature pipeline, training, calibrated uncertainty, shadow, suggest-only,
-bounded-auto eligibility, versiyonlu artefact) yalnızca gate açıkken.
+None in Phase 1. This ADR governs data contracts and process only.
 
-**Confidence.** `confidence = quantile interval width` **yasaktır** (ADR-030). Quantile yalnızca bir
-girdidir.
+## Analytics / ML consequences
 
-**Provenance & lisans.** Her kaynak `DataSourceRegistryEntry` (18 alan) ile kayıtlanır. Belirsiz
-erişim/lisans → `TBD_VERIFICATION_REQUIRED`. ToS'u aşan scraping planlanmaz.
+The v1.1 ML Activation Gate (G1–G7) is preserved unchanged. Pre-gate research
+(source research, license/access verification, parser prototypes, cleaning, schema
+mapping, pacing-prior analysis, simulator calibration, non-production baselines,
+wearable task-specific research) may NOT connect to the edge runtime, may NOT control
+`bounded_auto`, may NOT be packaged as a production artifact, and may NOT form a product
+performance claim. Production ML activation happens only after G1–G7.
 
-**Normalized research schema.** Provider-bağımsız `NormalizedSwimmingRecord`; `data_domain`
-(`ELITE_RACE | TRAINING_EXPORT | WEARABLE_SENSOR | ADAPTIVE_SWIM_SESSION | SYNTHETIC_SIMULATION`)
-**olmadan birleştirme yasak**; missingness korunur, sahte doldurma yok.
-
-**Repository sınırı.** Faz 1'de: bu ADR + external data strategy dokümanı + DataSourceRegistry
-sözleşme taslağı + normalized research schema taslağı + provenance/synthetic kuralları. Faz 1'de
-**oluşturulmaz**: production `ml/`, model registry, production inference, Garmin/FORM/Strava/Polar
-entegrasyonu, data lake, scraper, cloud storage, wearable NN, production pacing model. Boş `ml/`,
-`cloud/` veya provider adapter klasörü **açılmaz**. `contracts.external_data`, `swimcore` tarafından
-import **edilemez** (import-linter forbidden).
+Confidence: `confidence = quantile interval width` is forbidden (v1.1 ADR-030). Quantile
+is only one input to the uncertainty system.
 
 ## Reversibility
-KOLAY (doküman/contract seviyesi). Gerçek pipeline ayrı research epic'inde, ayrı reversibility ile.
 
-## Validation
-* `swimcore → contracts.external_data` import'u import-linter ile reddedilir.
-* `NormalizedSwimmingRecord` birleştirmesi `data_domain` olmadan test ile reddedilir.
-* External-data contract'larında production-eligibility alanı **yoktur** (test).
+HIGH for the plan-level contracts (draft only). The import boundary
+(`swimcore` ↛ `contracts.external_data`) is enforced by import-linter.
+
+## Validation tests
+
+`data_domain` required before any merge; no production-eligibility flag on external
+records; synthetic records must carry `synthetic=true` + provenance; ambiguous
+license/access → `TBD_VERIFICATION_REQUIRED`.

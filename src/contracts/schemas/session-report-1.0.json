@@ -1,0 +1,546 @@
+{
+  "$defs": {
+    "AnalyticsExclusionReason": {
+      "enum": [
+        "UNRELIABLE_STOP_TIMING",
+        "UNRELIABLE_ALIGNMENT"
+      ],
+      "title": "AnalyticsExclusionReason",
+      "type": "string"
+    },
+    "LengthOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "activeDurationSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activedurationsec"
+        },
+        "elapsedDurationSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Elapseddurationsec"
+        },
+        "exclusionReason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnalyticsExclusionReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gapSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gapsec"
+        },
+        "included": {
+          "default": true,
+          "title": "Included",
+          "type": "boolean"
+        },
+        "lengthIndex": {
+          "minimum": 0,
+          "title": "Lengthindex",
+          "type": "integer"
+        },
+        "splitQualityFlag": {
+          "$ref": "#/$defs/SplitQualityFlag"
+        },
+        "stoppedDurationSec": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Stoppeddurationsec",
+          "type": "number"
+        },
+        "targetTimeSec": {
+          "minimum": 0,
+          "title": "Targettimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "lengthIndex",
+        "targetTimeSec",
+        "splitQualityFlag"
+      ],
+      "title": "LengthOutcome",
+      "type": "object"
+    },
+    "PacingMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "deviationVariance": {
+          "minimum": 0,
+          "title": "Deviationvariance",
+          "type": "number"
+        },
+        "excludedLengths": {
+          "minimum": 0,
+          "title": "Excludedlengths",
+          "type": "integer"
+        },
+        "includedLengths": {
+          "minimum": 0,
+          "title": "Includedlengths",
+          "type": "integer"
+        },
+        "meanAbsDeviationSec": {
+          "minimum": 0,
+          "title": "Meanabsdeviationsec",
+          "type": "number"
+        },
+        "negativeSplitAchieved": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Negativesplitachieved"
+        },
+        "pacingConsistency": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Pacingconsistency",
+          "type": "number"
+        }
+      },
+      "required": [
+        "meanAbsDeviationSec",
+        "deviationVariance",
+        "pacingConsistency",
+        "includedLengths",
+        "excludedLengths"
+      ],
+      "title": "PacingMetrics",
+      "type": "object"
+    },
+    "SetEfficiencyMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "activeSwimmingDurationSec": {
+          "minimum": 0,
+          "title": "Activeswimmingdurationsec",
+          "type": "number"
+        },
+        "averageHeartRate": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Averageheartrate"
+        },
+        "elapsedDurationSec": {
+          "minimum": 0,
+          "title": "Elapseddurationsec",
+          "type": "number"
+        },
+        "highIntensityDurationSec": {
+          "minimum": 0,
+          "title": "Highintensitydurationsec",
+          "type": "number"
+        },
+        "paceContinuityScore": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Pacecontinuityscore",
+          "type": "number"
+        },
+        "paceDeclineSlope": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacedeclineslope"
+        },
+        "paceDeclineStartLength": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacedeclinestartlength"
+        },
+        "performanceRelatedStopProbability": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Performancerelatedstopprobability"
+        },
+        "setIndex": {
+          "minimum": 0,
+          "title": "Setindex",
+          "type": "integer"
+        },
+        "stopCount": {
+          "minimum": 0,
+          "title": "Stopcount",
+          "type": "integer"
+        },
+        "stoppedDurationSec": {
+          "minimum": 0,
+          "title": "Stoppeddurationsec",
+          "type": "number"
+        },
+        "targetPaceAdherenceRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Targetpaceadherenceratio",
+          "type": "number"
+        },
+        "targetPaceDurationSec": {
+          "minimum": 0,
+          "title": "Targetpacedurationsec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "setIndex",
+        "activeSwimmingDurationSec",
+        "stoppedDurationSec",
+        "elapsedDurationSec",
+        "stopCount",
+        "targetPaceDurationSec",
+        "targetPaceAdherenceRatio",
+        "highIntensityDurationSec",
+        "paceContinuityScore"
+      ],
+      "title": "SetEfficiencyMetrics",
+      "type": "object"
+    },
+    "SplitQualityFlag": {
+      "enum": [
+        "VERIFIED_HIGH",
+        "RELIABLE",
+        "MANUAL_UNVERIFIED",
+        "ESTIMATED",
+        "INVALID"
+      ],
+      "title": "SplitQualityFlag",
+      "type": "string"
+    },
+    "StopPauseSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "affectedLengthIndices": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Affectedlengthindices",
+          "type": "array"
+        },
+        "count": {
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        },
+        "longestStopDurationSec": {
+          "minimum": 0,
+          "title": "Longeststopdurationsec",
+          "type": "number"
+        },
+        "totalStoppedDurationSec": {
+          "minimum": 0,
+          "title": "Totalstoppeddurationsec",
+          "type": "number"
+        },
+        "triggerDistribution": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/StopPauseTrigger"
+          },
+          "title": "Triggerdistribution",
+          "type": "object"
+        }
+      },
+      "required": [
+        "count",
+        "triggerDistribution",
+        "totalStoppedDurationSec",
+        "longestStopDurationSec",
+        "affectedLengthIndices"
+      ],
+      "title": "StopPauseSummary",
+      "type": "object"
+    },
+    "StopPauseTrigger": {
+      "enum": [
+        "MANUAL_INCIDENT",
+        "LONG_STOP_THRESHOLD",
+        "COACH_STOP",
+        "SENSOR_STOP"
+      ],
+      "title": "StopPauseTrigger",
+      "type": "string"
+    },
+    "TrainingEfficiencyMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "activeSwimmingDurationSec": {
+          "minimum": 0,
+          "title": "Activeswimmingdurationsec",
+          "type": "number"
+        },
+        "averageHeartRate": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Averageheartrate"
+        },
+        "heartRatePaceRelationship": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heartratepacerelationship"
+        },
+        "heartRateTrend": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heartratetrend"
+        },
+        "highIntensityDurationSec": {
+          "minimum": 0,
+          "title": "Highintensitydurationsec",
+          "type": "number"
+        },
+        "longestStopDurationSec": {
+          "minimum": 0,
+          "title": "Longeststopdurationsec",
+          "type": "number"
+        },
+        "paceContinuityScore": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Pacecontinuityscore",
+          "type": "number"
+        },
+        "paceDeclineSlope": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacedeclineslope"
+        },
+        "paceDeclineStartLength": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacedeclinestartlength"
+        },
+        "performanceRelatedStopProbability": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Performancerelatedstopprobability"
+        },
+        "setEfficiencyMetrics": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SetEfficiencyMetrics"
+          },
+          "title": "Setefficiencymetrics",
+          "type": "array"
+        },
+        "stopBeforeAfterPaceDelta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stopbeforeafterpacedelta"
+        },
+        "stopCount": {
+          "minimum": 0,
+          "title": "Stopcount",
+          "type": "integer"
+        },
+        "targetPaceAdherenceRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Targetpaceadherenceratio",
+          "type": "number"
+        },
+        "targetPaceDurationSec": {
+          "minimum": 0,
+          "title": "Targetpacedurationsec",
+          "type": "number"
+        },
+        "totalElapsedDurationSec": {
+          "minimum": 0,
+          "title": "Totalelapseddurationsec",
+          "type": "number"
+        },
+        "totalStoppedDurationSec": {
+          "minimum": 0,
+          "title": "Totalstoppeddurationsec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "activeSwimmingDurationSec",
+        "totalElapsedDurationSec",
+        "totalStoppedDurationSec",
+        "stopCount",
+        "longestStopDurationSec",
+        "targetPaceDurationSec",
+        "targetPaceAdherenceRatio",
+        "highIntensityDurationSec",
+        "paceContinuityScore"
+      ],
+      "title": "TrainingEfficiencyMetrics",
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.adaptiveswim.dev/session-report-1.0.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "lengthOutcomes": {
+      "items": {
+        "$ref": "#/$defs/LengthOutcome"
+      },
+      "title": "Lengthoutcomes",
+      "type": "array"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Notes"
+    },
+    "pacingMetrics": {
+      "$ref": "#/$defs/PacingMetrics"
+    },
+    "sessionId": {
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "stopPauseSummary": {
+      "$ref": "#/$defs/StopPauseSummary"
+    },
+    "trainingEfficiency": {
+      "$ref": "#/$defs/TrainingEfficiencyMetrics"
+    },
+    "workoutRef": {
+      "title": "Workoutref",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sessionId",
+    "workoutRef",
+    "pacingMetrics",
+    "trainingEfficiency",
+    "lengthOutcomes",
+    "stopPauseSummary"
+  ],
+  "title": "SessionReport",
+  "type": "object"
+}

@@ -1,0 +1,470 @@
+{
+  "$defs": {
+    "AdaptationMode": {
+      "enum": [
+        "off",
+        "suggest_only",
+        "bounded_auto"
+      ],
+      "title": "AdaptationMode",
+      "type": "string"
+    },
+    "AdaptationPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "adaptationSource": {
+          "$ref": "#/$defs/AdaptationSource",
+          "default": "rule_based"
+        },
+        "fastestAllowedPaceSecPer100M": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 30,
+              "maximum": 300,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fastestallowedpacesecper100M"
+        },
+        "maxChangePercentPerLength": {
+          "anyOf": [
+            {
+              "maximum": 5.0,
+              "minimum": 0.1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxchangepercentperlength"
+        },
+        "minModelConfidence": {
+          "default": 0.8,
+          "maximum": 0.99,
+          "minimum": 0.5,
+          "title": "Minmodelconfidence",
+          "type": "number"
+        },
+        "mode": {
+          "$ref": "#/$defs/AdaptationMode"
+        },
+        "slowestAllowedPaceSecPer100M": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 30,
+              "maximum": 300,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Slowestallowedpacesecper100M"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "AdaptationPolicy",
+      "type": "object"
+    },
+    "AdaptationSource": {
+      "enum": [
+        "rule_based",
+        "ml"
+      ],
+      "title": "AdaptationSource",
+      "type": "string"
+    },
+    "FeedbackPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "showContinuousGap": {
+          "default": false,
+          "title": "Showcontinuousgap",
+          "type": "boolean"
+        },
+        "showGapAtWall": {
+          "default": true,
+          "title": "Showgapatwall",
+          "type": "boolean"
+        },
+        "showGhost": {
+          "default": true,
+          "title": "Showghost",
+          "type": "boolean"
+        }
+      },
+      "title": "FeedbackPolicy",
+      "type": "object"
+    },
+    "GhostSourceCoachBenchmark": {
+      "additionalProperties": false,
+      "properties": {
+        "profileRef": {
+          "title": "Profileref",
+          "type": "string"
+        },
+        "type": {
+          "const": "coach_benchmark",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "profileRef"
+      ],
+      "title": "GhostSourceCoachBenchmark",
+      "type": "object"
+    },
+    "GhostSourcePastSession": {
+      "additionalProperties": false,
+      "properties": {
+        "referenceSessionId": {
+          "title": "Referencesessionid",
+          "type": "string"
+        },
+        "type": {
+          "const": "past_session",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "referenceSessionId"
+      ],
+      "title": "GhostSourcePastSession",
+      "type": "object"
+    },
+    "GhostSourcePersonalBest": {
+      "additionalProperties": false,
+      "properties": {
+        "referenceSessionId": {
+          "title": "Referencesessionid",
+          "type": "string"
+        },
+        "type": {
+          "const": "personal_best",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "referenceSessionId"
+      ],
+      "title": "GhostSourcePersonalBest",
+      "type": "object"
+    },
+    "GhostSourcePlan": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "plan",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "GhostSourcePlan",
+      "type": "object"
+    },
+    "PaceMode": {
+      "enum": [
+        "even_pace",
+        "controlled_start",
+        "progressive",
+        "negative_split_part"
+      ],
+      "title": "PaceMode",
+      "type": "string"
+    },
+    "PaceSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "endPaceSecPer100M": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 30,
+              "maximum": 300,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endpacesecper100M"
+        },
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "mode": {
+          "$ref": "#/$defs/PaceMode"
+        },
+        "targetPaceSecPer100M": {
+          "exclusiveMinimum": 30,
+          "maximum": 300,
+          "title": "Targetpacesecper100M",
+          "type": "number"
+        },
+        "toM": {
+          "exclusiveMinimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "fromM",
+        "toM",
+        "mode",
+        "targetPaceSecPer100M"
+      ],
+      "title": "PaceSegment",
+      "type": "object"
+    },
+    "RepeatBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "adaptation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AdaptationPolicy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "distanceM": {
+          "minimum": 25,
+          "title": "Distancem",
+          "type": "integer"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FeedbackPolicy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ghostSource": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GhostSourcePlan"
+            },
+            {
+              "$ref": "#/$defs/GhostSourcePersonalBest"
+            },
+            {
+              "$ref": "#/$defs/GhostSourcePastSession"
+            },
+            {
+              "$ref": "#/$defs/GhostSourceCoachBenchmark"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ghostsource"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetLabel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "repetitions": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Repetitions",
+          "type": "integer"
+        },
+        "rest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RestNone"
+            },
+            {
+              "$ref": "#/$defs/RestFixed"
+            },
+            {
+              "$ref": "#/$defs/RestInterval"
+            }
+          ],
+          "title": "Rest"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/PaceSegment"
+          },
+          "minItems": 1,
+          "title": "Segments",
+          "type": "array"
+        },
+        "type": {
+          "const": "repeat",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "repetitions",
+        "distanceM",
+        "rest",
+        "segments"
+      ],
+      "title": "RepeatBlock",
+      "type": "object"
+    },
+    "RestFixed": {
+      "additionalProperties": false,
+      "properties": {
+        "restSec": {
+          "minimum": 0,
+          "title": "Restsec",
+          "type": "number"
+        },
+        "type": {
+          "const": "fixed",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "restSec"
+      ],
+      "title": "RestFixed",
+      "type": "object"
+    },
+    "RestInterval": {
+      "additionalProperties": false,
+      "properties": {
+        "startIntervalSec": {
+          "exclusiveMinimum": 0,
+          "title": "Startintervalsec",
+          "type": "number"
+        },
+        "type": {
+          "const": "interval",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "startIntervalSec"
+      ],
+      "title": "RestInterval",
+      "type": "object"
+    },
+    "RestNone": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "none",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "RestNone",
+      "type": "object"
+    },
+    "SetLabel": {
+      "enum": [
+        "warmup",
+        "main",
+        "technique",
+        "cooldown",
+        "custom"
+      ],
+      "title": "SetLabel",
+      "type": "string"
+    },
+    "Stroke": {
+      "enum": [
+        "freestyle",
+        "backstroke",
+        "breaststroke",
+        "butterfly",
+        "medley",
+        "mixed"
+      ],
+      "title": "Stroke",
+      "type": "string"
+    }
+  },
+  "$id": "https://schemas.adaptiveswim.dev/workout-1.0.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "blocks": {
+      "items": {
+        "$ref": "#/$defs/RepeatBlock"
+      },
+      "minItems": 1,
+      "title": "Blocks",
+      "type": "array"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "poolLengthM": {
+      "enum": [
+        25,
+        50
+      ],
+      "title": "Poollengthm",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "const": "1.0",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "stroke": {
+      "$ref": "#/$defs/Stroke"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "name",
+    "poolLengthM",
+    "stroke",
+    "blocks"
+  ],
+  "title": "WorkoutTemplateVersion",
+  "type": "object"
+}

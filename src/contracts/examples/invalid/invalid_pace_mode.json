@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "name": "Invalid pace mode",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "blocks": [
+    {
+      "type": "repeat",
+      "repetitions": 4,
+      "distanceM": 100,
+      "rest": {"type": "none"},
+      "segments": [
+        {"fromM": 0, "toM": 100, "mode": "sprint_mode", "targetPaceSecPer100M": 83.0}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "name": "1000m Aerobic (StopPause context)",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "blocks": [
+    {
+      "type": "repeat",
+      "label": "main",
+      "repetitions": 1,
+      "distanceM": 1000,
+      "rest": {"type": "none"},
+      "segments": [
+        {"fromM": 0, "toM": 1000, "mode": "even_pace", "targetPaceSecPer100M": 86.0}
+      ],
+      "feedback": {"showGhost": true, "showGapAtWall": true, "showContinuousGap": true}
+    }
+  ]
+}

@@ -1,1 +1,1 @@
-"""Gelistirici/CI CLI'lari: sema uretimi, senaryo kosumu, replay dogrulama, mimari kontrol."""
+"""Adaptive Swim swimtools package (Phase 1)."""

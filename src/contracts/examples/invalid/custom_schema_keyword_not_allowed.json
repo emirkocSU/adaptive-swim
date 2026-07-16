@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "name": "Has an unknown top-level keyword",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "multipleOfPoolLength": true,
+  "blocks": [
+    {
+      "type": "repeat",
+      "repetitions": 4,
+      "distanceM": 100,
+      "rest": {"type": "none"},
+      "segments": [
+        {"fromM": 0, "toM": 100, "mode": "even_pace", "targetPaceSecPer100M": 83.0}
+      ]
+    }
+  ]
+}

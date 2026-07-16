@@ -1,12 +1,12 @@
-# DataSourceRegistry (ADR-032)
+# Data Source Registry
 
-Her dis kaynak icin bir kayit. Belirsiz erisim/lisans -> `TBD_VERIFICATION_REQUIRED`.
-ToS'u asan scraping planlanmaz.
+Every external data source is registered as a `DataSourceRegistryEntry` before use. No
+access/download/commercial/redistribution right is assumed. Ambiguous license or access
+is recorded as `TBD_VERIFICATION_REQUIRED`. Scraping beyond a source's ToS/data license
+is not planned.
 
-Alanlar (18): sourceId, sourceName, ownerOrPublisher, sourceType, accessMethod, sourceUrlOrReference,
-licenseStatus, commercialUseStatus, redistributionStatus, consentRequired, dataAvailabilityStatus,
-availableFields, granularity, intendedRole (L1..L5), prohibitedUses, provenanceMethod, retrievalDate,
-contentHashOrVersion, notes.
-
-Bu contract Faz 1'de yalnizca `contracts/external_data.py` icinde plan-level olarak tanimlanir ve
-`swimcore` tarafindan import EDILEMEZ (import-linter forbidden).
+Fields (plan-level, see `src/contracts/external_data.py`): sourceId, sourceName,
+ownerOrPublisher, sourceType, accessMethod, sourceUrlOrReference, licenseStatus,
+commercialUseStatus, redistributionStatus, consentRequired, dataAvailabilityStatus,
+availableFields, granularity, intendedRole (L1..L5), prohibitedUses, provenanceMethod,
+retrievalDate, contentHashOrVersion, notes.

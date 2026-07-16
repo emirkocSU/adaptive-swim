@@ -1,7 +1,8 @@
-# Synthetic Veri Kurallari (ADR-032, L4)
+# Synthetic Data Rules
 
-* Her synthetic kayit `synthetic=true` + senaryo/seed provenance tasir.
-* Sportif performans kaniti DEGILDIR; production accuracy iddiasinda kullanilmaz.
-* Gercek pilot verisiyle kaynagi gizlenerek ayni tabloda birlestirilemez.
-* Kullanim: controller edge case, replay, abstain, bad/delayed split, incident stop, sensor dropout,
-  state machine + failure injection testleri.
+- Every synthetic record carries `synthetic=true` plus scenario/seed provenance.
+- Synthetic data is **not** sporting-performance evidence and is never used in a
+  production-accuracy claim.
+- Synthetic and real records are never merged by hiding the source; `data_domain` and
+  provenance are always preserved.
+- Missingness is preserved; no fake filling.

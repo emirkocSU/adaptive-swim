@@ -1,43 +1,40 @@
-# Architecture Decision Records
+# Architecture Decision Records — Index
 
-Her ADR şablon alanlarını taşır: Context / Problem / Considered options / Decision / (varsa Commands
-/ Events / State changes) / Consequences / Reversibility / Validation.
+Statuses: **ACTIVE**, **REVISED**, **DEFERRED** (design ready, build gated by a trigger),
+**NEW**, **SUPERSEDED**.
 
-## İndeks ve statü
+| ADR | Decision | Status |
+|---|---|---|
+| 001 | Modular monolith + separate edge process; monorepo | ACTIVE |
+| 002 | Edge runtime: Python asyncio; laptop first, RPi later | ACTIVE |
+| 003 | Edge storage: SQLite WAL + append-only JSONL; log-first ordering | ACTIVE (Faz 2) |
+| 004 | Cloud DB + object storage | DEFERRED → Faz 8 |
+| 005 | DSL versioning: semver-major, immutable versions, migration registry | ACTIVE |
+| 006 | In-process event bus + JSONL; no broker | ACTIVE |
+| 007 | Device adapter ABC + fixed envelope + latency calibration | ACTIVE (Faz 2) |
+| 008 | Edge→cloud sync protocol | DEFERRED → Faz 8 |
+| 009 | Realtime transport: WebSocket + resync handshake | ACTIVE (Faz 2) |
+| 010 | Auth: operator PIN + pre-provisioned profiles; OIDC deferred | REVISED |
+| 011 | Telemetry format: JSONL chunk + envelope | ACTIVE |
+| 012 | Simulator: real runtime embedded, SimClock, golden replay | ACTIVE |
+| 013 | ML inference: LightGBM native; ONNX only for OEM device | ACTIVE (gate-gated) |
+| 014 | Model registry & rollout channels | DEFERRED → Faz 8 |
+| 015 | Tenant isolation | DEFERRED → Faz 10 |
+| 016 | Privacy/research export: pseudonym map, small-cell suppression | ACTIVE |
+| 017 | Frontend: minimal edge-served UI; full PWA deferred | REVISED |
+| 018–020 | Repo structure / CI-CD / feature flags | ACTIVE |
+| 021 | Coach pacing reset / accounting only at wall boundary | ACTIVE |
+| 022 | Split detection: button/coach-tap + mandatory verification | ACTIVE |
+| 023 | Swimmer position: gap-at-wall + low-confidence interpolation | ACTIVE |
+| 024 | Hardware comms: wired (Ethernet/RS-485) preferred | ACTIVE |
+| 025 | Retention: local-phase simple delete/mask | REVISED |
+| 026 | Local export & backup | NEW |
+| 027 | Split verification | NEW |
+| 028 | ML Activation Gate | NEW |
+| 029 | Rule-based adaptation | NEW |
+| 030 | Confidence composition | NEW |
+| **031** | **StopPause & controlled ghost alignment** (supersedes the earlier ghost re-anchor policy) | **NEW** |
+| 032 | External Data Bootstrapping Strategy | NEW |
 
-| ADR | Karar | Statü | Faz |
-|---|---|---|---|
-| 001 | Modular monolith + ayrı edge süreci; monorepo | ACTIVE | — |
-| 002 | Edge runtime Python asyncio; ilk pilotlarda laptop; RPi ayrı faz | REVISED | 2 |
-| 003 | Edge storage SQLite WAL + append-only JSONL; log-first sıra + ≤50 ms fsync penceresi | REVISED | 1 (log), 2 (SQLite) |
-| 004 | Cloud DB + object storage | DEFERRED | 8 |
-| 005 | DSL versioning: semver-major, immutable versions, migration + golden | ACTIVE | 1 |
-| 006 | In-process event bus + JSONL; broker yok | ACTIVE | 1 (bus tüketicisi Faz 2) |
-| 007 | Adapter ABC + sabit envelope; LatencyCalibration | REVISED | 2 |
-| 008 | Edge→cloud sync protokolü | DEFERRED | 8 |
-| 009 | Realtime transport WebSocket + resync handshake | REVISED | 2 |
-| 010 | Auth: edge operator PIN; OIDC cloud ile | REVISED | 2/8 |
-| 011 | Telemetry format JSONL chunk; parquet yerel export | REVISED | 1 (contract), 4 |
-| 012 | Simulator gerçek runtime embedded, SimClock, golden replay | ACTIVE | 1 |
-| 013 | ML inference formatı LightGBM native; ONNX yalnızca OEM | ACTIVE | 6 |
-| 014 | Model registry & rollout | DEFERRED (yerel artefact alt-kararı) | 6/8 |
-| 015 | Tenant izolasyonu | DEFERRED | 10 |
-| 016 | Privacy/research export: pseudonym ayrık, küçük hücre bastırma | ACTIVE | 1 (kural), sonra pipeline |
-| 017 | Frontend: minimal yerel UI; tam PWA ertelendi | REVISED | 2 |
-| 018–020 | Repo yapısı / CI-CD / feature flags | ACTIVE ilke | 1 |
-| 021 | Adaptasyon yalnızca length/segment sınırında | ACTIVE | 1 |
-| 022 | Split detection: buton/koç-tap + zorunlu doğrulama | REVISED | 1 (contract), 3 |
-| 023 | Swimmer position: gap-at-wall + düşük güvenli interpolasyon; kamera reddi | ACTIVE | — |
-| 024 | Donanım iletişimi kablolu (Ethernet/RS-485); D5 uzman onayı | ACTIVE | 3 |
-| 025 | Retention: yerel dönem basit silme/maskeleme | REVISED | 1 (kural) |
-| 026 | Local export & backup (CSV/Parquet + imzalı yedek + iki-kopya) | NEW | 2 |
-| 027 | Split verification (5 kalite sınıfı, kullanım hakları) | NEW | 1 (contract), 3 |
-| 028 | ML Activation Gate (G1–G7; B1–B5 baseline) | NEW | 5/6 |
-| 029 | Rule-based adaptation (adaptationSource; EWMA + ölü-bant) | NEW | 5 |
-| 030 | Confidence composition (quantile tek başına güven değil) | NEW | 6 |
-| **031** | **Stop Pause and Ghost Alignment Policy** (re-anchor ve "incident pause"ın yerini alır) | **NEW** | **1** |
-| **032** | **External Data Bootstrapping Strategy** (5 katman) | **NEW** | **1 (doküman+contract)** |
-| **033** | **Deterministic identity & time** (Clock + EventIdGenerator; uuid4+seq, ULID yok) | **NEW** | **1** |
-
-001–030'un tam metinleri Architecture v1.1'de özetlenmiştir; repo büyüdükçe bu klasöre tek tek
-şablonla açılır. 031–033 bu klasörde tam metindir (Faz 1 kapsamı).
+Full ADR text lives in this directory. ADR-031 and ADR-032 are in Phase 1 scope
+(ADR-032 as document + contract draft only).

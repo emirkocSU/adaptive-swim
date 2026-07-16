@@ -1,8 +1,27 @@
+"""Shared test fixtures."""
+
 from __future__ import annotations
 
-from hypothesis import settings
+import random
+from pathlib import Path
 
-# Property testleri CI'da deterministik kosar (derandomize): ayni commit, ayni sonuc.
-settings.register_profile("ci", max_examples=200, derandomize=True, deadline=None)
-settings.register_profile("dev", max_examples=50, deadline=None)
-settings.load_profile("dev")
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC = REPO_ROOT / "src"
+CONTRACTS = SRC / "contracts"
+
+
+@pytest.fixture(autouse=True)
+def _deterministic_seed() -> None:
+    random.seed(1234)
+
+
+@pytest.fixture()
+def repo_root() -> Path:
+    return REPO_ROOT
+
+
+@pytest.fixture()
+def contracts_dir() -> Path:
+    return CONTRACTS

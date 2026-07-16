@@ -1,20 +1,14 @@
-# Dis Veri Stratejisi (ADR-032)
+# External Data Strategy (applicable guide to ADR-032)
 
-Bes katman, kati rol ayrimiyla. Hicbiri final production model ile ayni degerde degildir.
+Five layers with hard role boundaries: L1 Race Pacing Prior, L2 Wearable Sensor
+Pretraining, L3 User-Consented Training Exports, L4 Simulator Synthetic, L5 Adaptive Swim
+Proprietary (the only source for final production claims).
 
-* **L1 Race Pacing Prior** — pacing egrileri, split profilleri, simulator gercekciligi, cold-start.
-  Antrenman verisi DEGILDIR.
-* **L2 Wearable Sensor Pretraining** — swim/rest, turn/transition, segmentation, sensor quality,
-  incident-benzeri kesinti ONERISI. Final modelin yerine gecmez.
-* **L3 User-Consented Training Exports** — gercek antrenman verisi, baseline modelleri. Acik izin +
-  provenance zorunlu.
-* **L4 Simulator Synthetic** — edge case/replay/failure injection. Performans kaniti DEGILDIR;
-  `synthetic=true` + scenario provenance zorunlu.
-* **L5 Adaptive Swim Proprietary** — final model ESAS kaynagi. Iddia yalnizca bunun uzerinden
-  (athlete-grouped + time-aware validation).
-
-Gate ayrimi: pre-gate research (parser, cleaning, schema mapping, prior analizi) edge runtime'a
-baglanamaz, `bounded_auto`'yu kontrol edemez, urun iddiasi olusturamaz. Production activation yalnizca
-G1-G7 acikken.
-
-`confidence = quantile interval width` YASAKTIR (ADR-030). Quantile yalnizca bir girdidir.
+- Pre-gate research is separate from production ML activation and may never touch the edge
+  runtime, control `bounded_auto`, ship as a production artifact, or make a performance
+  claim.
+- The v1.1 ML Activation Gate (G1–G7) is preserved.
+- `contracts.external_data` is plan-level only and must never be imported by `swimcore`
+  (import-linter forbidden rule).
+- Merging race / training / adaptive-swim records without `data_domain` is forbidden.
+- No external dataset can earn production eligibility on its own.
