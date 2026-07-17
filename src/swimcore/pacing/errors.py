@@ -37,3 +37,7 @@ class InvalidPaceCurveError(PaceMathError):
 
 class UnsupportedPaceModeError(PaceMathError):
     pass
+
+
+class InvalidPoolLengthError(PaceMathError):
+    pass

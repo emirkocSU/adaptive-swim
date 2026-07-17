@@ -5,13 +5,18 @@ workout plan into a distance/active-time target pace timeline. Rest, StopPause, 
 elapsed time are **not** part of this layer.
 """
 
-from swimcore.pacing.curves import ControlledStartProfile, resolve_curve_endpoints
+from swimcore.pacing.curves import (
+    ControlledStartProfile,
+    resolve_curve_endpoints,
+    segment_active_duration_sec,
+)
 from swimcore.pacing.errors import (
     DistanceOutsideTimelineError,
     InvalidDistanceError,
     InvalidDurationError,
     InvalidPaceCurveError,
     InvalidPaceError,
+    InvalidPoolLengthError,
     PaceMathError,
     TimeOutsideTimelineError,
     UnsupportedPaceModeError,
@@ -43,6 +48,7 @@ __all__ = [
     "InvalidDurationError",
     "InvalidPaceCurveError",
     "InvalidPaceError",
+    "InvalidPoolLengthError",
     "PaceInterval",
     "PaceMathError",
     "PacePoint",
@@ -58,5 +64,6 @@ __all__ = [
     "next_wall_boundary",
     "previous_wall_boundary",
     "resolve_curve_endpoints",
+    "segment_active_duration_sec",
     "target_active_time_at_distance",
 ]

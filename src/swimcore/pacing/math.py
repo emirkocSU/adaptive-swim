@@ -11,6 +11,7 @@ import math
 from swimcore.pacing.errors import (
     InvalidDistanceError,
     InvalidDurationError,
+    InvalidPaceCurveError,
     InvalidPaceError,
 )
 from swimcore.pacing.types import EPSILON
@@ -18,6 +19,15 @@ from swimcore.pacing.types import EPSILON
 
 def _finite(value: float) -> bool:
     return not (math.isnan(value) or math.isinf(value))
+
+
+def require_finite_result(value: float, label: str = "result") -> float:
+    """Guarantee a public function never returns NaN/inf even for huge finite inputs."""
+    if not _finite(value):
+        raise InvalidPaceCurveError(
+            f"{label} overflowed to a non-finite value; inputs exceed the supported range"
+        )
+    return value
 
 
 def validate_pace(pace_sec_per_100m: float) -> float:
@@ -48,11 +58,11 @@ def duration_for_distance(distance_m: float, pace_sec_per_100m: float) -> float:
     """``d * p / 100``. Zero distance → zero duration."""
     distance_m = validate_distance(distance_m)
     pace = validate_pace(pace_sec_per_100m)
-    return distance_m * pace / 100.0
+    return require_finite_result(distance_m * pace / 100.0, "duration")
 
 
 def distance_for_duration(duration_sec: float, pace_sec_per_100m: float) -> float:
     """``t * 100 / p``. Zero duration → zero distance."""
     duration_sec = validate_duration(duration_sec)
     pace = validate_pace(pace_sec_per_100m)
-    return duration_sec * 100.0 / pace
+    return require_finite_result(duration_sec * 100.0 / pace, "distance")

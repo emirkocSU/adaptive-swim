@@ -75,8 +75,8 @@ so `fastestAllowedPaceSecPer100M <= targetPaceSecPer100M <= slowestAllowedPaceSe
   keywords (`multipleOfPoolLength`, `contiguousCoverage`, ...). Handles shape, types,
   ranges, and `additionalProperties: false` only.
 - Layer 2 — pure Python semantic validator (**Commit 3, done**), in `swimcore/workout/`:
-  `validate_workout(workout, context=None) -> WorkoutValidationResult`. Ten rules
-  (RULE-001…010): contiguous coverage, pool-length multiple, pace-bounds direction,
+  `validate_workout(workout, context=None) -> WorkoutValidationResult`. Twelve rules
+  (RULE-001 … RULE-012): contiguous coverage, pool-length multiple, pace-bounds direction,
   progressive mode, adaptation-bounds consistency, feedback capability, total distance,
   ghost-source references, rest-interval sanity, schema version. Pure and deterministic:
   no I/O/DB/network, never mutates input, returns all issues in one pass, ordered by
@@ -85,8 +85,9 @@ so `fastestAllowedPaceSecPer100M <= targetPaceSecPer100M <= slowestAllowedPaceSe
 - External facts arrive via an injected `WorkoutValidationContext`; without it,
   context-dependent rules degrade to a documented WARNING. `migrations.py` = pure
   `1.0 → 1.0` no-op only.
-- **Commit 4 pace math is not written yet.** Rule-009 uses an isolated rest estimate to be
-  replaced by the real pace engine in Commit 4.
+- Rule-009 (rest sanity) calls the shared Commit-4 pace math
+  (`swimcore.pacing.curves.segment_active_duration_sec`); the validator and the pace engine
+  use exactly one pace formula. Commit 4 (pace engine) is **done**.
 
 ## Pace math engine (Commit 4, done — `swimcore/pacing/`)
 
@@ -103,6 +104,25 @@ contract models), imports only `contracts` + stdlib. Timeline carries **active s
 only** — rest/StopPause/real-elapsed excluded. No second pace formula may exist in the
 simulator. StopPause freeze, pacing-reset runtime, ML pace, and SafetyController are NOT
 in this commit.
+
+## Deterministic clocks & ghost (Commit 5, done — `swimcore/time/`, `swimcore/ghost/`)
+
+`SimClock` (manual, monotonic, bit-identical; satisfies `contracts.events.Clock`).
+`ActiveClock` splits wall vs active time; `active = wall - confirmed stopped`; StopPause
+freezes retroactively from the real stop start and stays fixed until resume. It is a
+**monotonic runtime clock** (not an event store): every observation (query or transition) advances a
+forward-only watermark, so a later snapshot can never rewind active time and a StopPause
+confirmation cannot precede the last observed time; resume may not precede confirmation. `reconcile_at_wall` runs once, only at the next
+valid wall after the tracked alignment (authoritative Commit-4 wall helper). `GhostClock`
+drives the Commit-4 timeline by active time, aligns to an **externally supplied** tracked
+point only during a confirmed StopPause, uses an immutable `GhostAnchor` so it never jumps
+back to the plan, and `reconcile_at_wall` turns temporary mid-pool alignment into a forward
+wall anchor. States: ACTIVE / STOP_PAUSED only.
+
+Rules: pure, clock-injected, no I/O/sleep/randomness/`time.time()`/`datetime.now()`. Keep
+`timelineDistanceM` (plan) and `displayDistanceM` (aligned) separate. No stop *detection*, no
+swimmer-position estimation, no events/persistence, no session commands, no SafetyController,
+no second GhostClock in the simulator. Those are Commit 6+.
 
 ## Commands / test expectations
 

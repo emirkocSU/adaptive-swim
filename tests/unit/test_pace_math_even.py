@@ -59,3 +59,21 @@ def test_distance_time_distance_round_trip() -> None:
         t = duration_for_distance(d, p)
         back = distance_for_duration(t, p)
         assert abs(back - d) < 1e-9 + EPSILON
+
+
+# --------------------------------------------------------------------------- finite-result (fix 2)
+def test_large_finite_inputs_do_not_return_infinity() -> None:
+    from swimcore.pacing.errors import PaceMathError
+
+    with pytest.raises(PaceMathError):
+        duration_for_distance(1e308, 300)
+    with pytest.raises(PaceMathError):
+        distance_for_duration(1e308, 1e-308)
+
+
+def test_curve_duration_overflow_is_rejected() -> None:
+    from swimcore.pacing.curves import curve_duration
+    from swimcore.pacing.errors import PaceMathError
+
+    with pytest.raises(PaceMathError):
+        curve_duration(1e308, 300, 300)

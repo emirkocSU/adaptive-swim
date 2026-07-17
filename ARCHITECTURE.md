@@ -47,9 +47,10 @@ documented WARNING (e.g. a ghost reference becomes `REFERENCE_NOT_VERIFIED`) rat
 failing silently. `migrations.py` holds a pure `1.0 → 1.0` no-op registry; no speculative
 future migrations exist.
 
-**Commit 4 pace math is not written yet.** Rule-009 uses a small, isolated rest estimate
-(even/controlled/negative: `distance * targetPace / 100`; progressive: the mean of start
-and end pace) that will be swapped for the real pace engine in Commit 4.
+Rule-009 (rest sanity) shares the **single** Commit-4 pace formula
+(`swimcore.pacing.curves.segment_active_duration_sec`) — there is no second pace estimate in
+the validator. The semantic validator currently runs **twelve** rules (RULE-001 … RULE-012,
+the last two covering controlled-start and negative-split ordering).
 
 ## Pace math engine (Commit 4, `swimcore/pacing/`)
 
@@ -69,6 +70,35 @@ NaN/infinity are rejected; explicit domain errors live in `pacing/errors.py`. Th
 imports only `contracts` + the standard library (enforced by import-linter and the
 `arch_check` AST purity scan). In `20.00 +15.00`, the `20.00` active part comes from here;
 the `+15.00` stopped part is future StopPause runtime accounting.
+
+## Deterministic clocks & ghost primitive (Commit 5, `swimcore/time/`, `swimcore/ghost/`)
+
+`SimClock` is a manually-advanced, bit-identical clock (no system time / sleep / randomness /
+I/O) satisfying the existing `contracts.events.Clock` protocol. `ActiveClock` separates real
+(wall) time from active swimming time: `active = wall - confirmed stopped intervals`. A
+StopPause freezes **retroactively** — a stop that began at 10 s but was confirmed at 20 s
+pins active time to its 10 s value for the whole frozen window, and on resume the
+`[stop_start, resumed]` interval is removed permanently. `ActiveClock` is a **monotonic runtime** timing
+primitive — not an event store and not a session state machine: it advances a
+forward-only watermark on **every** observation (transitions *and* queries) and rejects any
+snapshot or query earlier than that watermark (`InvalidClockTimeError`) — so a later snapshot
+can never rewind the active time, and a StopPause confirmation cannot land in the past, and a resume may not precede
+the StopPause confirmation time. It never *detects* a stop. Historical replay is reconstructed
+from events in Commit 7, not from this clock.
+
+`GhostClock` advances the Commit-4 pace timeline by active time. It never tracks the real
+swimmer or measures pace loss — on a normal/large pace loss the ghost stays ACTIVE and keeps
+moving; no automatic alignment happens. During an externally confirmed StopPause the ghost
+aligns to an externally supplied `tracked_alignment_distance_m` (never estimated, not required
+to be reported) and holds. An explicit immutable `GhostAnchor`
+(`anchorActiveElapsedSec`, `anchorTimelineDistanceM`, `anchorDisplayDistanceM`) keeps
+`displayDistanceM = anchorDisplay + (timelineDistance(activeNow) - anchorTimeline)`, so the
+ghost resumes from where the swimmer stopped instead of snapping back to the plan. Two
+positions stay strictly separate: `timelineDistanceM` (unchanging mathematical plan position)
+and `displayDistanceM` (after the temporary alignment offset). Mid-pool alignment is
+temporary; `reconcile_at_wall` converts it into a safe forward wall anchor at the next valid
+wall — it does not change length/set/split state or start rest (that is Commit 6). In
+`20.00 +15.00`, `20.00` is the ActiveClock active time and `+15.00` is stopped elapsed.
 
 ## Ghost / StopPause model (supersedes the earlier "re-anchor-only-at-wall" idea)
 

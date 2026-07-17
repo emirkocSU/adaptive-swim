@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from contracts.workout import WorkoutTemplateVersion
@@ -74,3 +76,56 @@ def test_progressive_not_linear_time_ratio() -> None:
     tl = compile_pace_timeline(_progressive(84.0, 76.0))
     half = target_active_time_at_distance(tl, 50.0).elapsedActiveSec
     assert half != pytest.approx(tl.totalActiveDurationSec / 2)
+
+
+# --------------------------------------------------------------------------- curve numeric guards
+def test_curve_duration_rejects_non_finite_values() -> None:
+    from swimcore.pacing.curves import curve_duration
+    from swimcore.pacing.errors import PaceMathError
+
+    for bad in (math.nan, math.inf, -math.inf):
+        with pytest.raises(PaceMathError):
+            curve_duration(bad, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            curve_duration(100.0, bad, 80.0)
+        with pytest.raises(PaceMathError):
+            curve_duration(100.0, 80.0, bad)
+
+
+def test_elapsed_at_local_distance_rejects_non_finite_values() -> None:
+    from swimcore.pacing.curves import elapsed_at_local_distance
+    from swimcore.pacing.errors import PaceMathError
+
+    for bad in (math.nan, math.inf, -math.inf):
+        with pytest.raises(PaceMathError):
+            elapsed_at_local_distance(bad, 100.0, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            elapsed_at_local_distance(50.0, bad, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            elapsed_at_local_distance(50.0, 100.0, bad, 80.0)
+
+
+def test_pace_at_local_distance_rejects_non_finite_values() -> None:
+    from swimcore.pacing.curves import pace_at_local_distance
+    from swimcore.pacing.errors import PaceMathError
+
+    for bad in (math.nan, math.inf, -math.inf):
+        with pytest.raises(PaceMathError):
+            pace_at_local_distance(bad, 100.0, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            pace_at_local_distance(50.0, bad, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            pace_at_local_distance(50.0, 100.0, 80.0, bad)
+
+
+def test_local_distance_at_elapsed_rejects_non_finite_values() -> None:
+    from swimcore.pacing.curves import local_distance_at_elapsed
+    from swimcore.pacing.errors import PaceMathError
+
+    for bad in (math.nan, math.inf, -math.inf):
+        with pytest.raises(PaceMathError):
+            local_distance_at_elapsed(bad, 100.0, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            local_distance_at_elapsed(40.0, bad, 80.0, 80.0)
+        with pytest.raises(PaceMathError):
+            local_distance_at_elapsed(40.0, 100.0, bad, 80.0)

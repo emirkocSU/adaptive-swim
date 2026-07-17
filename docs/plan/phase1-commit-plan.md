@@ -9,8 +9,10 @@ their commit lands.
 | 2 | Contracts + JSON Schema (structural), validation contracts | done |
 | 3 | Pure semantic workout validator (`swimcore/workout/`), 12 rules | done |
 | 4 | **Deterministic pace math engine (`swimcore/pacing/`)** — this commit | done |
-| 5–6 | Runtime clocks (GhostClock/SimClock), StopPause runtime, session state machine | pending |
-| 7+ | Event persistence, replay, simulator swimmer, analytics report | pending |
+| 5 | **Deterministic clocks (`swimcore/time/`) + ghost primitive (`swimcore/ghost/`)** — this commit | done |
+| 6 | Session state machine, command handling, StopPause runtime, SafetyController | pending |
+| 7 | Event persistence + **historical replay** (rebuilt from events, not the runtime clock) | pending |
+| 8+ | Simulator swimmer, analytics report | pending |
 | later | ML advisory, cloud, UI, device/wearable adapters | pending (own ADRs/triggers) |
 
 ## Commit 4 boundary (what it is and is not)
@@ -31,3 +33,25 @@ report, ML, UI, cloud, hardware/device/wearable adapters, database.
   written yet.
 - In the `20.00 +15.00` display, the `20.00` (active) comes from this Commit 4 timeline;
   the `+15.00` (stopped) will come from later StopPause runtime accounting.
+
+## Commit 5 boundary (what it is and is not)
+
+Commit 5 adds **deterministic clock and ghost primitives only**: `SimClock` (manual,
+bit-identical), `ActiveClock` (wall vs active time with retroactive StopPause freeze), and
+`GhostClock` (drives the Commit-4 timeline, mid-pool alignment via an explicit anchor, wall
+reconciliation of the temporary alignment). Ghost states are ACTIVE / STOP_PAUSED only.
+
+Explicitly **out of scope** (later commits): full session state machine, command handling,
+event generation/persistence, JSONL replay, automatic stop *detection*, wearable/IMU,
+simulated swimmer, analytics/report, SafetyController, ML, UI, cloud, hardware adapter,
+database. Commit 5 never *detects* a StopPause — it only applies an externally confirmed one.
+
+## Commit 4/5 fix notes
+
+- ActiveClock is a **monotonic runtime clock**, not an event store; it rejects historical
+  queries. Historical replay is reconstructed from events in Commit 7.
+- A StopPause resume may not precede its confirmation time.
+- Wall reconciliation happens once, only at the first valid wall after the confirmed
+  StopPause alignment (never on a normal pace loss / normal ACTIVE ghost).
+- Commit 5 performs no workout length/set/repetition/split accounting.
+- Display `20.00 +15.00`: `20.00` active, `+15.00` stopped, `35.00` wall.

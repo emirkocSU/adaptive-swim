@@ -21,7 +21,7 @@
 - **Structural validation** — the generated JSON Schema layer: shape, types, ranges,
   `additionalProperties: false`. No domain/semantic rule lives here.
 - **Semantic validator** — the Commit 3 pure domain layer (`swimcore/workout/`) that runs
-  the ten workout rules and returns `ValidationIssue`s. Takes an injected
+  the twelve workout rules and returns `ValidationIssue`s. Takes an injected
   `WorkoutValidationContext`; queries no DB or device.
 - **ValidationIssue** — `path` + `rule` + `message` + `severity` (`ERROR` / `WARNING`).
   Only an `ERROR` makes a workout invalid; a `WARNING` does not.
@@ -38,3 +38,32 @@
   constant, controlled_start runs start→target, progressive runs target→end.
 - **Wall boundary** — a pool-length multiple; helpers (`is/previous/next_wall_boundary`)
   are pure and never move the ghost or mutate state.
+- **SimClock** — deterministic, manually-advanced millisecond clock (no system time); the
+  only time source injected into the simulator/tests. Bit-identical across identical runs.
+- **ActiveClock** — separates wall elapsed from active swimming time
+  (`active = wall − confirmed stopped`); applies StopPause freezes **retroactively** from the
+  real stop start. A timing primitive, not a session state machine.
+- **GhostClock** — drives the Commit-4 pace timeline by active time; ACTIVE / STOP_PAUSED.
+  Aligns to an externally supplied tracked point only during a confirmed StopPause.
+- **GhostAnchor** — immutable continuity anchor; `displayDistanceM = anchorDisplay +
+  (timelineDistance(activeNow) − anchorTimeline)`, preventing a jump back to the plan.
+- **timelineDistanceM vs displayDistanceM** — the unchanging mathematical plan position vs
+  the shown position after a temporary alignment offset. Never conflate them.
+- **Wall reconciliation** — converting a temporary mid-pool alignment into a safe forward
+  wall anchor at the next valid wall; it does not touch length/set/split state (Commit 6).
+- **Monotonic runtime clock** — ActiveClock only moves forward: a snapshot or query earlier
+  than its last transition is rejected (`InvalidClockTimeError`). It is not an event store;
+  historical replay is rebuilt from events in Commit 7.
+- **Resume rule** — a StopPause resume may not precede its confirmation time
+  (`resumedAtMs >= confirmedAtMs`).
+- **Expected reconciliation wall** — the single wall (next valid wall after the tracked
+  alignment, or the tracked wall itself if already on one) at which a pending StopPause
+  alignment may be reconciled, exactly once. Computed with the authoritative wall helper.
+- **InvalidPoolLengthError** — raised for a non-finite or non-positive pool length.
+- **Forward-only watermark** — ActiveClock records the latest observed time on every query
+  and transition; nothing may be observed earlier. A later snapshot cannot rewind active
+  time, and a StopPause confirmation cannot precede the last observed time.
+- **Finite-result guarantee** — every public pace-math function rejects not only NaN/inf
+  inputs but also results that overflow to non-finite for huge finite inputs.
+- **Wall-boundary total** — a GhostClock's timeline total distance must itself be a wall
+  boundary for the pool; `next_wall_boundary` never returns a non-wall final distance.

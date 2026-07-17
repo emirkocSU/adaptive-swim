@@ -22,6 +22,8 @@ from swimcore.pacing.errors import (
     DistanceOutsideTimelineError,
     InvalidDistanceError,
     InvalidDurationError,
+    InvalidPaceCurveError,
+    InvalidPoolLengthError,
     TimeOutsideTimelineError,
 )
 from swimcore.pacing.math import _finite
@@ -49,8 +51,76 @@ def _interval_from_segment(seg: PaceSegment, offset_m: float) -> PaceInterval:
     )
 
 
+def _terminal_pace(seg: PaceSegment) -> float:
+    if seg.mode.value == "progressive" and seg.endPaceSecPer100M is not None:
+        return seg.endPaceSecPer100M
+    return seg.targetPaceSecPer100M
+
+
+def _assert_compilable(workout: WorkoutTemplateVersion) -> None:
+    """Reject a semantically-invalid workout before compiling a pace timeline.
+
+    Covers the pace-relevant defects: coverage (gap/overlap/reversed), controlled-start /
+    progressive direction+presence (via ``resolve_curve_endpoints``), negative-split
+    ordering, and target pace conflicting with adaptation bounds. This is the minimum the
+    pacing layer must guarantee for itself; it is not a copy of the full semantic validator.
+    """
+    for b, block in enumerate(workout.blocks):
+        segs = block.segments
+        if abs(segs[0].fromM) > EPSILON:
+            raise InvalidPaceCurveError(f"block {b}: first segment must start at 0")
+        for s, seg in enumerate(segs):
+            if seg.toM <= seg.fromM + EPSILON:
+                raise InvalidPaceCurveError(f"block {b} segment {s}: reversed/zero-length")
+            # direction + presence for controlled_start / progressive
+            resolve_curve_endpoints(
+                seg.mode.value,
+                seg.targetPaceSecPer100M,
+                seg.startPaceSecPer100M,
+                seg.endPaceSecPer100M,
+            )
+        for s in range(len(segs) - 1):
+            if segs[s + 1].fromM > segs[s].toM + EPSILON:
+                raise InvalidPaceCurveError(f"block {b}: gap before segment {s + 1}")
+            if segs[s + 1].fromM < segs[s].toM - EPSILON:
+                raise InvalidPaceCurveError(f"block {b}: overlap at segment {s + 1}")
+        if abs(segs[-1].toM - block.distanceM) > EPSILON:
+            raise InvalidPaceCurveError(f"block {b}: last segment must end at block distance")
+
+        prev_terminal: float | None = None
+        for s, seg in enumerate(segs):
+            if (
+                seg.mode.value == "negative_split_part"
+                and prev_terminal is not None
+                and seg.targetPaceSecPer100M > prev_terminal + EPSILON
+            ):
+                raise InvalidPaceCurveError(
+                    f"block {b} segment {s}: negative-split part slower than previous terminal"
+                )
+            prev_terminal = _terminal_pace(seg)
+
+        adaptation = block.adaptation
+        if adaptation is not None and adaptation.mode.value != "off":
+            fastest = adaptation.fastestAllowedPaceSecPer100M
+            slowest = adaptation.slowestAllowedPaceSecPer100M
+            for s, seg in enumerate(segs):
+                if fastest is not None and seg.targetPaceSecPer100M < fastest - EPSILON:
+                    raise InvalidPaceCurveError(
+                        f"block {b} segment {s}: target faster than adaptation fastest bound"
+                    )
+                if slowest is not None and seg.targetPaceSecPer100M > slowest + EPSILON:
+                    raise InvalidPaceCurveError(
+                        f"block {b} segment {s}: target slower than adaptation slowest bound"
+                    )
+
+
 def compile_pace_timeline(workout: WorkoutTemplateVersion) -> PaceTimeline:
-    """Expand blocks × repetitions into a global active-time pace timeline (rest excluded)."""
+    """Expand blocks × repetitions into a global active-time pace timeline (rest excluded).
+
+    Raises ``PaceMathError`` (``InvalidPaceCurveError``) for a semantically-invalid workout
+    rather than silently producing a wrong timeline.
+    """
+    _assert_compilable(workout)
     intervals: list[PaceInterval] = []
     offset = 0.0
     total_active = 0.0
@@ -164,22 +234,29 @@ def ghost_distance_at_active_time(
 
 # --------------------------------------------------------------------------- wall helpers
 def _validate_pool(pool_length_m: int) -> None:
+    if not _finite(pool_length_m):
+        raise InvalidPoolLengthError(f"pool length must be finite, got {pool_length_m}")
     if pool_length_m <= 0:
-        raise InvalidDistanceError(f"pool length must be > 0, got {pool_length_m}")
+        raise InvalidPoolLengthError(f"pool length must be > 0, got {pool_length_m}")
+
+
+def _validate_finite_distance(distance_m: float, label: str = "distance") -> None:
+    if not _finite(distance_m):
+        raise InvalidDistanceError(f"{label} must be finite, got {distance_m}")
+    if distance_m < -EPSILON:
+        raise InvalidDistanceError(f"{label} must be >= 0, got {distance_m}")
 
 
 def is_wall_boundary(distance_m: float, pool_length_m: int) -> bool:
     _validate_pool(pool_length_m)
-    if distance_m < -EPSILON:
-        raise InvalidDistanceError(f"distance must be >= 0, got {distance_m}")
+    _validate_finite_distance(distance_m)
     ratio = distance_m / pool_length_m
     return abs(ratio - round(ratio)) < 1e-6
 
 
 def previous_wall_boundary(distance_m: float, pool_length_m: int) -> float:
     _validate_pool(pool_length_m)
-    if distance_m < -EPSILON:
-        raise InvalidDistanceError(f"distance must be >= 0, got {distance_m}")
+    _validate_finite_distance(distance_m)
     k = math.floor(distance_m / pool_length_m + 1e-6)
     return float(k * pool_length_m)
 
@@ -190,8 +267,22 @@ def next_wall_boundary(
     total_distance_m: float,
 ) -> float:
     _validate_pool(pool_length_m)
-    if distance_m < -EPSILON:
-        raise InvalidDistanceError(f"distance must be >= 0, got {distance_m}")
+    _validate_finite_distance(distance_m)
+    _validate_finite_distance(total_distance_m, "total distance")
+    if distance_m > total_distance_m + EPSILON:
+        raise InvalidDistanceError(
+            f"distance {distance_m} exceeds total distance {total_distance_m}"
+        )
     k = math.floor(distance_m / pool_length_m + 1e-6)
     candidate = float((k + 1) * pool_length_m)
-    return min(candidate, total_distance_m)
+    if candidate > total_distance_m + EPSILON:
+        # The next wall would exceed the timeline. Only clamp to the total if the total is
+        # itself a valid wall; otherwise there is no valid wall at/after this distance.
+        if is_wall_boundary(total_distance_m, pool_length_m):
+            return max(total_distance_m, distance_m)
+        raise InvalidDistanceError(
+            f"no wall boundary between {distance_m} and total {total_distance_m} "
+            f"(pool {pool_length_m}); total is not a wall"
+        )
+    # never step backward relative to the current position
+    return max(candidate, distance_m)
