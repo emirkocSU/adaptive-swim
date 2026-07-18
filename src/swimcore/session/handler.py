@@ -30,6 +30,18 @@ class EventFactory:
     def last_ts_ms(self) -> int:
         return self._last_ts_ms
 
+    def checkpoint(self) -> tuple[int, int]:
+        """Return a rollback point for aggregate-level command atomicity.
+
+        The external id generator is intentionally not snapshotted: a failing id source may
+        consume ids, but the session event sequence and timestamp must remain unchanged.
+        """
+        return self._seq, self._last_ts_ms
+
+    def restore(self, checkpoint: tuple[int, int]) -> None:
+        """Restore the factory's committed sequence/timestamp after a failed command."""
+        self._seq, self._last_ts_ms = checkpoint
+
     def build(
         self,
         event_type: EventType,

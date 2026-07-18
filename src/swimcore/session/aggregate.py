@@ -12,8 +12,10 @@ via a session-level offset and is kept separate from StopPause accounting.
 
 from __future__ import annotations
 
+import copy
 import math
 from collections.abc import Mapping
+from typing import Any
 
 from contracts.commands import (
     AbortSession,
@@ -115,6 +117,38 @@ from swimcore.workout.start_mode import resolve_default_start_mode, resolve_repe
 
 _TOL = 1e-6
 
+_MUTABLE_STATE_FIELDS: tuple[str, ...] = (
+    "sessionId",
+    "state",
+    "workout",
+    "paceTimeline",
+    "activeClock",
+    "ghostClock",
+    "appliedPaceTarget",
+    "selectedPaceProfileId",
+    "selectedPaceProfileVersion",
+    "selectedPaceProfileSource",
+    "selectedPaceProfileType",
+    "profileCoachLocked",
+    "resolvedStartModes",
+    "poolLengthM",
+    "workoutGoal",
+    "defaultStartMode",
+    "pendingCoachPacingReset",
+    "recordedSplits",
+    "recordedSplitsById",
+    "splitIdByLengthIndex",
+    "verifiedSplits",
+    "openStopPause",
+    "processedClientCommandIds",
+    "lastWallDistanceM",
+    "_stop_counter",
+    "_pause_offset_ms",
+    "_pause_started_at_ms",
+    "_reconciliation_pending",
+    "_expected_reconciliation_wall_m",
+)
+
 
 def _split_fingerprint(command: RecordSplit) -> str:
     return command.model_dump_json()
@@ -181,9 +215,32 @@ class SessionAggregate:
                 raise CommandIdConflictError(f"clientCommandId {cid} reused with different content")
             return list(stored_events)  # idempotent: no mutation, same result
 
-        events = self._dispatch(command)
+        checkpoint = self._checkpoint_mutable_state()
+        try:
+            events = self._dispatch(command)
+        except Exception:
+            self._restore_mutable_state(checkpoint)
+            raise
         self.processedClientCommandIds[cid] = (fp, list(events))
         return events
+
+    def _checkpoint_mutable_state(self) -> tuple[dict[str, Any], tuple[int, int]]:
+        """Snapshot mutable aggregate state before processing a command.
+
+        Session command handling is atomic: if validation, clock/ghost orchestration, or
+        event creation fails, the aggregate is restored to this checkpoint. The injected
+        clock and external event-id source are not rolled back.
+        """
+        return (
+            {name: copy.deepcopy(getattr(self, name)) for name in _MUTABLE_STATE_FIELDS},
+            self._events.checkpoint(),
+        )
+
+    def _restore_mutable_state(self, checkpoint: tuple[dict[str, Any], tuple[int, int]]) -> None:
+        values, event_checkpoint = checkpoint
+        for name, value in values.items():
+            setattr(self, name, value)
+        self._events.restore(event_checkpoint)
 
     # ------------------------------------------------------------------ dispatch
     def _dispatch(self, command: Command) -> list[EventEnvelope]:

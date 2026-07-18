@@ -6,9 +6,57 @@ import copy
 
 import pytest
 
-from contracts.commands import MarkStopPause, RecordSplit
+from contracts.commands import (
+    AbortSession,
+    CompleteSession,
+    MarkStopPause,
+    PauseSession,
+    RecordSplit,
+    ResolveStopPause,
+    ResumeSession,
+)
 from swimcore.session import InvalidSplitBoundaryError
-from tests.unit._session_helpers import record_split, started
+from swimcore.session.state import SessionState
+from tests.unit._session_helpers import record_split, started, workout
+
+
+class FailingIdGen:
+    def __init__(self, start_at: int = 0, fail_at: int = 1) -> None:
+        self._n = start_at
+        self._fail_at = fail_at
+
+    def next_id(self) -> str:
+        self._n += 1
+        if self._n == self._fail_at:
+            raise RuntimeError("id source exhausted")
+        return f"evt-{self._n}"
+
+
+def _fail_next_event(agg) -> None:
+    agg._events._id_gen = FailingIdGen(fail_at=1)
+
+
+def _fail_second_event(agg) -> None:
+    agg._events._id_gen = FailingIdGen(fail_at=2)
+
+
+def _active_state(agg) -> dict | None:
+    clock = agg.activeClock
+    return None if clock is None else copy.deepcopy(clock.__dict__)
+
+
+def _ghost_state(agg) -> dict | None:
+    ghost = agg.ghostClock
+    if ghost is None:
+        return None
+    return {
+        "state": ghost._state,
+        "alignment_active": ghost._alignment_active,
+        "wall_reconciliation_pending": ghost._wall_reconciliation_pending,
+        "expected_reconciliation_wall": ghost._expected_reconciliation_wall_m,
+        "anchor": copy.deepcopy(ghost._anchor),
+        "clock": copy.deepcopy(ghost._clock.__dict__),
+    }
 
 
 def _snapshot(agg) -> dict:
@@ -20,8 +68,17 @@ def _snapshot(agg) -> dict:
         "openStopPause": copy.copy(agg.openStopPause),
         "pending_reset": copy.copy(agg.pendingCoachPacingReset),
         "recorded": dict(agg.recordedSplits),
+        "recorded_by_id": dict(agg.recordedSplitsById),
+        "split_id_by_length": dict(agg.splitIdByLengthIndex),
+        "verified": dict(agg.verifiedSplits),
         "reconciliation_pending": agg._reconciliation_pending,
+        "expected_reconciliation_wall": agg._expected_reconciliation_wall_m,
+        "pause_started": agg._pause_started_at_ms,
+        "pause_offset": agg._pause_offset_ms,
         "last_wall": agg.lastWallDistanceM,
+        "event_checkpoint": agg._events.checkpoint(),
+        "ghost": _ghost_state(agg),
+        "active": _active_state(agg),
     }
 
 
@@ -92,6 +149,155 @@ def test_failed_split_does_not_clear_pending_reconciliation() -> None:
             )
         )
     assert agg._reconciliation_pending is True
+
+
+
+def test_failed_record_split_event_creation_rolls_back_split_state() -> None:
+    agg, _ = started()
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(record_split(agg, 0))
+
+    assert _snapshot(agg) == before
+
+
+def test_failed_mark_stop_pause_event_creation_rolls_back_all_stop_state() -> None:
+    agg, _ = started()
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(
+            MarkStopPause(
+                clientCommandId="ms-event-fails",
+                sessionId=agg.sessionId,
+                trigger="COACH_STOP",
+                stopStartedAtMs=1000,
+                confirmedAtMs=2000,
+                detectionSource="COACH",
+                trackedAlignmentDistanceM=10.0,
+            )
+        )
+
+    assert _snapshot(agg) == before
+
+
+def test_failed_multi_event_mark_stop_pause_rolls_back_after_first_event() -> None:
+    agg, _ = started()
+    before = _snapshot(agg)
+    _fail_second_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(
+            MarkStopPause(
+                clientCommandId="ms-second-event-fails",
+                sessionId=agg.sessionId,
+                trigger="SENSOR_STOP",
+                stopStartedAtMs=1000,
+                confirmedAtMs=2000,
+                detectionSource="SENSOR",
+                trackedAlignmentDistanceM=10.0,
+            )
+        )
+
+    assert _snapshot(agg) == before
+
+
+def test_failed_resolve_stop_pause_event_creation_restores_open_stop() -> None:
+    agg, _ = started()
+    agg.handle(
+        MarkStopPause(
+            clientCommandId="ms-open",
+            sessionId=agg.sessionId,
+            trigger="COACH_STOP",
+            stopStartedAtMs=1000,
+            confirmedAtMs=2000,
+            detectionSource="COACH",
+            trackedAlignmentDistanceM=10.0,
+        )
+    )
+    assert agg.openStopPause is not None
+    interval_id = agg.openStopPause.intervalId
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(
+            ResolveStopPause(
+                clientCommandId="resolve-fails",
+                sessionId=agg.sessionId,
+                intervalId=interval_id,
+                resumedAtMs=3000,
+            )
+        )
+
+    assert _snapshot(agg) == before
+
+
+def test_failed_pause_event_creation_keeps_running_state() -> None:
+    agg, _ = started()
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(PauseSession(clientCommandId="pause-fails", sessionId=agg.sessionId))
+
+    assert agg.state is SessionState.RUNNING
+    assert _snapshot(agg) == before
+
+
+def test_failed_resume_event_creation_restores_pause_bookkeeping() -> None:
+    agg, clk = started()
+    clk.set(1000)
+    agg.handle(PauseSession(clientCommandId="pause-ok", sessionId=agg.sessionId))
+    clk.set(2000)
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(ResumeSession(clientCommandId="resume-fails", sessionId=agg.sessionId))
+
+    assert _snapshot(agg) == before
+
+
+def test_failed_complete_event_creation_keeps_session_running() -> None:
+    agg, clk = started(workout(reps=1, dist=100))
+    for i in range(4):
+        agg.handle(record_split(agg, i))
+    clk.set(200000)
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(CompleteSession(clientCommandId="complete-fails", sessionId=agg.sessionId))
+
+    assert agg.state is SessionState.RUNNING
+    assert _snapshot(agg) == before
+
+
+def test_failed_abort_event_creation_preserves_open_and_pending_state() -> None:
+    agg, clk = started()
+    agg.handle(
+        MarkStopPause(
+            clientCommandId="ms-before-abort",
+            sessionId=agg.sessionId,
+            trigger="COACH_STOP",
+            stopStartedAtMs=1000,
+            confirmedAtMs=2000,
+            detectionSource="COACH",
+            trackedAlignmentDistanceM=10.0,
+        )
+    )
+    clk.set(3000)
+    before = _snapshot(agg)
+    _fail_next_event(agg)
+
+    with pytest.raises(RuntimeError):
+        agg.handle(AbortSession(clientCommandId="abort-fails", sessionId=agg.sessionId))
+
+    assert _snapshot(agg) == before
 
 
 def test_idempotent_replay_returns_same_events_without_mutation() -> None:
