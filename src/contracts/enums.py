@@ -77,6 +77,12 @@ class PaceTargetOrigin(_StrEnum):
     COACH_PACING_RESET = "COACH_PACING_RESET"
 
 
+class PaceRequestSource(_StrEnum):
+    COACH_MANUAL = "COACH_MANUAL"
+    RULE_BASED = "RULE_BASED"
+    ML = "ML"
+
+
 class ControlAdaptationSource(_StrEnum):
     rule_based = "rule_based"
     ml = "ml"
@@ -107,6 +113,8 @@ class ReasonCode(_StrEnum):
     SUGGESTED = "SUGGESTED"
     BOUNDED_APPLY = "BOUNDED_APPLY"
     COACH_OVERRIDE = "COACH_OVERRIDE"
+    CLAMPED_TO_BOUNDS = "CLAMPED_TO_BOUNDS"
+    APPLIED = "APPLIED"
 
 
 # --------------------------------------------------------------------------- ghost

@@ -35,6 +35,7 @@ from contracts.enums import (
     ControlAdaptationSource,
     ControlDecisionAction,
     EventType,
+    PaceRequestSource,
     PaceTargetOrigin,
     ReasonCode,
     SplitQualityFlag,
@@ -94,6 +95,7 @@ class SessionAbortedPayload(StrictModel):
 # --------------------------------------------------------------------------- split payloads
 class SplitRecordedPayload(StrictModel):
     sessionId: NonEmptyStr
+    splitId: NonEmptyStr
     lengthIndex: NonNegInt
     wallTimestampMs: NonNegInt
     source: SplitSource
@@ -102,6 +104,7 @@ class SplitRecordedPayload(StrictModel):
 
 class SplitVerifiedPayload(StrictModel):
     sessionId: NonEmptyStr
+    splitId: NonEmptyStr
     lengthIndex: NonNegInt
     verificationSource: VerificationSource
     verifiedWallTimestampMs: NonNegInt
@@ -182,10 +185,21 @@ class CoachPacingResetAppliedPayload(StrictModel):
 
 class ControlDecisionMadePayload(StrictModel):
     decision: ControlDecisionAction
+    #: Full, loss-less list of safety reason codes (never empty).
+    reasonCodes: list[NonEmptyStr]
     reasonCode: ReasonCode
     adaptationSource: ControlAdaptationSource
+    requestSource: PaceRequestSource = PaceRequestSource.COACH_MANUAL
     suggestedPaceSecPer100M: PaceValue | None = None
     appliedPaceSecPer100M: PaceValue | None = None
+    abstained: bool = False
+    bounded: bool = False
+
+    @model_validator(mode="after")
+    def _reason_codes_not_empty(self) -> ControlDecisionMadePayload:
+        if not self.reasonCodes:
+            raise ValueError("reasonCodes must not be empty")
+        return self
 
 
 EventPayload = (

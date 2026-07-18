@@ -71,6 +71,35 @@ imports only `contracts` + the standard library (enforced by import-linter and t
 `arch_check` AST purity scan). In `20.00 +15.00`, the `20.00` active part comes from here;
 the `+15.00` stopped part is future StopPause runtime accounting.
 
+## Session orchestration & SafetyController (Commit 6, `swimcore/session/`, `swimcore/control/`)
+
+The session aggregate is a pure, deterministic domain object that combines the contracts,
+semantic validator, pace timeline, ActiveClock, GhostClock, and SafetyController into one
+in-memory flow. `handle(command) -> list[EventEnvelope]` dispatches typed commands, enforces
+the lifecycle state machine (CREATED → ARMED → RUNNING ⇄ PAUSED, → COMPLETED/ABORTED), and
+produces typed domain events with a monotonic session-local sequence. Time and event ids are
+injected (no system clock/randomness); input models are never mutated; no persistence or
+replay (Commit 7).
+
+**StopPause is not a lifecycle state.** During a confirmed StopPause the session stays
+RUNNING, the ghost is STOP_PAUSED, and the active clock is frozen. `MarkStopPause` drives
+`GhostClock.apply_stop_pause` (which validates the alignment before freezing the clock, so a
+bad alignment never leaves the clock frozen — atomicity). Wall reconciliation is orchestrated
+by `RecordSplit`: a wall split matching the expected reconciliation wall reconciles the
+pending mid-pool alignment exactly once. Coach pacing reset is requested any time in RUNNING
+but applied only at the next valid wall split; it never stops the clock, repositions the ghost
+mid-pool, or erases prior performance.
+
+Every pace change flows through the **SafetyController** — a pure decision function (it never
+touches session state, events, the ghost, the clock, or persistence). Smaller sec/100m is
+faster; applied pace can never be faster than the fastest limit, slower than the slowest
+limit, or exceed the max change per length. `adaptationMode == off` or `suggest_only`, low
+confidence, low data quality, or not-at-a-wall all abstain to the coach plan; NaN/inf or
+heart-rate-only suggestions are rejected. Every decision carries reason codes. Idempotency is
+per `clientCommandId` (same content → same stored events, no re-mutation; different content →
+conflict). Accounting: `active = ActiveClock`, `stopped = confirmed StopPause`, `elapsed =
+active + stopped`.
+
 ## Deterministic clocks & ghost primitive (Commit 5, `swimcore/time/`, `swimcore/ghost/`)
 
 `SimClock` is a manually-advanced, bit-identical clock (no system time / sleep / randomness /

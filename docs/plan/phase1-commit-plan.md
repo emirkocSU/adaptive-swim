@@ -10,7 +10,7 @@ their commit lands.
 | 3 | Pure semantic workout validator (`swimcore/workout/`), 12 rules | done |
 | 4 | **Deterministic pace math engine (`swimcore/pacing/`)** — this commit | done |
 | 5 | **Deterministic clocks (`swimcore/time/`) + ghost primitive (`swimcore/ghost/`)** — this commit | done |
-| 6 | Session state machine, command handling, StopPause runtime, SafetyController | pending |
+| 6 | **Session state machine, command handling, StopPause orchestration, SafetyController** — this commit | done |
 | 7 | Event persistence + **historical replay** (rebuilt from events, not the runtime clock) | pending |
 | 8+ | Simulator swimmer, analytics report | pending |
 | later | ML advisory, cloud, UI, device/wearable adapters | pending (own ADRs/triggers) |
@@ -55,3 +55,43 @@ database. Commit 5 never *detects* a StopPause — it only applies an externally
   StopPause alignment (never on a normal pace loss / normal ACTIVE ghost).
 - Commit 5 performs no workout length/set/repetition/split accounting.
 - Display `20.00 +15.00`: `20.00` active, `+15.00` stopped, `35.00` wall.
+
+## Commit 6 boundary (what it is and is not)
+
+Commit 6 is the **session orchestration layer** (`swimcore/session/`, `swimcore/control/`):
+session aggregate + state machine (CREATED/ARMED/RUNNING/PAUSED/COMPLETED/ABORTED), typed
+command handling with idempotency, in-memory domain event generation, StopPause
+orchestration, coach pacing reset (request/apply-at-next-wall), split recording/verification,
+and the deterministic SafetyController that gates every pace change.
+
+- StopPause is **not** a lifecycle state: the session stays RUNNING while the ghost is
+  STOP_PAUSED and the active clock is frozen.
+- Normal pace loss is not a StopPause; coach pacing reset is not a StopPause.
+- A coach pacing reset applies only at the next valid wall boundary.
+- The SafetyController is the mandatory gate for all pace changes; ML only suggests, and low
+  confidence/quality falls back to the coach plan.
+- Accounting: `active = ActiveClock`, `stopped = confirmed StopPause intervals`,
+  `elapsed = active + stopped`.
+
+Out of scope (later commits): JSONL persistence, event replay, filesystem, database, network,
+cloud, UI/FastAPI, real simulator swimmer, wearable/sensor processing, ML runtime, analytics
+report, hardware/LED adapter. Persistence and replay are Commit 7.
+
+## Commit 6 correction pass (completed)
+
+All Commit 6 correction invariants (session-id validation, exact-workout completion,
+splitId vs official length, wall-bound splits, coach-reset ghost-anchor at wall, lifecycle
+pause freeze, atomic command handling, forward-only event time, full SafetyContext
+validation, coach/rule/ML pace-source rules, loss-less reason codes, StopPause metadata
+preservation, current-interval block resolution) are implemented and covered by tests. CI is
+green (386 tests).
+
+## Pending mainline integration (NOT in this pass)
+
+The distance-specific approved-pace-profile / Workout 1.1 start-mode / planning-ML mainline
+integration (start-mode taxonomy, ApprovedPaceProfile leg contract, deterministic
+distance-specific profile compilation, P1–P7 planning-model gate, reporting-contract
+expansion, the new semantic rule codes, and ADR-034/035/036) depends on the authoritative
+source document `Adaptive_Swim_Model_Tabanli_Tempo_ve_Baslangic_Guncellemesi_TR.md`, which was
+not available in this pass. These remain to be implemented once that document is provided, so
+the mainline contract/core integration is not yet complete.

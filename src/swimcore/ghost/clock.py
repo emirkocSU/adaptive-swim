@@ -195,3 +195,42 @@ class GhostClock:
         self._wall_reconciliation_pending = False
         self._expected_reconciliation_wall_m = None
         return self._build_snapshot(reconciled_at_ms)
+
+    def apply_coach_pacing_reset_at_wall(
+        self,
+        wall_distance_m: float,
+        applied_at_ms: int,
+    ) -> GhostSnapshot:
+        """Move the display anchor to a wall for a coach pacing reset (not a StopPause).
+
+        Pure: creates no StopPause, adds no stopped duration, does not freeze the active
+        clock, and does not erase prior gap/split data. Only valid ACTIVE, at a real wall,
+        with no pending StopPause reconciliation, leaving the timeline untouched and the
+        current target-pace context intact.
+        """
+        if self._state is not GhostState.ACTIVE:
+            raise InvalidWallReconciliationError("coach pacing reset requires ACTIVE state")
+        if self._wall_reconciliation_pending:
+            raise InvalidWallReconciliationError(
+                "coach pacing reset not allowed while a StopPause reconciliation is pending"
+            )
+        self._check_finite(wall_distance_m, "wall_distance_m")
+        if (
+            wall_distance_m < -_WALL_TOL
+            or wall_distance_m > self._timeline.totalDistanceM + _WALL_TOL
+        ):
+            raise InvalidWallReconciliationError(
+                f"wall distance {wall_distance_m} out of [0, {self._timeline.totalDistanceM}]"
+            )
+        if not is_wall_boundary(wall_distance_m, self._pool_length_m):
+            raise InvalidWallReconciliationError(
+                f"{wall_distance_m} is not a wall boundary (pool {self._pool_length_m}); "
+                "coach pacing reset must land on a wall (no mid-pool)"
+            )
+        current = self._build_snapshot(applied_at_ms)
+        self._anchor = GhostAnchor(
+            anchorActiveElapsedSec=current.activeElapsedMs / 1000.0,
+            anchorTimelineDistanceM=current.timelineDistanceM,
+            anchorDisplayDistanceM=wall_distance_m,
+        )
+        return self._build_snapshot(applied_at_ms)

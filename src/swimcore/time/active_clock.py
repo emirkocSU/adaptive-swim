@@ -47,6 +47,8 @@ class ActiveClock:
         self._completed_stopped_ms: int = 0
         self._open_stop_started_at_ms: int | None = None
         self._open_stop_confirmed_at_ms: int | None = None
+        #: Resume time of the most recent completed StopPause; a new stop may not start before it.
+        self._last_completed_stop_resumed_at_ms: int = 0
 
     # ------------------------------------------------------------------ accessors
     @property
@@ -86,6 +88,11 @@ class ActiveClock:
             raise InvalidStopIntervalError(
                 f"stop start {stop_started_at_ms} before clock start {start}"
             )
+        if stop_started_at_ms < self._last_completed_stop_resumed_at_ms:
+            raise InvalidStopIntervalError(
+                f"stop start {stop_started_at_ms} overlaps the previous StopPause resumed at "
+                f"{self._last_completed_stop_resumed_at_ms}"
+            )
         if confirmed_at_ms < stop_started_at_ms:
             raise InvalidStopIntervalError(
                 f"confirmation {confirmed_at_ms} precedes stop start {stop_started_at_ms}"
@@ -124,6 +131,7 @@ class ActiveClock:
         self._open_stop_confirmed_at_ms = None
         self._last_transition_at_ms = resumed_at_ms
         self._last_observed_at_ms = resumed_at_ms
+        self._last_completed_stop_resumed_at_ms = resumed_at_ms
 
     # ------------------------------------------------------------------ queries
     def _observe(self, now_ms: int) -> None:

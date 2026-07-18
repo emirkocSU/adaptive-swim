@@ -49,3 +49,11 @@ forbidden_modules =
     socket
     requests
     httpx
+
+[importlinter:contract:5]
+name = control must not depend on session
+type = forbidden
+source_modules =
+    swimcore.control
+forbidden_modules =
+    swimcore.session

@@ -67,3 +67,22 @@
   inputs but also results that overflow to non-finite for huge finite inputs.
 - **Wall-boundary total** — a GhostClock's timeline total distance must itself be a wall
   boundary for the pool; `next_wall_boundary` never returns a non-wall final distance.
+- **ActiveClock forward-only rule** — ActiveClock is forward-only in observed wall time.
+  Active elapsed may be retroactively corrected only when a StopPause is confirmed from an
+  earlier stop-start timestamp (a single controlled decrease); it never becomes negative,
+  stopped never becomes negative, and `wall = active + stopped` always holds.
+- **StopPause non-overlap** — a new StopPause may not start before the previous completed
+  StopPause's resume time (`stopStartedAtMs >= lastCompletedStopResumedAtMs`).
+- **Session aggregate** — the Commit 6 pure orchestration object combining contracts,
+  validator, timeline, clocks, ghost, and SafetyController; `handle(command)` returns
+  in-memory events. No persistence/replay (Commit 7).
+- **Session state** — CREATED/ARMED/RUNNING/PAUSED/COMPLETED/ABORTED. StopPause is not a
+  lifecycle state; the session stays RUNNING while the ghost is STOP_PAUSED.
+- **Idempotency (clientCommandId)** — a repeated command with identical content returns the
+  same stored events without re-mutating; different content is a conflict.
+- **SafetyController** — pure mandatory gate for pace changes; smaller sec/100m is faster;
+  applied pace never breaches fastest/slowest/max-change; off/suggest_only/low-confidence/
+  low-quality/not-at-wall abstain to the coach plan; NaN/inf/heart-rate-only are rejected;
+  every decision carries reason codes. ML only suggests and never controls the ghost directly.
+- **Wall reconciliation orchestration** — a wall `RecordSplit` matching the expected wall
+  reconciles a pending StopPause alignment exactly once; mid-pool has no official accounting.

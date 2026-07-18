@@ -9,12 +9,16 @@ from __future__ import annotations
 
 from typing import Literal
 
-from contracts._base import NonEmptyStr, NonNegInt, PaceValue, StrictModel
+from contracts._base import NonEmptyStr, NonNegFloat, NonNegInt, PaceValue, StrictModel, UnitRatio
 from contracts.enums import (
+    AlignmentQuality,
     AlignmentSource,
+    PaceRequestSource,
     SplitSource,
     StopDetectionSource,
     StopPauseTrigger,
+    StopSignalQuality,
+    StopStartTimeQuality,
     VerificationSource,
 )
 
@@ -63,14 +67,18 @@ class CompleteSession(Command):
 class RecordSplit(Command):
     commandType: Literal["RecordSplit"] = "RecordSplit"
     sessionId: str
+    splitId: NonEmptyStr
     lengthIndex: NonNegInt
     wallTimestampMs: NonNegInt
     source: SplitSource
+    #: Wall distance for this split; required and must be a valid wall boundary.
+    distanceM: NonNegFloat | None = None
 
 
 class VerifySplit(Command):
     commandType: Literal["VerifySplit"] = "VerifySplit"
     sessionId: str
+    splitId: NonEmptyStr
     lengthIndex: int
     verificationSource: VerificationSource
     verifiedWallTimestampMs: NonNegInt
@@ -80,8 +88,15 @@ class MarkStopPause(Command):
     commandType: Literal["MarkStopPause"] = "MarkStopPause"
     sessionId: str
     trigger: StopPauseTrigger
-    occurredAtMs: NonNegInt
+    stopStartedAtMs: NonNegInt
+    confirmedAtMs: NonNegInt
     detectionSource: StopDetectionSource
+    detectionQuality: StopSignalQuality = StopSignalQuality.UNKNOWN
+    alignmentSource: AlignmentSource = AlignmentSource.TRACKED_POSITION
+    alignmentQuality: AlignmentQuality = AlignmentQuality.UNKNOWN
+    stopStartTimeQuality: StopStartTimeQuality = StopStartTimeQuality.UNKNOWN
+    trackedAlignmentDistanceM: NonNegFloat = 0.0
+    createdBy: NonEmptyStr = "coach"
     notes: str | None = None
 
 
@@ -89,14 +104,23 @@ class ResolveStopPause(Command):
     commandType: Literal["ResolveStopPause"] = "ResolveStopPause"
     sessionId: str
     intervalId: str
-    endedAtMs: NonNegInt
+    resumedAtMs: NonNegInt
     alignmentSource: AlignmentSource = AlignmentSource.WALL_RECONCILIATION
+    resolvedBy: str | None = None
+    resolutionNotes: str | None = None
 
 
 class ApplyCoachPaceTarget(Command):
     commandType: Literal["ApplyCoachPaceTarget"] = "ApplyCoachPaceTarget"
     sessionId: str
-    appliedPaceSecPer100M: PaceValue
+    suggestedPaceSecPer100M: PaceValue
+    source: PaceRequestSource = PaceRequestSource.COACH_MANUAL
+    reason: str | None = None
+    requestedBy: NonEmptyStr = "coach"
+    confidence: UnitRatio | None = None
+    dataQuality: UnitRatio | None = None
+    currentWallDistanceM: NonNegFloat | None = None
+    isWallBoundary: bool | None = None
 
 
 class CoachPacingReset(Command):

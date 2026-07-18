@@ -124,6 +124,22 @@ Rules: pure, clock-injected, no I/O/sleep/randomness/`time.time()`/`datetime.now
 swimmer-position estimation, no events/persistence, no session commands, no SafetyController,
 no second GhostClock in the simulator. Those are Commit 6+.
 
+## Session orchestration & SafetyController (Commit 6, done — `swimcore/session/`, `swimcore/control/`)
+
+`SessionAggregate.handle(command) -> list[EventEnvelope]`: pure deterministic state machine
+(CREATED/ARMED/RUNNING/PAUSED/COMPLETED/ABORTED) + idempotency (`clientCommandId`) + typed
+in-memory events. StopPause is NOT a lifecycle state — session stays RUNNING, ghost
+STOP_PAUSED, active clock frozen. `RecordSplit` at the expected wall reconciles the pending
+alignment once. Coach pacing reset applies only at the next valid wall; never stops clock /
+repositions ghost mid-pool / erases performance. All pace changes go through the pure
+`SafetyController` (fastest/slowest/max-change bounds; off/suggest_only/low-conf/low-quality/
+not-at-wall abstain; NaN/inf/heart-rate-only reject; reason codes always present). Time +
+event ids injected; inputs never mutated; atomic (validate before mutating clock/ghost).
+
+Do NOT add here: persistence, replay, filesystem, DB, network, cloud, UI/FastAPI, real
+simulator swimmer, wearable/sensor processing, ML runtime, analytics report, hardware adapter
+(Commit 7+). Do not rewrite pace/ghost/clock implementations.
+
 ## Commands / test expectations
 
 `make ci` must stay green. Every change tests the invariant it touches. Generated JSON

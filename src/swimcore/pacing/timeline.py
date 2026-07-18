@@ -9,6 +9,7 @@ global distance coordinates.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 
 from contracts.workout import PaceSegment, WorkoutTemplateVersion
 from swimcore.pacing.curves import (
@@ -124,10 +125,11 @@ def compile_pace_timeline(workout: WorkoutTemplateVersion) -> PaceTimeline:
     intervals: list[PaceInterval] = []
     offset = 0.0
     total_active = 0.0
-    for block in workout.blocks:
-        for _ in range(block.repetitions):
-            for seg in block.segments:
-                interval = _interval_from_segment(seg, offset)
+    for b, block in enumerate(workout.blocks):
+        for r in range(block.repetitions):
+            for si, seg in enumerate(block.segments):
+                base = _interval_from_segment(seg, offset)
+                interval = replace(base, blockIndex=b, repeatIndex=r, segmentIndex=si)
                 intervals.append(interval)
                 offset = interval.toM
                 total_active += interval.activeDurationSec

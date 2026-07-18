@@ -113,3 +113,22 @@ unverified or normal pace loss must not reposition the ghost mid-length.
 - `next_wall_boundary` never returns a non-wall final distance
   (`test_next_wall_rejects_non_wall_total_distance`); GhostClock rejects a non-wall timeline
   total (`test_constructor_rejects_non_wall_total_distance`).
+
+## Commit 6 (this commit) — session orchestration & SafetyController
+
+- `swimcore/session/` and `swimcore/control/` are pure (arch_check AST scan + import-linter;
+  a new contract forbids `control` depending on `session`).
+- Files: `test_session_lifecycle` (transitions, invalid transitions, terminal rejects),
+  `test_session_command_idempotency` (duplicate no-op, conflict, monotonic seq),
+  `test_session_stop_pause` (RUNNING during StopPause, retroactive correction, ghost
+  STOP_PAUSED, resolve, interval mismatch, second-open/overlap rejected, split reconciles /
+  wrong-wall rejected), `test_session_splits` (record/verify, ordering, duplicates,
+  missing-verify, StopPause does not INVALID a split), `test_session_coach_pacing_reset`
+  (no clock stop, not mid-length, applied at next wall, conflicting pending rejected,
+  requested+applied events, prior splits preserved), `test_safety_controller` (all gates,
+  bounds, reason codes, smaller=faster, heart-rate-only reject, determinism),
+  `test_session_properties` (Hypothesis: seq increasing, terminal never transitions, identical
+  sequences → identical events, duplicates no-op, applied pace within bounds, active+stopped=
+  wall, RUNNING during StopPause) plus atomicity (failed command unchanged, failed alignment
+  doesn't freeze the clock, failed pace decision doesn't change target, failed reconciliation
+  leaves pending intact).

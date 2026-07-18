@@ -33,6 +33,11 @@ class PaceInterval:
     endPaceSecPer100M: float
     mode: str
     activeDurationSec: float
+    #: Provenance on the workout structure (2.14): which block/repeat/segment produced this.
+    blockIndex: int = 0
+    repeatIndex: int = 0
+    segmentIndex: int = 0
+    profileLegIndex: int | None = None
 
     @property
     def lengthM(self) -> float:

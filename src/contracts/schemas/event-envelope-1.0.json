@@ -93,6 +93,11 @@
     "ControlDecisionMadePayload": {
       "additionalProperties": false,
       "properties": {
+        "abstained": {
+          "default": false,
+          "title": "Abstained",
+          "type": "boolean"
+        },
         "adaptationSource": {
           "$ref": "#/$defs/ControlAdaptationSource"
         },
@@ -110,11 +115,28 @@
           "default": null,
           "title": "Appliedpacesecper100M"
         },
+        "bounded": {
+          "default": false,
+          "title": "Bounded",
+          "type": "boolean"
+        },
         "decision": {
           "$ref": "#/$defs/ControlDecisionAction"
         },
         "reasonCode": {
           "$ref": "#/$defs/ReasonCode"
+        },
+        "reasonCodes": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "requestSource": {
+          "$ref": "#/$defs/PaceRequestSource",
+          "default": "COACH_MANUAL"
         },
         "suggestedPaceSecPer100M": {
           "anyOf": [
@@ -133,6 +155,7 @@
       },
       "required": [
         "decision",
+        "reasonCodes",
         "reasonCode",
         "adaptationSource"
       ],
@@ -303,6 +326,15 @@
       "title": "LongStopConfirmedPayload",
       "type": "object"
     },
+    "PaceRequestSource": {
+      "enum": [
+        "COACH_MANUAL",
+        "RULE_BASED",
+        "ML"
+      ],
+      "title": "PaceRequestSource",
+      "type": "string"
+    },
     "PaceTargetChangedPayload": {
       "additionalProperties": false,
       "properties": {
@@ -361,7 +393,9 @@
         "CONFLICT_STREAK",
         "SUGGESTED",
         "BOUNDED_APPLY",
-        "COACH_OVERRIDE"
+        "COACH_OVERRIDE",
+        "CLAMPED_TO_BOUNDS",
+        "APPLIED"
       ],
       "title": "ReasonCode",
       "type": "string"
@@ -549,6 +583,11 @@
         "source": {
           "$ref": "#/$defs/SplitSource"
         },
+        "splitId": {
+          "minLength": 1,
+          "title": "Splitid",
+          "type": "string"
+        },
         "wallTimestampMs": {
           "minimum": 0,
           "title": "Walltimestampms",
@@ -557,6 +596,7 @@
       },
       "required": [
         "sessionId",
+        "splitId",
         "lengthIndex",
         "wallTimestampMs",
         "source",
@@ -593,6 +633,11 @@
           "title": "Sessionid",
           "type": "string"
         },
+        "splitId": {
+          "minLength": 1,
+          "title": "Splitid",
+          "type": "string"
+        },
         "verificationSource": {
           "$ref": "#/$defs/VerificationSource"
         },
@@ -604,6 +649,7 @@
       },
       "required": [
         "sessionId",
+        "splitId",
         "lengthIndex",
         "verificationSource",
         "verifiedWallTimestampMs",

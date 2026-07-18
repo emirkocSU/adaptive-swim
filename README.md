@@ -27,7 +27,10 @@ make ci            # lint, typecheck, arch, schema-check, unit (+ later: propert
 
 ## Current status
 
-Commit 2 — Core contracts and workout schema. Later commits add the semantic validator,
+Commit 6 complete (incl. correction invariants). The distance-specific pace-profile / Workout 1.1 start-mode / planning-ML mainline integration is pending its authoritative source document and is not yet done. Contracts + schema, semantic validator, pace math
+engine, deterministic SimClock/ActiveClock/GhostClock, and the session orchestration layer
+(state machine, command handling, StopPause orchestration, coach pacing reset, split
+recording/verification, and the mandatory SafetyController) are in place. Later commits add
 pace math, ghost/StopPause state, event log + replay, simulator, and the full
 network-disabled end-to-end slice.
 

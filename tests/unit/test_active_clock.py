@@ -195,3 +195,74 @@ def test_active_elapsed_query_advances_forward_watermark() -> None:
     c.active_elapsed_ms(80_000)
     with pytest.raises(InvalidClockTimeError):
         c.active_elapsed_ms(40_000)
+
+
+# --------------------------------------------------------------------------- overlap (A1)
+def test_second_stop_cannot_overlap_previous_stop() -> None:
+    c = _started(0)
+    c.freeze_from(5_000, 6_000)
+    c.resume(8_000)  # previous resume = 8_000
+    with pytest.raises(InvalidStopIntervalError):
+        c.freeze_from(7_000, 9_000)  # starts before previous resume
+
+
+def test_second_stop_start_cannot_precede_previous_resume() -> None:
+    c = _started(0)
+    c.freeze_from(5_000, 6_000)
+    c.resume(10_000)
+    with pytest.raises(InvalidStopIntervalError):
+        c.freeze_from(9_999, 11_000)
+
+
+def test_second_stop_can_start_exactly_at_previous_resume() -> None:
+    c = _started(0)
+    c.freeze_from(5_000, 6_000)
+    c.resume(8_000)
+    c.freeze_from(8_000, 9_000)  # exactly at previous resume → allowed
+    c.resume(10_000)
+    assert c.active_elapsed_ms(12_000) == 12_000 - (3_000 + 2_000)
+
+
+def test_multiple_non_overlapping_stop_pauses_are_supported() -> None:
+    c = _started(0)
+    c.freeze_from(5_000, 6_000)
+    c.resume(8_000)
+    c.freeze_from(12_000, 13_000)
+    c.resume(16_000)
+    assert c.active_elapsed_ms(20_000) == 20_000 - (3_000 + 4_000)
+
+
+# --------------------------------------------------------------------------- retroactive (A2)
+def test_retroactive_stop_confirmation_may_correct_active_elapsed() -> None:
+    c = _started(0)
+    assert c.snapshot(15_000).activeElapsedMs == 15_000
+    c.freeze_from(10_000, 20_000)  # stop actually began at 10 s
+    snap = c.snapshot(20_000)
+    assert snap.activeElapsedMs == 10_000  # corrected downward, once
+    assert snap.stoppedElapsedMs == 10_000
+    assert snap.wallElapsedMs == 20_000
+
+
+def test_active_elapsed_cannot_decrease_without_stop_confirmation() -> None:
+    c = _started(0)
+    prev = 0
+    for now in (5_000, 10_000, 20_000):
+        active = c.active_elapsed_ms(now)
+        assert active >= prev
+        prev = active
+
+
+def test_wall_time_never_moves_backward() -> None:
+    c = _started(0)
+    c.snapshot(50_000)
+    with pytest.raises(InvalidClockTimeError):
+        c.snapshot(49_999)
+
+
+def test_retroactive_correction_preserves_duration_identity() -> None:
+    c = _started(0)
+    c.snapshot(15_000)
+    c.freeze_from(10_000, 20_000)
+    c.resume(25_000)
+    snap = c.snapshot(30_000)
+    assert snap.wallElapsedMs == snap.activeElapsedMs + snap.stoppedElapsedMs
