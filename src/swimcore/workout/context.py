@@ -17,7 +17,7 @@ _DEFAULT_CAPABILITIES: frozenset[FeedbackCapability] = frozenset(FeedbackCapabil
 
 
 class WorkoutValidationContext(StrictModel):
-    supportedSchemaVersions: frozenset[str] = frozenset({"1.0"})
+    supportedSchemaVersions: frozenset[str] = frozenset({"1.0", "1.1"})
     maxTotalWorkoutDistanceM: int | None = None
     completedSessionIds: frozenset[str] = frozenset()
     knownCoachBenchmarkProfileRefs: frozenset[str] = frozenset()

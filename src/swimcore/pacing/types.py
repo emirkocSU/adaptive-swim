@@ -38,6 +38,12 @@ class PaceInterval:
     repeatIndex: int = 0
     segmentIndex: int = 0
     profileLegIndex: int | None = None
+    #: Approved-profile provenance (ADR-034); populated by the profile compiler path.
+    startMode: str | None = None
+    profileId: str | None = None
+    profileSource: str | None = None
+    profileType: str | None = None
+    phaseType: str | None = None
 
     @property
     def lengthM(self) -> float:

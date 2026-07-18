@@ -13,7 +13,7 @@ from __future__ import annotations
 from contracts._base import StrictModel
 from contracts.enums import IssueSeverity
 from contracts.errors import ValidationIssue
-from contracts.workout import WorkoutTemplateVersion
+from contracts.workout import AnyWorkoutTemplate
 from swimcore.workout import rules
 from swimcore.workout.context import WorkoutValidationContext
 from swimcore.workout.rules import RuleCode
@@ -42,6 +42,7 @@ _ALL_RULES = (
     rules.rule_010_schema_version,
     rules.rule_011_controlled_start,
     rules.rule_012_negative_split_order,
+    rules.rule_013_start_mode_and_overrides,
 )
 
 
@@ -74,7 +75,7 @@ def _bracket_index(path: str, token: str) -> int:
 
 
 def validate_workout(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     context: WorkoutValidationContext | None = None,
 ) -> WorkoutValidationResult:
     """Validate a structurally-valid workout against the semantic rules.

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.1",
+  "name": "200 Free Race Pace",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "startPolicy": {
+    "defaultMode": "DIVE_START",
+    "allowBlockOverride": true,
+    "allowRepeatOverride": true
+  },
+  "workoutGoal": "RACE_PACE",
+  "blocks": [
+    {
+      "type": "repeat",
+      "label": "main",
+      "repetitions": 1,
+      "distanceM": 200,
+      "rest": {
+        "type": "none"
+      },
+      "segments": [
+        {
+          "fromM": 0,
+          "toM": 200,
+          "mode": "even_pace",
+          "targetPaceSecPer100M": 66.5
+        }
+      ]
+    }
+  ],
+  "repeatOverrides": [],
+  "targetTotalTimeSec": 133.0
+}

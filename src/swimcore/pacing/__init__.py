@@ -22,6 +22,18 @@ from swimcore.pacing.errors import (
     UnsupportedPaceModeError,
 )
 from swimcore.pacing.math import distance_for_duration, duration_for_distance
+from swimcore.pacing.profile_compiler import (
+    ProfileCompilationError,
+    compile_approved_pace_profile,
+)
+from swimcore.pacing.profile_selection import (
+    AmbiguousPaceProfileSelectionError,
+    CoachLockedProfileOverrideError,
+    NoLiveEligiblePaceProfileError,
+    PaceProfileSelectionError,
+    ProfileSelectionPolicy,
+    select_live_pace_profile,
+)
 from swimcore.pacing.timeline import (
     compile_pace_timeline,
     ghost_distance_at_active_time,
@@ -41,6 +53,8 @@ from swimcore.pacing.types import (
 
 __all__ = [
     "EPSILON",
+    "AmbiguousPaceProfileSelectionError",
+    "CoachLockedProfileOverrideError",
     "ControlledStartProfile",
     "DistanceAtTimeResult",
     "DistanceOutsideTimelineError",
@@ -49,13 +63,18 @@ __all__ = [
     "InvalidPaceCurveError",
     "InvalidPaceError",
     "InvalidPoolLengthError",
+    "NoLiveEligiblePaceProfileError",
     "PaceInterval",
     "PaceMathError",
+    "PaceProfileSelectionError",
     "PacePoint",
     "PaceTimeline",
+    "ProfileCompilationError",
+    "ProfileSelectionPolicy",
     "TimeAtDistanceResult",
     "TimeOutsideTimelineError",
     "UnsupportedPaceModeError",
+    "compile_approved_pace_profile",
     "compile_pace_timeline",
     "distance_for_duration",
     "duration_for_distance",
@@ -65,5 +84,6 @@ __all__ = [
     "previous_wall_boundary",
     "resolve_curve_endpoints",
     "segment_active_duration_sec",
+    "select_live_pace_profile",
     "target_active_time_at_distance",
 ]

@@ -157,3 +157,19 @@ kept separate); if unreliable, the length may be excluded from analysis.
 `cloud/`, `ml/` runtime, `ui/`, device drivers, partner adapters, database, FastAPI,
 wearable connectors, rule-based/ML adaptation engines. These arrive in later phases with
 their own ADRs and triggers.
+
+## Distance-specific approved pace profiles (mainline)
+
+Live pacing consumes a single authoritative `ApprovedPaceProfile` (ADR-034). Legs cover the
+distance with no gap/overlap and sum exactly to the target total time; the deterministic
+compiler (`compile_approved_pace_profile`) produces a bit-identical timeline. Profile
+selection is deterministic and honours the coach authority order
+(`COACH_AUTHORED > COACH_APPROVED_MODEL > DEFAULT_MODEL_GENERATED`), with a coach lock that
+blocks ML/rule auto-override. Workout 1.1 makes start mode and pool length mandatory
+execution context; official distance comes only from workout geometry / verified walls, never
+from a wearable estimate (ADR-036).
+
+Runtime boundary: the deterministic core only *executes* an already-approved profile — it
+never generates one and never calls model inference in the live loop. The pre-session
+planning model (DRAFT profiles, gated by P1–P7) and the live adaptation model (gated by
+G1–G7, behind the SafetyController) are separate and both optional (ADR-035).

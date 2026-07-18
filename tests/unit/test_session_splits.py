@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from contracts.commands import RecordSplit, VerifySplit
 from swimcore.session import (
@@ -22,18 +23,17 @@ def test_record_valid_wall_split() -> None:
 
 
 def test_split_requires_distance() -> None:
-    agg, clk = started()
-    with pytest.raises(InvalidSplitBoundaryError):
-        agg.handle(
-            RecordSplit(
-                clientCommandId="s",
-                sessionId=agg.sessionId,
-                splitId="x",
-                lengthIndex=0,
-                wallTimestampMs=40000,
-                source="TOUCHPAD",
-                distanceM=None,
-            )
+    # distanceM is now required at the contract level (structural == runtime).
+    started()
+    with pytest.raises(ValidationError):
+        RecordSplit(
+            clientCommandId="s",
+            sessionId="whatever",
+            splitId="x",
+            lengthIndex=0,
+            wallTimestampMs=40000,
+            source="TOUCHPAD",
+            distanceM=None,
         )
 
 

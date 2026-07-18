@@ -20,6 +20,18 @@ repository. It is authoritative. Read it before writing code.
    implementation inside the simulator is forbidden.
 9. Manual splits are not ground truth. Split quality is a five-class flag.
 10. Core IP stays with the founder. `swimcore` must remain separable.
+11. ML plans; the deterministic core executes approved plans. Plan generation and live
+    adaptation are separate concerns and are never conflated (ADR-035).
+12. A coach-authored / coach-locked profile has the highest authority. ML and rule-based
+    sources cannot auto-override it (`COACH_PROFILE_LOCKED`); they may only suggest.
+13. Start mode and pool length are mandatory workout execution context (Workout 1.1,
+    ADR-036). The resolved start mode is never ambiguous.
+14. Wearable estimated distance never rewrites official distance and never jumps the ghost;
+    official distance comes only from workout geometry / verified walls (ADR-036).
+15. Profile legs are not official wall splits. Leg boundaries are analytical; official
+    splits come only from verified wall boundaries (ADR-034/036).
+16. Natural planned sprint fade (a short-distance positive split) is not a StopPause and not
+    an incident; the `SafetyController` must not treat it as a pace collapse.
 
 ## Ghost alignment rule (StopPause model — CORRECTED)
 
@@ -159,3 +171,26 @@ Schema files are produced by `python -m swimtools.gen_schemas` and verified by
 
 No cloud, no real ML runtime, no UI/PWA, no device driver, no database, no FastAPI, no
 wearable connector. Phase 1 is a headless, offline, deterministic core.
+
+## Distance-specific approved pace profiles (mainline, pre-Commit 7 — done)
+
+`ApprovedPaceProfile` (`src/contracts/pace_profiles.py`) is the single authoritative live
+plan input. Legs cover the distance with no gap/overlap; leg durations sum exactly to
+`targetTotalTimeSec` (no silent normalization). Selection authority:
+`COACH_AUTHORED > COACH_APPROVED_MODEL > DEFAULT_MODEL_GENERATED` (default-model needs an
+explicit opt-in; ties raise). `compile_approved_pace_profile` runs the approved profile
+deterministically (constant leg pace, bit-identical timeline; rest/StopPause/lifecycle-pause
+excluded). Workout 1.1 (`WorkoutTemplateV1_1`) adds `StartPolicy`, per-block/per-repeat start
+overrides, and `workoutGoal`; migration 1.0→1.1 is explicit (`migrate_workout_1_0_to_1_1`,
+start mode never guessed). SafetyController gains `profileSource` / `profileCoachLocked` /
+`currentProfileLegIndex` / `currentTargetPaceSecPer100M`; ML missing confidence/quality →
+distinct `ML_CONFIDENCE_MISSING` / `DATA_QUALITY_MISSING` abstain; coach-locked →
+`COACH_PROFILE_LOCKED`. See ADR-034/035/036.
+
+## Planning ML vs live adaptation ML
+
+Two separate models and gates. The pre-session planning model produces DRAFT profiles and
+must pass the Planning Model Gate **P1–P7** before it can be a live plan source; without it,
+templates/manual/legacy segments keep the product complete. The live adaptation model keeps
+the existing G1–G7 gate and always runs behind the SafetyController. Neither ever controls
+the ghost/clock/StopPause directly.

@@ -93,6 +93,370 @@
       "title": "LengthOutcome",
       "type": "object"
     },
+    "PaceProfileReportContext": {
+      "additionalProperties": false,
+      "description": "Optional distance-specific pace-profile context for the session report (§20).\n\nNatural planned fade (short-distance positive split) and an unexpected collapse are\nseparate fields, so a planned fast-start-and-fade is never auto-flagged as bad.",
+      "properties": {
+        "actualHeartRate": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualheartrate"
+        },
+        "actualOfficialSplits": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualofficialsplits"
+        },
+        "actualPaceFadeSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualpacefadesec"
+        },
+        "coachEditedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coacheditedlegindices"
+        },
+        "coachLocked": {
+          "default": false,
+          "title": "Coachlocked",
+          "type": "boolean"
+        },
+        "defaultStartMode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Defaultstartmode"
+        },
+        "expectedPaceFadeSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expectedpacefadesec"
+        },
+        "firstVsLastSectionDifferenceSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firstvslastsectiondifferencesec"
+        },
+        "generalModelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generalmodelversion"
+        },
+        "heartRatePaceRelationship": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heartratepacerelationship"
+        },
+        "modelConfidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelconfidence"
+        },
+        "nextSessionCalibrationSuggestion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nextsessioncalibrationsuggestion"
+        },
+        "paceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileid"
+        },
+        "paceProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofilesource"
+        },
+        "paceProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofiletype"
+        },
+        "paceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileversion"
+        },
+        "perSplitDeviationSec": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Persplitdeviationsec"
+        },
+        "personalCalibrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Personalcalibrationversion"
+        },
+        "poolLengthM": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Poollengthm"
+        },
+        "resolvedStartModes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolvedstartmodes"
+        },
+        "startUnderwaterPhaseSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startunderwaterphasesec"
+        },
+        "stopPauseDurationsSec": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stoppausedurationssec"
+        },
+        "strokeRateTrend": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strokeratetrend"
+        },
+        "targetHeartRate": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetheartrate"
+        },
+        "targetLegs": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ProfileLegOutcome"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetlegs"
+        },
+        "targetTotalTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targettotaltimesec"
+        },
+        "turnEffectSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turneffectsec"
+        },
+        "unexpectedCollapseDeltaSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unexpectedcollapsedeltasec"
+        }
+      },
+      "title": "PaceProfileReportContext",
+      "type": "object"
+    },
     "PacingMetrics": {
       "additionalProperties": false,
       "properties": {
@@ -143,6 +507,77 @@
         "excludedLengths"
       ],
       "title": "PacingMetrics",
+      "type": "object"
+    },
+    "ProfileLegOutcome": {
+      "additionalProperties": false,
+      "description": "Target vs actual for a single profile leg (leg != official wall split).",
+      "properties": {
+        "actualDurationSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualdurationsec"
+        },
+        "deviationSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deviationsec"
+        },
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "legIndex": {
+          "minimum": 0,
+          "title": "Legindex",
+          "type": "integer"
+        },
+        "phaseType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phasetype"
+        },
+        "targetDurationSec": {
+          "minimum": 0,
+          "title": "Targetdurationsec",
+          "type": "number"
+        },
+        "toM": {
+          "minimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "legIndex",
+        "fromM",
+        "toM",
+        "targetDurationSec"
+      ],
+      "title": "ProfileLegOutcome",
       "type": "object"
     },
     "SetEfficiencyMetrics": {
@@ -514,6 +949,17 @@
       ],
       "default": null,
       "title": "Notes"
+    },
+    "paceProfileContext": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PaceProfileReportContext"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "pacingMetrics": {
       "$ref": "#/$defs/PacingMetrics"

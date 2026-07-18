@@ -14,15 +14,17 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
-from contracts._base import NonNegFloat, PaceValue, PosFloat, StrictModel
+from contracts._base import NonNegFloat, NonNegInt, PaceValue, PosFloat, StrictModel
 from contracts.enums import (
     AdaptationMode,
     AdaptationSource,
     PaceMode,
     SetLabel,
+    StartMode,
     Stroke,
+    WorkoutGoal,
 )
 
 
@@ -104,6 +106,8 @@ class RepeatBlock(StrictModel):
     adaptation: AdaptationPolicy | None = None
     feedback: FeedbackPolicy | None = None
     ghostSource: GhostSource | None = None
+    #: Workout 1.1: optional block-level start-mode override.
+    startMode: StartMode | None = None
 
 
 class WorkoutTemplateVersion(StrictModel):
@@ -112,3 +116,83 @@ class WorkoutTemplateVersion(StrictModel):
     poolLengthM: Literal[25, 50]
     stroke: Stroke
     blocks: Annotated[list[RepeatBlock], Field(min_length=1)]
+
+
+#: Explicit 1.0 alias (the discriminated union references it by this name).
+WorkoutTemplateV1_0 = WorkoutTemplateVersion
+
+
+# --------------------------------------------------------------------------- Workout 1.1
+class StartPolicy(StrictModel):
+    """Mandatory in Workout 1.1: how starts default and whether overrides are allowed."""
+
+    defaultMode: StartMode
+    allowBlockOverride: bool = True
+    allowRepeatOverride: bool = True
+
+
+class RepeatExecutionOverride(StrictModel):
+    """Per-repetition override for start mode / profile.
+
+    ``blockIndex`` disambiguates repeats across blocks (two blocks may each have a
+    ``repeatIndex=0``); ``repeatIndex`` is 0-based within that block.
+    """
+
+    blockIndex: NonNegInt = 0
+    repeatIndex: NonNegInt
+    startMode: StartMode | None = None
+    paceProfileRef: str | None = None
+
+
+class WorkoutTemplateV1_1(StrictModel):
+    schemaVersion: Literal["1.1"]
+    name: Annotated[str, Field(min_length=1, max_length=120)]
+    poolLengthM: Literal[25, 50]
+    stroke: Stroke
+    startPolicy: StartPolicy
+    workoutGoal: WorkoutGoal
+    blocks: Annotated[list[RepeatBlock], Field(min_length=1)]
+    repeatOverrides: list[RepeatExecutionOverride] = Field(default_factory=list)
+    #: Optional total-target hint used by planning; leg durations are authoritative.
+    targetTotalTimeSec: PosFloat | None = None
+
+    @model_validator(mode="after")
+    def _check_overrides(self) -> WorkoutTemplateV1_1:
+        seen: set[tuple[int, int]] = set()
+        for ov in self.repeatOverrides:
+            key = (ov.blockIndex, ov.repeatIndex)
+            if key in seen:
+                raise ValueError(
+                    f"duplicate override for block {ov.blockIndex} repeat {ov.repeatIndex}"
+                )
+            seen.add(key)
+            if not (0 <= ov.blockIndex < len(self.blocks)):
+                raise ValueError(f"override blockIndex {ov.blockIndex} out of range")
+            block = self.blocks[ov.blockIndex]
+            if not (0 <= ov.repeatIndex < block.repetitions):
+                raise ValueError(
+                    f"override repeatIndex {ov.repeatIndex} out of range for block "
+                    f"{ov.blockIndex} ({block.repetitions} repetitions)"
+                )
+            if not self.startPolicy.allowRepeatOverride and ov.startMode is not None:
+                raise ValueError(
+                    f"block {ov.blockIndex} repeat {ov.repeatIndex} sets startMode but "
+                    "startPolicy.allowRepeatOverride is false"
+                )
+        for b, block in enumerate(self.blocks):
+            if block.startMode is not None and not self.startPolicy.allowBlockOverride:
+                raise ValueError(
+                    f"block {b} sets startMode but startPolicy.allowBlockOverride is false"
+                )
+        return self
+
+
+#: Discriminated union over ``schemaVersion``. Consumers that only handle the runtime pace
+#: model still use ``WorkoutTemplateVersion`` (the 1.0 shape) after an explicit migration.
+WorkoutTemplate = Annotated[
+    WorkoutTemplateV1_0 | WorkoutTemplateV1_1,
+    Field(discriminator="schemaVersion"),
+]
+
+#: Plain (non-annotated) union for internal function signatures that accept either version.
+AnyWorkoutTemplate = WorkoutTemplateV1_0 | WorkoutTemplateV1_1

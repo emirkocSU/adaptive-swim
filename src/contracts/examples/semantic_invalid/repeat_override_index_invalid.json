@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.1",
+  "name": "Bad Repeat Override",
+  "poolLengthM": 25,
+  "stroke": "freestyle",
+  "startPolicy": {"defaultMode": "DIVE_START", "allowBlockOverride": true, "allowRepeatOverride": true},
+  "workoutGoal": "RACE_PACE",
+  "blocks": [
+    {"type": "repeat", "label": "main", "repetitions": 2, "distanceM": 100,
+     "rest": {"type": "none"},
+     "segments": [{"fromM": 0, "toM": 100, "mode": "even_pace", "targetPaceSecPer100M": 70.0}]}
+  ],
+  "repeatOverrides": [{"repeatIndex": 5, "startMode": "IN_WATER_PUSH_START"}]
+}

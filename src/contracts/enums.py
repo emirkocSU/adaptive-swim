@@ -23,6 +23,120 @@ class Stroke(_StrEnum):
     mixed = "mixed"
 
 
+# --------------------------------------------------------------------------- start mode / goal (Workout 1.1)
+class StartMode(_StrEnum):
+    """How a length / repeat begins. Affects the first-segment pace distribution.
+
+    The official distance at start is always 0 m regardless of start mode (ADR-036).
+    """
+
+    DIVE_START = "DIVE_START"
+    IN_WATER_PUSH_START = "IN_WATER_PUSH_START"
+    IN_WATER_STATIC_START = "IN_WATER_STATIC_START"
+
+
+class WorkoutGoal(_StrEnum):
+    RACE_PACE = "RACE_PACE"
+    THRESHOLD = "THRESHOLD"
+    AEROBIC = "AEROBIC"
+    TECHNIQUE = "TECHNIQUE"
+    TEST = "TEST"
+    RECOVERY = "RECOVERY"
+    MAX_PERFORMANCE = "MAX_PERFORMANCE"
+    CONTROLLED_RACE_EFFORT = "CONTROLLED_RACE_EFFORT"
+    CUSTOM = "CUSTOM"
+
+
+# --------------------------------------------------------------------------- pace profile taxonomy (ADR-034)
+class PaceProfileType(_StrEnum):
+    SPRINT_POSITIVE_SPLIT = "SPRINT_POSITIVE_SPLIT"
+    FAST_START_HOLD = "FAST_START_HOLD"
+    FAST_START_CONTROLLED_FADE = "FAST_START_CONTROLLED_FADE"
+    EVEN_PACE = "EVEN_PACE"
+    CONTROLLED_START = "CONTROLLED_START"
+    PROGRESSIVE_BUILD = "PROGRESSIVE_BUILD"
+    NEGATIVE_SPLIT = "NEGATIVE_SPLIT"
+    FINAL_ACCELERATION = "FINAL_ACCELERATION"
+    CUSTOM_COACH_PROFILE = "CUSTOM_COACH_PROFILE"
+    MODEL_GENERATED_CUSTOM = "MODEL_GENERATED_CUSTOM"
+    DISTANCE_SPECIFIC_MIXED = "DISTANCE_SPECIFIC_MIXED"
+
+
+class PaceProfileSource(_StrEnum):
+    """Authoritative priority (highest first):
+
+    COACH_AUTHORED > COACH_APPROVED_MODEL > DEFAULT_MODEL_GENERATED.
+    TEMPLATE and LEGACY_SEGMENTS are positioned explicitly by the selector.
+    """
+
+    COACH_AUTHORED = "COACH_AUTHORED"
+    COACH_APPROVED_MODEL = "COACH_APPROVED_MODEL"
+    DEFAULT_MODEL_GENERATED = "DEFAULT_MODEL_GENERATED"
+    TEMPLATE = "TEMPLATE"
+    LEGACY_SEGMENTS = "LEGACY_SEGMENTS"
+
+
+class ProfileApprovalStatus(_StrEnum):
+    DRAFT = "DRAFT"
+    COACH_APPROVED = "COACH_APPROVED"
+    COACH_LOCKED = "COACH_LOCKED"
+    APPROVED_BY_EXPLICIT_DEFAULT_POLICY = "APPROVED_BY_EXPLICIT_DEFAULT_POLICY"
+    REJECTED = "REJECTED"
+
+
+class PaceProfilePhase(_StrEnum):
+    """Analytical phase of a profile leg. Legs are NOT official wall splits."""
+
+    START_UNDERWATER = "START_UNDERWATER"
+    SURFACE_SWIM = "SURFACE_SWIM"
+    TURN_TRANSITION = "TURN_TRANSITION"
+    MID_RACE = "MID_RACE"
+    FINAL_ACCELERATION = "FINAL_ACCELERATION"
+    FINISH = "FINISH"
+    CUSTOM = "CUSTOM"
+
+
+class TotalTimeReconciliationMode(_StrEnum):
+    """Editor-layer only. ALLOW_INCONSISTENT_DRAFT never reaches live runtime."""
+
+    KEEP_TOTAL_REDISTRIBUTE = "KEEP_TOTAL_REDISTRIBUTE"
+    UPDATE_TOTAL = "UPDATE_TOTAL"
+    ALLOW_INCONSISTENT_DRAFT = "ALLOW_INCONSISTENT_DRAFT"
+
+
+class ProfileGenerationMode(_StrEnum):
+    """Coach-screen authoring mode (Phase 2 UI; contract-only in Phase 1)."""
+
+    AUTO_GENERATE = "AUTO_GENERATE"
+    GENERATE_AND_EDIT = "GENERATE_AND_EDIT"
+    MANUAL_PROFILE = "MANUAL_PROFILE"
+    TEMPLATE = "TEMPLATE"
+
+
+# --------------------------------------------------------------------------- physiology (advisory only)
+class HrControlMode(_StrEnum):
+    OFF = "OFF"
+    ADVISORY = "ADVISORY"
+
+
+class EffortTargetType(_StrEnum):
+    HR_ZONE = "HR_ZONE"
+    MAX_HR_PERCENT_RANGE = "MAX_HR_PERCENT_RANGE"
+    AEROBIC_THRESHOLD = "AEROBIC_THRESHOLD"
+    ANAEROBIC_THRESHOLD = "ANAEROBIC_THRESHOLD"
+    RPE = "RPE"
+    CONTROLLED_RACE_EFFORT = "CONTROLLED_RACE_EFFORT"
+    MAX_PERFORMANCE = "MAX_PERFORMANCE"
+
+
+# --------------------------------------------------------------------------- official distance authority (ADR-036)
+class OfficialDistanceAuthority(_StrEnum):
+    WORKOUT_GEOMETRY = "WORKOUT_GEOMETRY"
+    WALL_VERIFICATION = "WALL_VERIFICATION"
+    COMPLETED_LENGTH_COUNT = "COMPLETED_LENGTH_COUNT"
+    EXTERNAL_VERIFIED_WALL = "EXTERNAL_VERIFIED_WALL"
+
+
 class PaceMode(_StrEnum):
     even_pace = "even_pace"
     controlled_start = "controlled_start"
@@ -115,6 +229,12 @@ class ReasonCode(_StrEnum):
     COACH_OVERRIDE = "COACH_OVERRIDE"
     CLAMPED_TO_BOUNDS = "CLAMPED_TO_BOUNDS"
     APPLIED = "APPLIED"
+    # --- Workout 1.1 / approved-profile mainline (§12) ---
+    COACH_PROFILE_LOCKED = "COACH_PROFILE_LOCKED"
+    ML_CONFIDENCE_MISSING = "ML_CONFIDENCE_MISSING"
+    DATA_QUALITY_MISSING = "DATA_QUALITY_MISSING"
+    PROFILE_SOURCE_NOT_ELIGIBLE = "PROFILE_SOURCE_NOT_ELIGIBLE"
+    CURRENT_PROFILE_LEG_TARGET = "CURRENT_PROFILE_LEG_TARGET"
 
 
 # --------------------------------------------------------------------------- ghost
@@ -224,6 +344,13 @@ class EventType(_StrEnum):
     CoachPacingResetApplied = "CoachPacingResetApplied"
     ControlDecisionMade = "ControlDecisionMade"
     SessionRecovered = "SessionRecovered"
+    # --- pace-profile / planning lifecycle (§13; authored later, contracts now) ---
+    PaceProfileGenerated = "PaceProfileGenerated"
+    PaceProfileEdited = "PaceProfileEdited"
+    PaceProfileApproved = "PaceProfileApproved"
+    PaceProfileRejected = "PaceProfileRejected"
+    PaceProfileSelected = "PaceProfileSelected"
+    PaceProfileLocked = "PaceProfileLocked"
 
 
 # --------------------------------------------------------------------------- external data

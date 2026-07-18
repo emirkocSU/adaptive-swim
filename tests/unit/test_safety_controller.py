@@ -80,13 +80,13 @@ def test_ml_missing_confidence_abstains() -> None:
         PaceChangeRequest(81.0, source=PaceRequestSource.ML, inputDataQuality=0.9), _ctx()
     )
     assert d.decision is SafetyDecision.ABSTAIN_USE_COACH_PLAN
-    assert SafetyReasonCode.LOW_CONFIDENCE in d.reasonCodes
+    assert SafetyReasonCode.ML_CONFIDENCE_MISSING in d.reasonCodes
 
 
 def test_ml_missing_data_quality_abstains() -> None:
     d = SC.decide(PaceChangeRequest(81.0, source=PaceRequestSource.ML, confidence=0.9), _ctx())
     assert d.decision is SafetyDecision.ABSTAIN_USE_COACH_PLAN
-    assert SafetyReasonCode.LOW_DATA_QUALITY in d.reasonCodes
+    assert SafetyReasonCode.DATA_QUALITY_MISSING in d.reasonCodes
 
 
 def test_ml_low_confidence_abstains() -> None:
@@ -106,7 +106,7 @@ def test_coach_manual_does_not_require_ml_confidence() -> None:
 def test_rule_request_requires_data_quality() -> None:
     d = SC.decide(PaceChangeRequest(81.0, source=PaceRequestSource.RULE_BASED), _ctx())
     assert d.decision is SafetyDecision.ABSTAIN_USE_COACH_PLAN
-    assert SafetyReasonCode.LOW_DATA_QUALITY in d.reasonCodes
+    assert SafetyReasonCode.DATA_QUALITY_MISSING in d.reasonCodes
 
 
 def test_ml_cannot_override_coach_locked_profile() -> None:

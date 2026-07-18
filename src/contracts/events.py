@@ -27,6 +27,7 @@ from contracts._base import (
     PosFloat,
     SeqInt,
     StrictModel,
+    UnitRatio,
     approx_equal,
 )
 from contracts.enums import (
@@ -60,6 +61,16 @@ class WorkoutValidatedPayload(StrictModel):
 class SessionCreatedPayload(StrictModel):
     sessionId: NonEmptyStr
     workoutRef: NonEmptyStr
+    #: Workout 1.1 / approved-profile mainline metadata (optional for legacy 1.0 sessions).
+    workoutSchemaVersion: str | None = None
+    poolLengthM: int | None = None
+    defaultStartMode: str | None = None
+    selectedPaceProfileId: str | None = None
+    selectedPaceProfileVersion: str | None = None
+    selectedPaceProfileSource: str | None = None
+    selectedPaceProfileType: str | None = None
+    profileCoachLocked: bool = False
+    workoutGoal: str | None = None
 
 
 class SessionArmedPayload(StrictModel):
@@ -69,6 +80,8 @@ class SessionArmedPayload(StrictModel):
 class SessionStartedPayload(StrictModel):
     sessionId: NonEmptyStr
     startedAtMs: NonNegInt
+    resolvedFirstStartMode: str | None = None
+    targetTotalActiveTimeSec: NonNegFloat | None = None
 
 
 class SessionPausedPayload(StrictModel):
@@ -202,6 +215,51 @@ class ControlDecisionMadePayload(StrictModel):
         return self
 
 
+# --------------------------------------------------------------------------- pace-profile / planning payloads (§13)
+class _PaceProfileEventPayload(StrictModel):
+    """Shared shape for pace-profile lifecycle events (authored by a later UI/ML phase).
+
+    Defined now so persistence/replay contracts do not break when those phases land.
+    """
+
+    profileId: NonEmptyStr
+    profileVersion: NonEmptyStr
+    source: str
+    profileType: str
+    modelVersion: str | None = None
+    confidence: UnitRatio | None = None
+    targetTotalTimeSec: PosFloat
+    poolLengthM: int
+    startMode: str
+    changedLegIndices: list[NonNegInt] | None = None
+    actor: NonEmptyStr
+    reason: str | None = None
+
+
+class PaceProfileGeneratedPayload(_PaceProfileEventPayload):
+    pass
+
+
+class PaceProfileEditedPayload(_PaceProfileEventPayload):
+    pass
+
+
+class PaceProfileApprovedPayload(_PaceProfileEventPayload):
+    pass
+
+
+class PaceProfileRejectedPayload(_PaceProfileEventPayload):
+    pass
+
+
+class PaceProfileSelectedPayload(_PaceProfileEventPayload):
+    pass
+
+
+class PaceProfileLockedPayload(_PaceProfileEventPayload):
+    pass
+
+
 EventPayload = (
     WorkoutValidatedPayload
     | SessionCreatedPayload
@@ -221,6 +279,12 @@ EventPayload = (
     | CoachPacingResetRequestedPayload
     | CoachPacingResetAppliedPayload
     | ControlDecisionMadePayload
+    | PaceProfileGeneratedPayload
+    | PaceProfileEditedPayload
+    | PaceProfileApprovedPayload
+    | PaceProfileRejectedPayload
+    | PaceProfileSelectedPayload
+    | PaceProfileLockedPayload
 )
 
 #: Exactly one payload model per event type.
@@ -243,6 +307,12 @@ PAYLOAD_FOR_EVENT: dict[EventType, type[StrictModel]] = {
     EventType.CoachPacingResetRequested: CoachPacingResetRequestedPayload,
     EventType.CoachPacingResetApplied: CoachPacingResetAppliedPayload,
     EventType.ControlDecisionMade: ControlDecisionMadePayload,
+    EventType.PaceProfileGenerated: PaceProfileGeneratedPayload,
+    EventType.PaceProfileEdited: PaceProfileEditedPayload,
+    EventType.PaceProfileApproved: PaceProfileApprovedPayload,
+    EventType.PaceProfileRejected: PaceProfileRejectedPayload,
+    EventType.PaceProfileSelected: PaceProfileSelectedPayload,
+    EventType.PaceProfileLocked: PaceProfileLockedPayload,
 }
 # SessionRecovered is a replay-only marker handled in a later commit; it carries no
 # domain payload contract here.

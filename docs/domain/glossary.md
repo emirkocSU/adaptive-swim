@@ -86,3 +86,23 @@
   every decision carries reason codes. ML only suggests and never controls the ghost directly.
 - **Wall reconciliation orchestration** — a wall `RecordSplit` matching the expected wall
   reconciles a pending StopPause alignment exactly once; mid-pool has no official accounting.
+
+## Distance-specific pace-profile terms (ADR-034/035/036)
+
+- **ApprovedPaceProfile** — the single authoritative live plan input. Legs cover the distance
+  with no gap/overlap; leg durations sum exactly to the target total time.
+- **PaceProfileLeg** — one distance-specific leg (e.g. 0–15 m start/underwater). A leg is an
+  analytical phase, **not** an official wall split.
+- **Official split** — a length verified at a real 25 m / 50 m wall boundary. Only walls (and
+  workout geometry) establish official distance; wearable estimates never do.
+- **Start mode** — `DIVE_START`, `IN_WATER_PUSH_START`, or `IN_WATER_STATIC_START`. Resolved
+  per repeat (repeat override → block → workout default). Official distance at start is 0 m.
+- **Profile source authority** — `COACH_AUTHORED > COACH_APPROVED_MODEL >
+  DEFAULT_MODEL_GENERATED` (then TEMPLATE, LEGACY_SEGMENTS).
+- **Coach lock** — a coach-locked profile cannot be auto-overridden by ML/rule sources
+  (`COACH_PROFILE_LOCKED`); those may only suggest.
+- **Planning ML vs live adaptation ML** — the planning model produces DRAFT profiles offline
+  (gated by P1–P7); the live adaptation model suggests the next safe-boundary pace behind the
+  SafetyController (gated by G1–G7). Neither controls the ghost/clock/StopPause.
+- **Natural planned fade** — a short-distance positive split that is part of the plan; not a
+  StopPause and not an incident.

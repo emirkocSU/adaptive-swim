@@ -93,9 +93,21 @@ class SafetyController:
                 reasonCodes=(SafetyReasonCode.HEART_RATE_ONLY_REJECTED,),
             )
 
-        # ML can never override a coach-locked profile.
-        if request.source is PaceRequestSource.ML and context.coachLocked:
-            return abstain(SafetyReasonCode.COACH_PLAN_FALLBACK)
+        # ML can never override a coach-locked profile (either the request-level lock flag
+        # or the selected-profile lock metadata).
+        if request.source is PaceRequestSource.ML and (
+            context.coachLocked or context.profileCoachLocked
+        ):
+            return ControlDecision(
+                decision=SafetyDecision.ABSTAIN_USE_COACH_PLAN,
+                suggestedPaceSecPer100M=suggested,
+                appliedPaceSecPer100M=coach,
+                reasonCodes=(
+                    SafetyReasonCode.COACH_PROFILE_LOCKED,
+                    SafetyReasonCode.COACH_PLAN_FALLBACK,
+                ),
+                abstained=True,
+            )
 
         if context.adaptationMode is AdaptationMode.off:
             return abstain(SafetyReasonCode.MODE_OFF)
@@ -104,20 +116,22 @@ class SafetyController:
         if not context.isWallBoundary:
             return abstain(SafetyReasonCode.NOT_AT_WALL_BOUNDARY)
 
-        # Source-based confidence / data-quality requirements.
+        # Source-based confidence / data-quality requirements. A *missing* field is a
+        # distinct reason from a merely *low* one, so an ML request with no confidence /
+        # data quality abstains explicitly (it must never fall through to APPLY).
         if request.source is PaceRequestSource.ML:
-            if request.confidence is None or request.confidence < context.minConfidence:
+            if request.confidence is None:
+                return abstain(SafetyReasonCode.ML_CONFIDENCE_MISSING)
+            if request.inputDataQuality is None:
+                return abstain(SafetyReasonCode.DATA_QUALITY_MISSING)
+            if request.confidence < context.minConfidence:
                 return abstain(SafetyReasonCode.LOW_CONFIDENCE)
-            if (
-                request.inputDataQuality is None
-                or request.inputDataQuality < context.minDataQuality
-            ):
+            if request.inputDataQuality < context.minDataQuality:
                 return abstain(SafetyReasonCode.LOW_DATA_QUALITY)
         elif request.source is PaceRequestSource.RULE_BASED:
-            if (
-                request.inputDataQuality is None
-                or request.inputDataQuality < context.minDataQuality
-            ):
+            if request.inputDataQuality is None:
+                return abstain(SafetyReasonCode.DATA_QUALITY_MISSING)
+            if request.inputDataQuality < context.minDataQuality:
                 return abstain(SafetyReasonCode.LOW_DATA_QUALITY)
             if request.confidence is not None and request.confidence < context.minConfidence:
                 return abstain(SafetyReasonCode.LOW_CONFIDENCE)

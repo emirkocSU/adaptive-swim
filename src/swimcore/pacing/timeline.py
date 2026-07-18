@@ -73,13 +73,35 @@ def _assert_compilable(workout: WorkoutTemplateVersion) -> None:
         for s, seg in enumerate(segs):
             if seg.toM <= seg.fromM + EPSILON:
                 raise InvalidPaceCurveError(f"block {b} segment {s}: reversed/zero-length")
-            # direction + presence for controlled_start / progressive
+            # Presence + finiteness of endpoints (the math layer owns this).
             resolve_curve_endpoints(
                 seg.mode.value,
                 seg.targetPaceSecPer100M,
                 seg.startPaceSecPer100M,
                 seg.endPaceSecPer100M,
             )
+            # Pace *direction* is a compiler-level guard (smaller sec/100m = faster):
+            # controlled_start must begin slower-or-equal to target; progressive must end
+            # faster-or-equal to target. The low-level endpoint resolver deliberately does
+            # not re-enforce this, so the compiler asserts it explicitly here.
+            if (
+                seg.mode.value == "controlled_start"
+                and seg.startPaceSecPer100M is not None
+                and seg.startPaceSecPer100M < seg.targetPaceSecPer100M - EPSILON
+            ):
+                raise InvalidPaceCurveError(
+                    f"block {b} segment {s}: controlled_start startPace "
+                    f"{seg.startPaceSecPer100M} must be >= target {seg.targetPaceSecPer100M}"
+                )
+            if (
+                seg.mode.value == "progressive"
+                and seg.endPaceSecPer100M is not None
+                and seg.endPaceSecPer100M > seg.targetPaceSecPer100M + EPSILON
+            ):
+                raise InvalidPaceCurveError(
+                    f"block {b} segment {s}: progressive endPace "
+                    f"{seg.endPaceSecPer100M} must be <= target {seg.targetPaceSecPer100M}"
+                )
         for s in range(len(segs) - 1):
             if segs[s + 1].fromM > segs[s].toM + EPSILON:
                 raise InvalidPaceCurveError(f"block {b}: gap before segment {s + 1}")

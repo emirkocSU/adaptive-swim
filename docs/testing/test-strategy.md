@@ -132,3 +132,23 @@ unverified or normal pace loss must not reposition the ghost mid-length.
   wall, RUNNING during StopPause) plus atomicity (failed command unchanged, failed alignment
   doesn't freeze the clock, failed pace decision doesn't change target, failed reconciliation
   leaves pending intact).
+
+## Mainline (approved pace profiles) test strategy
+
+- **Workout 1.1 / start mode:** schema requiredness, explicit migration (no guessed start
+  mode), and resolution precedence (`test_workout_v1_1_schema`, `test_workout_v1_1_migration`,
+  `test_start_mode_resolution`).
+- **Pace profiles:** exact-distance coverage, exact target-time reconciliation, authority
+  order, coach lock, default-model opt-in, 25 m vs 50 m mismatch, leg-vs-official-split
+  distinction, sprint positive split, negative split
+  (`test_approved_pace_profile_contracts`, `test_pace_profile_selection`,
+  `test_pace_profile_compiler`).
+- **Sensor-distance safety:** estimated distance cannot alter official split/total, a normal
+  dive cannot reposition the ghost, StopPause alignment is visual/temporary
+  (`test_official_distance_authority`).
+- **Safety profile authority:** ML missing confidence/quality → distinct abstain reasons,
+  coach-locked profile blocks ML auto-apply, current-interval bounds
+  (`test_safety_profile_authority`, `test_session_current_profile_context`).
+- **Property invariants:** deterministic selection respecting priority; compiled duration
+  equals profile total; official distance is a pool-length multiple
+  (`tests/property/test_profile_and_session_invariants`).

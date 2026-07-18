@@ -32,6 +32,7 @@ markers = [
     "e2e: end-to-end headless vertical slice (later commits)",
     "property: property-based invariants (later commits)",
     "replay: golden replay determinism (later commits)",
+    "architecture: architecture/purity guardrails",
 ]
 
 [tool.mypy]

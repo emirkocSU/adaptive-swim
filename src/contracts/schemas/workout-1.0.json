@@ -340,6 +340,17 @@
           "title": "Segments",
           "type": "array"
         },
+        "startMode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StartMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "type": {
           "const": "repeat",
           "title": "Type",
@@ -422,6 +433,16 @@
         "custom"
       ],
       "title": "SetLabel",
+      "type": "string"
+    },
+    "StartMode": {
+      "description": "How a length / repeat begins. Affects the first-segment pace distribution.\n\nThe official distance at start is always 0 m regardless of start mode (ADR-036).",
+      "enum": [
+        "DIVE_START",
+        "IN_WATER_PUSH_START",
+        "IN_WATER_STATIC_START"
+      ],
+      "title": "StartMode",
       "type": "string"
     },
     "Stroke": {

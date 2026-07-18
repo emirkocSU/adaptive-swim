@@ -1,0 +1,44 @@
+{
+  "profileId": "prof-100-sprint-pos",
+  "profileVersion": "1",
+  "source": "COACH_AUTHORED",
+  "profileType": "SPRINT_POSITIVE_SPLIT",
+  "approvalStatus": "COACH_APPROVED",
+  "coachLocked": false,
+  "poolLengthM": 25,
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "workoutGoal": "MAX_PERFORMANCE",
+  "targetTotalTimeSec": 55.4,
+  "reportingSplitGranularityM": 25,
+  "legs": [
+    {
+      "legIndex": 0,
+      "fromM": 0,
+      "toM": 25,
+      "targetDurationSec": 13.0,
+      "phaseType": "START_UNDERWATER"
+    },
+    {
+      "legIndex": 1,
+      "fromM": 25,
+      "toM": 50,
+      "targetDurationSec": 13.6,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 2,
+      "fromM": 50,
+      "toM": 75,
+      "targetDurationSec": 14.2,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 3,
+      "fromM": 75,
+      "toM": 100,
+      "targetDurationSec": 14.6,
+      "phaseType": "FINISH"
+    }
+  ]
+}

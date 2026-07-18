@@ -86,12 +86,43 @@ validation, coach/rule/ML pace-source rules, loss-less reason codes, StopPause m
 preservation, current-interval block resolution) are implemented and covered by tests. CI is
 green (386 tests).
 
-## Pending mainline integration (NOT in this pass)
+## Mainline integration (completed, pre-Commit 7)
 
 The distance-specific approved-pace-profile / Workout 1.1 start-mode / planning-ML mainline
-integration (start-mode taxonomy, ApprovedPaceProfile leg contract, deterministic
-distance-specific profile compilation, P1–P7 planning-model gate, reporting-contract
-expansion, the new semantic rule codes, and ADR-034/035/036) depends on the authoritative
-source document `Adaptive_Swim_Model_Tabanli_Tempo_ve_Baslangic_Guncellemesi_TR.md`, which was
-not available in this pass. These remain to be implemented once that document is provided, so
-the mainline contract/core integration is not yet complete.
+integration is now implemented as a set of mainline corrections/backports *before* Commit 7
+(historical Commit 1–10 numbering is unchanged):
+
+- Workout 1.1 (`WorkoutTemplateV1_1`, `StartPolicy`, per-block/per-repeat overrides,
+  `workoutGoal`) + explicit `migrate_workout_1_0_to_1_1` (start mode never guessed).
+- `StartMode` taxonomy and deterministic resolution (repeat → block → default).
+- `ApprovedPaceProfile` + `PaceProfileLeg` contract with exact target-time reconciliation;
+  leg ≠ official split.
+- Deterministic `select_live_pace_profile` (authority order, coach lock, opt-in default) and
+  `compile_approved_pace_profile` (bit-identical timeline).
+- Official-distance authority + wearable-estimate restrictions (ADR-036).
+- SafetyController profile authority: `profileSource` / `profileCoachLocked` /
+  current-profile-leg target; distinct `ML_CONFIDENCE_MISSING` / `DATA_QUALITY_MISSING` /
+  `COACH_PROFILE_LOCKED` reasons; exhaustive reason-code mapping.
+- Pace-profile lifecycle event contracts (§13) and report-context expansion (§20), defined
+  now for forward-compatible persistence/replay.
+- New semantic rule codes (§21) and ADR-034/035/036.
+
+No real ML, UI, wearable connector, persistence/replay, or analytics implementation is added
+in this pass. Commit 7 (append-only event log + replay) is still not started.
+
+## Roadmap phases (updated for the mainline)
+
+- **Phase 1 (now):** Workout 1.1 start-mode contracts; approved pace-profile contracts;
+  deterministic profile selection/compilation/execution; official-distance safety;
+  Session/Safety integration. No real ML, no UI, no wearable connector.
+- **Phase 2:** coach workout form; visual pace-profile editor; manual/template/generate-edit
+  workflows; local profile approval/locking; optional planning model only if P1–P7 passes.
+- **Phase 3 — Pool Pilot 0:** coach-authored/approved fixed profiles; 25 m vs 50 m behavior;
+  official distance & wall validation; no live adaptive ML claim.
+- **Phase 4:** consented wearable/import data; start/turn/HR metadata; personal calibration
+  dataset; coach feedback capture.
+- **Phase 5:** deterministic rule-based adaptation; planning model shadow/generate-edit
+  evaluation; personal calibration experiments; coach remains final authority.
+- **Phase 6:** live adaptation ML only if the existing G1–G7 gate passes; planning and
+  adaptation models evaluated separately.
+- **Phase 7+:** comparative pilots, cloud, OEM per the existing roadmap.

@@ -182,7 +182,13 @@
         "CoachPacingResetRequested",
         "CoachPacingResetApplied",
         "ControlDecisionMade",
-        "SessionRecovered"
+        "SessionRecovered",
+        "PaceProfileGenerated",
+        "PaceProfileEdited",
+        "PaceProfileApproved",
+        "PaceProfileRejected",
+        "PaceProfileSelected",
+        "PaceProfileLocked"
       ],
       "title": "EventType",
       "type": "string"
@@ -326,6 +332,648 @@
       "title": "LongStopConfirmedPayload",
       "type": "object"
     },
+    "PaceProfileApprovedPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "changedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changedlegindices"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "poolLengthM": {
+          "title": "Poollengthm",
+          "type": "integer"
+        },
+        "profileId": {
+          "minLength": 1,
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileType": {
+          "title": "Profiletype",
+          "type": "string"
+        },
+        "profileVersion": {
+          "minLength": 1,
+          "title": "Profileversion",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startMode": {
+          "title": "Startmode",
+          "type": "string"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileVersion",
+        "source",
+        "profileType",
+        "targetTotalTimeSec",
+        "poolLengthM",
+        "startMode",
+        "actor"
+      ],
+      "title": "PaceProfileApprovedPayload",
+      "type": "object"
+    },
+    "PaceProfileEditedPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "changedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changedlegindices"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "poolLengthM": {
+          "title": "Poollengthm",
+          "type": "integer"
+        },
+        "profileId": {
+          "minLength": 1,
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileType": {
+          "title": "Profiletype",
+          "type": "string"
+        },
+        "profileVersion": {
+          "minLength": 1,
+          "title": "Profileversion",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startMode": {
+          "title": "Startmode",
+          "type": "string"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileVersion",
+        "source",
+        "profileType",
+        "targetTotalTimeSec",
+        "poolLengthM",
+        "startMode",
+        "actor"
+      ],
+      "title": "PaceProfileEditedPayload",
+      "type": "object"
+    },
+    "PaceProfileGeneratedPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "changedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changedlegindices"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "poolLengthM": {
+          "title": "Poollengthm",
+          "type": "integer"
+        },
+        "profileId": {
+          "minLength": 1,
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileType": {
+          "title": "Profiletype",
+          "type": "string"
+        },
+        "profileVersion": {
+          "minLength": 1,
+          "title": "Profileversion",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startMode": {
+          "title": "Startmode",
+          "type": "string"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileVersion",
+        "source",
+        "profileType",
+        "targetTotalTimeSec",
+        "poolLengthM",
+        "startMode",
+        "actor"
+      ],
+      "title": "PaceProfileGeneratedPayload",
+      "type": "object"
+    },
+    "PaceProfileLockedPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "changedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changedlegindices"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "poolLengthM": {
+          "title": "Poollengthm",
+          "type": "integer"
+        },
+        "profileId": {
+          "minLength": 1,
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileType": {
+          "title": "Profiletype",
+          "type": "string"
+        },
+        "profileVersion": {
+          "minLength": 1,
+          "title": "Profileversion",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startMode": {
+          "title": "Startmode",
+          "type": "string"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileVersion",
+        "source",
+        "profileType",
+        "targetTotalTimeSec",
+        "poolLengthM",
+        "startMode",
+        "actor"
+      ],
+      "title": "PaceProfileLockedPayload",
+      "type": "object"
+    },
+    "PaceProfileRejectedPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "changedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changedlegindices"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "poolLengthM": {
+          "title": "Poollengthm",
+          "type": "integer"
+        },
+        "profileId": {
+          "minLength": 1,
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileType": {
+          "title": "Profiletype",
+          "type": "string"
+        },
+        "profileVersion": {
+          "minLength": 1,
+          "title": "Profileversion",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startMode": {
+          "title": "Startmode",
+          "type": "string"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileVersion",
+        "source",
+        "profileType",
+        "targetTotalTimeSec",
+        "poolLengthM",
+        "startMode",
+        "actor"
+      ],
+      "title": "PaceProfileRejectedPayload",
+      "type": "object"
+    },
+    "PaceProfileSelectedPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "changedLegIndices": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Changedlegindices"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "poolLengthM": {
+          "title": "Poollengthm",
+          "type": "integer"
+        },
+        "profileId": {
+          "minLength": 1,
+          "title": "Profileid",
+          "type": "string"
+        },
+        "profileType": {
+          "title": "Profiletype",
+          "type": "string"
+        },
+        "profileVersion": {
+          "minLength": 1,
+          "title": "Profileversion",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startMode": {
+          "title": "Startmode",
+          "type": "string"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "profileId",
+        "profileVersion",
+        "source",
+        "profileType",
+        "targetTotalTimeSec",
+        "poolLengthM",
+        "startMode",
+        "actor"
+      ],
+      "title": "PaceProfileSelectedPayload",
+      "type": "object"
+    },
     "PaceRequestSource": {
       "enum": [
         "COACH_MANUAL",
@@ -395,7 +1043,12 @@
         "BOUNDED_APPLY",
         "COACH_OVERRIDE",
         "CLAMPED_TO_BOUNDS",
-        "APPLIED"
+        "APPLIED",
+        "COACH_PROFILE_LOCKED",
+        "ML_CONFIDENCE_MISSING",
+        "DATA_QUALITY_MISSING",
+        "PROFILE_SOURCE_NOT_ELIGIBLE",
+        "CURRENT_PROFILE_LEG_TARGET"
       ],
       "title": "ReasonCode",
       "type": "string"
@@ -472,15 +1125,116 @@
     "SessionCreatedPayload": {
       "additionalProperties": false,
       "properties": {
+        "defaultStartMode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Defaultstartmode"
+        },
+        "poolLengthM": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Poollengthm"
+        },
+        "profileCoachLocked": {
+          "default": false,
+          "title": "Profilecoachlocked",
+          "type": "boolean"
+        },
+        "selectedPaceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedpaceprofileid"
+        },
+        "selectedPaceProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedpaceprofilesource"
+        },
+        "selectedPaceProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedpaceprofiletype"
+        },
+        "selectedPaceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedpaceprofileversion"
+        },
         "sessionId": {
           "minLength": 1,
           "title": "Sessionid",
           "type": "string"
         },
+        "workoutGoal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workoutgoal"
+        },
         "workoutRef": {
           "minLength": 1,
           "title": "Workoutref",
           "type": "string"
+        },
+        "workoutSchemaVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workoutschemaversion"
         }
       },
       "required": [
@@ -535,6 +1289,18 @@
     "SessionStartedPayload": {
       "additionalProperties": false,
       "properties": {
+        "resolvedFirstStartMode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolvedfirststartmode"
+        },
         "sessionId": {
           "minLength": 1,
           "title": "Sessionid",
@@ -544,6 +1310,19 @@
           "minimum": 0,
           "title": "Startedatms",
           "type": "integer"
+        },
+        "targetTotalActiveTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targettotalactivetimesec"
         }
       },
       "required": [
@@ -1216,6 +1995,24 @@
         },
         {
           "$ref": "#/$defs/ControlDecisionMadePayload"
+        },
+        {
+          "$ref": "#/$defs/PaceProfileGeneratedPayload"
+        },
+        {
+          "$ref": "#/$defs/PaceProfileEditedPayload"
+        },
+        {
+          "$ref": "#/$defs/PaceProfileApprovedPayload"
+        },
+        {
+          "$ref": "#/$defs/PaceProfileRejectedPayload"
+        },
+        {
+          "$ref": "#/$defs/PaceProfileSelectedPayload"
+        },
+        {
+          "$ref": "#/$defs/PaceProfileLockedPayload"
         }
       ],
       "title": "Payload"

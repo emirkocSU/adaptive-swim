@@ -19,12 +19,15 @@ from pydantic import BaseModel
 
 from contracts.analytics import SessionReport
 from contracts.events import EventEnvelope
-from contracts.workout import WorkoutTemplateVersion
+from contracts.pace_profiles import ApprovedPaceProfile
+from contracts.workout import WorkoutTemplateV1_1, WorkoutTemplateVersion
 
 _SCHEMA_DIR = Path(__file__).resolve().parents[1] / "contracts" / "schemas"
 
 _MODELS: dict[str, type[BaseModel]] = {
     "workout-1.0.json": WorkoutTemplateVersion,
+    "workout-1.1.json": WorkoutTemplateV1_1,
+    "approved-pace-profile-1.0.json": ApprovedPaceProfile,
     "event-envelope-1.0.json": EventEnvelope,
     "session-report-1.0.json": SessionReport,
 }

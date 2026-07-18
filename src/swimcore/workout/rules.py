@@ -13,10 +13,10 @@ from contracts._base import FLOAT_TOLERANCE, approx_equal
 from contracts.enums import AdaptationMode, FeedbackCapability, IssueSeverity, PaceMode
 from contracts.errors import ValidationIssue
 from contracts.workout import (
+    AnyWorkoutTemplate,
     PaceSegment,
     RepeatBlock,
     RestInterval,
-    WorkoutTemplateVersion,
 )
 from swimcore.workout.context import WorkoutValidationContext
 
@@ -67,6 +67,21 @@ class RuleCode(StrEnum):
     START_PACE_NOT_ALLOWED_FOR_MODE = "START_PACE_NOT_ALLOWED_FOR_MODE"
     # RULE-012 negative split ordering
     NEGATIVE_SPLIT_ORDER_INVALID = "NEGATIVE_SPLIT_ORDER_INVALID"
+    # RULE-013 Workout 1.1 start-mode / approved-profile semantics (§21)
+    START_MODE_REQUIRED = "START_MODE_REQUIRED"
+    START_OVERRIDE_NOT_ALLOWED = "START_OVERRIDE_NOT_ALLOWED"
+    REPEAT_OVERRIDE_INDEX_INVALID = "REPEAT_OVERRIDE_INDEX_INVALID"
+    PACE_PROFILE_NOT_APPROVED = "PACE_PROFILE_NOT_APPROVED"
+    PACE_PROFILE_POOL_MISMATCH = "PACE_PROFILE_POOL_MISMATCH"
+    PACE_PROFILE_START_MODE_MISMATCH = "PACE_PROFILE_START_MODE_MISMATCH"
+    PACE_PROFILE_STROKE_MISMATCH = "PACE_PROFILE_STROKE_MISMATCH"
+    PACE_PROFILE_COVERAGE_GAP = "PACE_PROFILE_COVERAGE_GAP"
+    PACE_PROFILE_OVERLAP = "PACE_PROFILE_OVERLAP"
+    PACE_PROFILE_DURATION_MISMATCH = "PACE_PROFILE_DURATION_MISMATCH"
+    PACE_PROFILE_TOTAL_TIME_MISMATCH = "PACE_PROFILE_TOTAL_TIME_MISMATCH"
+    DEFAULT_MODEL_PROFILE_NOT_OPTED_IN = "DEFAULT_MODEL_PROFILE_NOT_OPTED_IN"
+    AMBIGUOUS_LIVE_PROFILE = "AMBIGUOUS_LIVE_PROFILE"
+    PHYSIOLOGY_TARGET_INVALID = "PHYSIOLOGY_TARGET_INVALID"
 
 
 def _issue(path: str, rule: RuleCode, message: str, severity: IssueSeverity) -> ValidationIssue:
@@ -83,7 +98,7 @@ def _warn(path: str, rule: RuleCode, message: str) -> ValidationIssue:
 
 # --------------------------------------------------------------------------- RULE-001
 def rule_001_contiguous_coverage(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -142,7 +157,7 @@ def rule_001_contiguous_coverage(
 
 # --------------------------------------------------------------------------- RULE-002
 def rule_002_pool_length_multiple(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -178,7 +193,7 @@ def _is_wall_multiple(value: float, pool: int) -> bool:
 
 # --------------------------------------------------------------------------- RULE-003
 def rule_003_pace_bounds_direction(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -214,7 +229,7 @@ def rule_003_pace_bounds_direction(
 
 # --------------------------------------------------------------------------- RULE-004
 def rule_004_progressive_mode(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -254,7 +269,7 @@ def rule_004_progressive_mode(
 
 # --------------------------------------------------------------------------- RULE-005
 def rule_005_adaptation_bounds_consistency(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -333,7 +348,7 @@ _ESSENTIAL_CAPABILITIES = frozenset({FeedbackCapability.SHOW_GHOST})
 
 
 def rule_006_feedback_capability(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -375,7 +390,7 @@ def rule_006_feedback_capability(
 
 # --------------------------------------------------------------------------- RULE-007
 def rule_007_total_distance(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -402,7 +417,7 @@ def rule_007_total_distance(
 
 # --------------------------------------------------------------------------- RULE-008
 def rule_008_ghost_source_references(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -451,7 +466,7 @@ def _reference_issue(
 
 # --------------------------------------------------------------------------- RULE-009
 def rule_009_rest_interval_sanity(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -508,7 +523,7 @@ def _segment_duration_sec(seg: PaceSegment) -> float:
 
 # --------------------------------------------------------------------------- RULE-010
 def rule_010_schema_version(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -526,7 +541,7 @@ def rule_010_schema_version(
 
 # --------------------------------------------------------------------------- RULE-011
 def rule_011_controlled_start(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
@@ -566,28 +581,111 @@ def rule_011_controlled_start(
 
 
 # --------------------------------------------------------------------------- RULE-012
+def _segment_terminal_pace(seg: PaceSegment) -> float:
+    """Terminal (exit) pace of a segment: end pace for progressive, else target."""
+    if seg.mode is PaceMode.progressive and seg.endPaceSecPer100M is not None:
+        return seg.endPaceSecPer100M
+    return seg.targetPaceSecPer100M
+
+
 def rule_012_negative_split_order(
-    workout: WorkoutTemplateVersion,
+    workout: AnyWorkoutTemplate,
     ctx: WorkoutValidationContext,
     has_context: bool,
 ) -> list[ValidationIssue]:
-    """Consecutive negative_split_part segments may not get slower (numerically larger)."""
+    """Negative-split ordering.
+
+    The FIRST ``negative_split_part`` must be no slower than the terminal pace of the
+    preceding (normal/progressive) segment; consecutive negative-split parts may not get
+    slower (numerically larger) than the previous part.
+    """
     issues: list[ValidationIssue] = []
     for b, block in enumerate(workout.blocks):
-        prev_pace: float | None = None
-        prev_index: int | None = None
+        prev_ns_pace: float | None = None
+        prev_ns_index: int | None = None
+        prev_terminal: float | None = None
+        prev_terminal_index: int | None = None
         for s, seg in enumerate(block.segments):
             if seg.mode is not PaceMode.negative_split_part:
+                prev_terminal = _segment_terminal_pace(seg)
+                prev_terminal_index = s
                 continue
-            if prev_pace is not None and seg.targetPaceSecPer100M > prev_pace + _TOL:
+            # first negative-split part vs the previous segment's terminal pace
+            if (
+                prev_ns_pace is None
+                and prev_terminal is not None
+                and seg.targetPaceSecPer100M > prev_terminal + _TOL
+            ):
+                issues.append(
+                    _err(
+                        f"blocks[{b}].segments[{s}].targetPaceSecPer100M",
+                        RuleCode.NEGATIVE_SPLIT_ORDER_INVALID,
+                        f"first negative-split segment {s} ({seg.targetPaceSecPer100M}) is "
+                        f"slower than the terminal pace of segment {prev_terminal_index} "
+                        f"({prev_terminal}); a negative split must not start slower",
+                    )
+                )
+            if prev_ns_pace is not None and seg.targetPaceSecPer100M > prev_ns_pace + _TOL:
                 issues.append(
                     _err(
                         f"blocks[{b}].segments[{s}].targetPaceSecPer100M",
                         RuleCode.NEGATIVE_SPLIT_ORDER_INVALID,
                         f"negative-split segment {s} ({seg.targetPaceSecPer100M}) is slower "
-                        f"than segment {prev_index} ({prev_pace}); later parts must not slow down",
+                        f"than segment {prev_ns_index} ({prev_ns_pace}); later parts must "
+                        f"not slow down",
                     )
                 )
-            prev_pace = seg.targetPaceSecPer100M
-            prev_index = s
+            prev_ns_pace = seg.targetPaceSecPer100M
+            prev_ns_index = s
+    return issues
+
+
+# --------------------------------------------------------------------------- RULE-013 (Workout 1.1)
+def rule_013_start_mode_and_overrides(
+    workout: AnyWorkoutTemplate,
+    ctx: WorkoutValidationContext,
+    has_context: bool,
+) -> list[ValidationIssue]:
+    """Workout 1.1 start-mode / repeat-override semantics.
+
+    A 1.0 workout has no start policy, so this rule is a no-op for it. For 1.1 it checks that
+    every repeat override targets a valid repeat index and respects the start policy. The
+    pydantic model already enforces most of this at construction; this rule surfaces the same
+    problems as machine-readable ``ValidationIssue`` objects for the validation report.
+    """
+    issues: list[ValidationIssue] = []
+    start_policy = getattr(workout, "startPolicy", None)
+    if start_policy is None:
+        return issues  # 1.0 workout: nothing to check
+    overrides = getattr(workout, "repeatOverrides", []) or []
+    blocks = workout.blocks
+    max_reps = max((b.repetitions for b in blocks), default=0)
+    seen: set[int] = set()
+    for ov in overrides:
+        if ov.repeatIndex in seen or not (0 <= ov.repeatIndex < max_reps):
+            issues.append(
+                _err(
+                    f"repeatOverrides[{ov.repeatIndex}]",
+                    RuleCode.REPEAT_OVERRIDE_INDEX_INVALID,
+                    f"repeatIndex {ov.repeatIndex} is duplicate or out of range [0,{max_reps})",
+                )
+            )
+        seen.add(ov.repeatIndex)
+        if ov.startMode is not None and not start_policy.allowRepeatOverride:
+            issues.append(
+                _err(
+                    f"repeatOverrides[{ov.repeatIndex}].startMode",
+                    RuleCode.START_OVERRIDE_NOT_ALLOWED,
+                    "repeat override sets startMode but startPolicy.allowRepeatOverride is false",
+                )
+            )
+    for b, block in enumerate(blocks):
+        if getattr(block, "startMode", None) is not None and not start_policy.allowBlockOverride:
+            issues.append(
+                _err(
+                    f"blocks[{b}].startMode",
+                    RuleCode.START_OVERRIDE_NOT_ALLOWED,
+                    "block sets startMode but startPolicy.allowBlockOverride is false",
+                )
+            )
     return issues

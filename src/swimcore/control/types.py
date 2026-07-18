@@ -28,6 +28,12 @@ class SafetyReasonCode(StrEnum):
     COACH_PLAN_FALLBACK = "COACH_PLAN_FALLBACK"
     APPLIED_WITHIN_BOUNDS = "APPLIED_WITHIN_BOUNDS"
     HEART_RATE_ONLY_REJECTED = "HEART_RATE_ONLY_REJECTED"
+    # --- approved-profile mainline (§12) ---
+    COACH_PROFILE_LOCKED = "COACH_PROFILE_LOCKED"
+    ML_CONFIDENCE_MISSING = "ML_CONFIDENCE_MISSING"
+    DATA_QUALITY_MISSING = "DATA_QUALITY_MISSING"
+    PROFILE_SOURCE_NOT_ELIGIBLE = "PROFILE_SOURCE_NOT_ELIGIBLE"
+    CURRENT_PROFILE_LEG_TARGET = "CURRENT_PROFILE_LEG_TARGET"
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +60,11 @@ class SafetyContext:
     minConfidence: float = 0.5
     minDataQuality: float = 0.5
     coachLocked: bool = False
+    #: Approved-profile context (§12). Populated from the session's selected profile.
+    profileSource: str | None = None
+    profileCoachLocked: bool = False
+    currentProfileLegIndex: int | None = None
+    currentTargetPaceSecPer100M: float | None = None
 
 
 @dataclass(frozen=True, slots=True)

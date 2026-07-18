@@ -1,0 +1,505 @@
+{
+  "$defs": {
+    "CoachProfileMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "authoredBy": {
+          "minLength": 1,
+          "title": "Authoredby",
+          "type": "string"
+        },
+        "editedLegIndices": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Editedlegindices",
+          "type": "array"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "authoredBy"
+      ],
+      "title": "CoachProfileMetadata",
+      "type": "object"
+    },
+    "EffortTargetType": {
+      "enum": [
+        "HR_ZONE",
+        "MAX_HR_PERCENT_RANGE",
+        "AEROBIC_THRESHOLD",
+        "ANAEROBIC_THRESHOLD",
+        "RPE",
+        "CONTROLLED_RACE_EFFORT",
+        "MAX_PERFORMANCE"
+      ],
+      "title": "EffortTargetType",
+      "type": "string"
+    },
+    "HrControlMode": {
+      "enum": [
+        "OFF",
+        "ADVISORY"
+      ],
+      "title": "HrControlMode",
+      "type": "string"
+    },
+    "ModelProfileMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "coachConstraintVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coachconstraintversion"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "generalModelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generalmodelversion"
+        },
+        "generatedAtMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generatedatms"
+        },
+        "modelVersion": {
+          "minLength": 1,
+          "title": "Modelversion",
+          "type": "string"
+        },
+        "personalCalibrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Personalcalibrationversion"
+        },
+        "profileGenerationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profilegenerationid"
+        }
+      },
+      "required": [
+        "modelVersion"
+      ],
+      "title": "ModelProfileMetadata",
+      "type": "object"
+    },
+    "PaceProfileLeg": {
+      "additionalProperties": false,
+      "description": "One distance-specific leg of a profile. Not an official wall split.",
+      "properties": {
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "legIndex": {
+          "minimum": 0,
+          "title": "Legindex",
+          "type": "integer"
+        },
+        "phaseType": {
+          "$ref": "#/$defs/PaceProfilePhase"
+        },
+        "targetDurationSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targetdurationsec",
+          "type": "number"
+        },
+        "toM": {
+          "exclusiveMinimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "legIndex",
+        "fromM",
+        "toM",
+        "targetDurationSec",
+        "phaseType"
+      ],
+      "title": "PaceProfileLeg",
+      "type": "object"
+    },
+    "PaceProfilePhase": {
+      "description": "Analytical phase of a profile leg. Legs are NOT official wall splits.",
+      "enum": [
+        "START_UNDERWATER",
+        "SURFACE_SWIM",
+        "TURN_TRANSITION",
+        "MID_RACE",
+        "FINAL_ACCELERATION",
+        "FINISH",
+        "CUSTOM"
+      ],
+      "title": "PaceProfilePhase",
+      "type": "string"
+    },
+    "PaceProfileSource": {
+      "description": "Authoritative priority (highest first):\n\nCOACH_AUTHORED > COACH_APPROVED_MODEL > DEFAULT_MODEL_GENERATED.\nTEMPLATE and LEGACY_SEGMENTS are positioned explicitly by the selector.",
+      "enum": [
+        "COACH_AUTHORED",
+        "COACH_APPROVED_MODEL",
+        "DEFAULT_MODEL_GENERATED",
+        "TEMPLATE",
+        "LEGACY_SEGMENTS"
+      ],
+      "title": "PaceProfileSource",
+      "type": "string"
+    },
+    "PaceProfileType": {
+      "enum": [
+        "SPRINT_POSITIVE_SPLIT",
+        "FAST_START_HOLD",
+        "FAST_START_CONTROLLED_FADE",
+        "EVEN_PACE",
+        "CONTROLLED_START",
+        "PROGRESSIVE_BUILD",
+        "NEGATIVE_SPLIT",
+        "FINAL_ACCELERATION",
+        "CUSTOM_COACH_PROFILE",
+        "MODEL_GENERATED_CUSTOM",
+        "DISTANCE_SPECIFIC_MIXED"
+      ],
+      "title": "PaceProfileType",
+      "type": "string"
+    },
+    "PhysiologyTarget": {
+      "additionalProperties": false,
+      "description": "Optional physiological target attached to a workout or approved pace profile.",
+      "properties": {
+        "effortTargetType": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EffortTargetType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "hrControlMode": {
+          "$ref": "#/$defs/HrControlMode",
+          "default": "ADVISORY"
+        },
+        "maxHrPercentMax": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxhrpercentmax"
+        },
+        "maxHrPercentMin": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxhrpercentmin"
+        },
+        "rpeTarget": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rpetarget"
+        },
+        "targetHrZone": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targethrzone"
+        }
+      },
+      "title": "PhysiologyTarget",
+      "type": "object"
+    },
+    "ProfileApprovalStatus": {
+      "enum": [
+        "DRAFT",
+        "COACH_APPROVED",
+        "COACH_LOCKED",
+        "APPROVED_BY_EXPLICIT_DEFAULT_POLICY",
+        "REJECTED"
+      ],
+      "title": "ProfileApprovalStatus",
+      "type": "string"
+    },
+    "StartMode": {
+      "description": "How a length / repeat begins. Affects the first-segment pace distribution.\n\nThe official distance at start is always 0 m regardless of start mode (ADR-036).",
+      "enum": [
+        "DIVE_START",
+        "IN_WATER_PUSH_START",
+        "IN_WATER_STATIC_START"
+      ],
+      "title": "StartMode",
+      "type": "string"
+    },
+    "Stroke": {
+      "enum": [
+        "freestyle",
+        "backstroke",
+        "breaststroke",
+        "butterfly",
+        "medley",
+        "mixed"
+      ],
+      "title": "Stroke",
+      "type": "string"
+    },
+    "WorkoutGoal": {
+      "enum": [
+        "RACE_PACE",
+        "THRESHOLD",
+        "AEROBIC",
+        "TECHNIQUE",
+        "TEST",
+        "RECOVERY",
+        "MAX_PERFORMANCE",
+        "CONTROLLED_RACE_EFFORT",
+        "CUSTOM"
+      ],
+      "title": "WorkoutGoal",
+      "type": "string"
+    }
+  },
+  "$id": "https://schemas.adaptiveswim.dev/approved-pace-profile-1.0.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Authoritative live plan input. Legs must cover the distance and sum to the total.",
+  "properties": {
+    "approvalStatus": {
+      "$ref": "#/$defs/ProfileApprovalStatus"
+    },
+    "approvedAtMs": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approvedatms"
+    },
+    "approvedBy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approvedby"
+    },
+    "coachLocked": {
+      "default": false,
+      "title": "Coachlocked",
+      "type": "boolean"
+    },
+    "coachMetadata": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CoachProfileMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "createdAtMs": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Createdatms"
+    },
+    "legs": {
+      "items": {
+        "$ref": "#/$defs/PaceProfileLeg"
+      },
+      "minItems": 1,
+      "title": "Legs",
+      "type": "array"
+    },
+    "modelMetadata": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ModelProfileMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "physiologyTarget": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PhysiologyTarget"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "poolLengthM": {
+      "title": "Poollengthm",
+      "type": "integer"
+    },
+    "profileId": {
+      "minLength": 1,
+      "title": "Profileid",
+      "type": "string"
+    },
+    "profileType": {
+      "$ref": "#/$defs/PaceProfileType"
+    },
+    "profileVersion": {
+      "minLength": 1,
+      "title": "Profileversion",
+      "type": "string"
+    },
+    "reportingSplitGranularityM": {
+      "default": 25,
+      "title": "Reportingsplitgranularitym",
+      "type": "integer"
+    },
+    "source": {
+      "$ref": "#/$defs/PaceProfileSource"
+    },
+    "startMode": {
+      "$ref": "#/$defs/StartMode"
+    },
+    "stroke": {
+      "$ref": "#/$defs/Stroke"
+    },
+    "targetTotalTimeSec": {
+      "exclusiveMinimum": 0,
+      "title": "Targettotaltimesec",
+      "type": "number"
+    },
+    "workoutGoal": {
+      "$ref": "#/$defs/WorkoutGoal"
+    }
+  },
+  "required": [
+    "profileId",
+    "profileVersion",
+    "source",
+    "profileType",
+    "approvalStatus",
+    "poolLengthM",
+    "startMode",
+    "stroke",
+    "workoutGoal",
+    "targetTotalTimeSec",
+    "legs"
+  ],
+  "title": "ApprovedPaceProfile",
+  "type": "object"
+}

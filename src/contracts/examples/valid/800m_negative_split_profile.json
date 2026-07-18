@@ -1,0 +1,132 @@
+{
+  "profileId": "prof-800-neg",
+  "profileVersion": "1",
+  "source": "COACH_APPROVED_MODEL",
+  "profileType": "NEGATIVE_SPLIT",
+  "approvalStatus": "COACH_APPROVED",
+  "coachLocked": false,
+  "poolLengthM": 50,
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "workoutGoal": "THRESHOLD",
+  "targetTotalTimeSec": 400.8,
+  "reportingSplitGranularityM": 50,
+  "legs": [
+    {
+      "legIndex": 0,
+      "fromM": 0,
+      "toM": 50,
+      "targetDurationSec": 25.5,
+      "phaseType": "START_UNDERWATER"
+    },
+    {
+      "legIndex": 1,
+      "fromM": 50,
+      "toM": 100,
+      "targetDurationSec": 25.44,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 2,
+      "fromM": 100,
+      "toM": 150,
+      "targetDurationSec": 25.38,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 3,
+      "fromM": 150,
+      "toM": 200,
+      "targetDurationSec": 25.32,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 4,
+      "fromM": 200,
+      "toM": 250,
+      "targetDurationSec": 25.26,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 5,
+      "fromM": 250,
+      "toM": 300,
+      "targetDurationSec": 25.2,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 6,
+      "fromM": 300,
+      "toM": 350,
+      "targetDurationSec": 25.14,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 7,
+      "fromM": 350,
+      "toM": 400,
+      "targetDurationSec": 25.08,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 8,
+      "fromM": 400,
+      "toM": 450,
+      "targetDurationSec": 25.02,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 9,
+      "fromM": 450,
+      "toM": 500,
+      "targetDurationSec": 24.96,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 10,
+      "fromM": 500,
+      "toM": 550,
+      "targetDurationSec": 24.9,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 11,
+      "fromM": 550,
+      "toM": 600,
+      "targetDurationSec": 24.84,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 12,
+      "fromM": 600,
+      "toM": 650,
+      "targetDurationSec": 24.78,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 13,
+      "fromM": 650,
+      "toM": 700,
+      "targetDurationSec": 24.72,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 14,
+      "fromM": 700,
+      "toM": 750,
+      "targetDurationSec": 24.66,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 15,
+      "fromM": 750,
+      "toM": 800,
+      "targetDurationSec": 24.6,
+      "phaseType": "FINISH"
+    }
+  ],
+  "modelMetadata": {
+    "modelVersion": "m1",
+    "confidence": 0.77
+  }
+}

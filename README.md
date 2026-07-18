@@ -27,12 +27,19 @@ make ci            # lint, typecheck, arch, schema-check, unit (+ later: propert
 
 ## Current status
 
-Commit 6 complete (incl. correction invariants). The distance-specific pace-profile / Workout 1.1 start-mode / planning-ML mainline integration is pending its authoritative source document and is not yet done. Contracts + schema, semantic validator, pace math
-engine, deterministic SimClock/ActiveClock/GhostClock, and the session orchestration layer
+Commit 6 complete (incl. correction invariants). The distance-specific pace-profile /
+Workout 1.1 start-mode / planning-ML mainline integration is now **done** (pre-Commit 7,
+per the Pre-Commit 7 master implementation contract). Contracts + schema (incl. Workout 1.1
+and `ApprovedPaceProfile`), semantic validator, pace math engine, deterministic
+SimClock/ActiveClock/GhostClock, approved-profile selection + deterministic compiler,
+start-mode resolution, official-distance authority, and the session orchestration layer
 (state machine, command handling, StopPause orchestration, coach pacing reset, split
-recording/verification, and the mandatory SafetyController) are in place. Later commits add
-pace math, ghost/StopPause state, event log + replay, simulator, and the full
-network-disabled end-to-end slice.
+recording/verification, and the mandatory SafetyController with profile authority) are in
+place. Later commits add the event log + replay (Commit 7), simulator, incident-aware
+analytics, and the full network-disabled end-to-end slice.
+
+No real ML, no coach UI, no wearable connector in this scope — planning ML and live
+adaptation ML are contract- and gate-level only (ADR-034/035/036).
 
 See `CLAUDE.md` for the non-negotiables and dependency rules, `ARCHITECTURE.md` for the
 living architecture summary, and `docs/adr/` for decisions.

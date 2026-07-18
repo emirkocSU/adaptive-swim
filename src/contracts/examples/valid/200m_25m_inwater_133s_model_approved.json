@@ -1,0 +1,76 @@
+{
+  "profileId": "prof-200-25-inwater-133",
+  "profileVersion": "1",
+  "source": "COACH_APPROVED_MODEL",
+  "profileType": "EVEN_PACE",
+  "approvalStatus": "COACH_APPROVED",
+  "coachLocked": false,
+  "poolLengthM": 25,
+  "startMode": "IN_WATER_PUSH_START",
+  "stroke": "freestyle",
+  "workoutGoal": "RACE_PACE",
+  "targetTotalTimeSec": 133.0,
+  "reportingSplitGranularityM": 25,
+  "legs": [
+    {
+      "legIndex": 0,
+      "fromM": 0,
+      "toM": 25,
+      "targetDurationSec": 16.861965,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 1,
+      "fromM": 25,
+      "toM": 50,
+      "targetDurationSec": 16.762191,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 2,
+      "fromM": 50,
+      "toM": 75,
+      "targetDurationSec": 16.662416,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 3,
+      "fromM": 75,
+      "toM": 100,
+      "targetDurationSec": 16.562641,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 4,
+      "fromM": 100,
+      "toM": 125,
+      "targetDurationSec": 16.462866,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 5,
+      "fromM": 125,
+      "toM": 150,
+      "targetDurationSec": 16.462866,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 6,
+      "fromM": 150,
+      "toM": 175,
+      "targetDurationSec": 16.562641,
+      "phaseType": "SURFACE_SWIM"
+    },
+    {
+      "legIndex": 7,
+      "fromM": 175,
+      "toM": 200,
+      "targetDurationSec": 16.662414,
+      "phaseType": "FINISH"
+    }
+  ],
+  "modelMetadata": {
+    "modelVersion": "m1",
+    "confidence": 0.82
+  }
+}

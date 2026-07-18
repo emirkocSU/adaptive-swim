@@ -32,6 +32,12 @@ class Command(StrictModel):
 class CreateSession(Command):
     commandType: Literal["CreateSession"] = "CreateSession"
     workoutRef: str
+    #: Optional mainline selection: an approved pace-profile ref (from the aggregate's
+    #: profile registry) and the resolved repeat to run first. When present, the session
+    #: runs the approved distance-specific profile instead of legacy 1.0 segments.
+    paceProfileRef: str | None = None
+    firstRepeatIndex: NonNegInt = 0
+    allowDefaultModelProfile: bool = False
 
 
 class ArmSession(Command):
@@ -72,7 +78,7 @@ class RecordSplit(Command):
     wallTimestampMs: NonNegInt
     source: SplitSource
     #: Wall distance for this split; required and must be a valid wall boundary.
-    distanceM: NonNegFloat | None = None
+    distanceM: NonNegFloat
 
 
 class VerifySplit(Command):

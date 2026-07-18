@@ -35,6 +35,10 @@ Statuses: **ACTIVE**, **REVISED**, **DEFERRED** (design ready, build gated by a 
 | 030 | Confidence composition | NEW |
 | **031** | **StopPause & controlled ghost alignment** (supersedes the earlier ghost re-anchor policy) | **NEW** |
 | 032 | External Data Bootstrapping Strategy | NEW |
+| 033 | Deterministic identity and time | ACTIVE |
+| **034** | **Distance-specific approved pace profiles** (leg ≠ official split; exact total-time reconciliation) | **ACTIVE (Faz 1)** |
+| **035** | **Pre-session planning ML vs live adaptation ML; coach authority; Planning Model Gate P1–P7** | **ACTIVE (Faz 1: contract/gate only)** |
+| **036** | **Start mode & official-distance authority** (wearable estimate never rewrites official distance) | **ACTIVE (Faz 1)** |
 
-Full ADR text lives in this directory. ADR-031 and ADR-032 are in Phase 1 scope
-(ADR-032 as document + contract draft only).
+Full ADR text lives in this directory. ADR-031, ADR-032, ADR-034, ADR-035, and ADR-036 are
+in Phase 1 scope (034/035/036 as contracts, deterministic core, and docs — no real ML/UI).

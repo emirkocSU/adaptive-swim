@@ -69,7 +69,8 @@ from contracts.events import (
     StopPauseStartedPayload,
     WorkoutValidatedPayload,
 )
-from contracts.workout import WorkoutTemplateVersion
+from contracts.pace_profiles import ApprovedPaceProfile
+from contracts.workout import WorkoutTemplateV1_1, WorkoutTemplateVersion
 from contracts.workout import WorkoutTemplateVersion as _WTV  # noqa: F401
 from swimcore.control import (
     ControlDecision,
@@ -81,6 +82,11 @@ from swimcore.control import (
 )
 from swimcore.ghost import GhostClock
 from swimcore.pacing import PaceInterval, PaceTimeline, compile_pace_timeline, is_wall_boundary
+from swimcore.pacing.profile_compiler import compile_approved_pace_profile
+from swimcore.pacing.profile_selection import (
+    ProfileSelectionPolicy,
+    select_live_pace_profile,
+)
 from swimcore.session.errors import (
     CommandIdConflictError,
     InvalidSessionTransitionError,
@@ -104,6 +110,8 @@ from swimcore.session.transitions import next_state
 from swimcore.session.types import OpenStopPause, PendingCoachReset, RecordedSplit, VerifiedSplit
 from swimcore.time import ActiveClock
 from swimcore.workout import WorkoutValidationContext, validate_workout
+from swimcore.workout.profile_rules import validate_approved_pace_profile
+from swimcore.workout.start_mode import resolve_default_start_mode, resolve_repeat_start_mode
 
 _TOL = 1e-6
 
@@ -120,8 +128,12 @@ class SessionAggregate:
         id_gen: EventIdGenerator,
         safety: SafetyController | None = None,
         validation_context: WorkoutValidationContext | None = None,
+        profiles: Mapping[str, ApprovedPaceProfile] | None = None,
+        workouts_v1_1: Mapping[str, WorkoutTemplateV1_1] | None = None,
     ) -> None:
         self._workouts = workouts
+        self._profiles: Mapping[str, ApprovedPaceProfile] = profiles or {}
+        self._workouts_v1_1: Mapping[str, WorkoutTemplateV1_1] = workouts_v1_1 or {}
         self._clock = clock
         self._events = EventFactory(id_gen)
         self._safety = safety if safety is not None else SafetyController()
@@ -134,6 +146,16 @@ class SessionAggregate:
         self.activeClock: ActiveClock | None = None
         self.ghostClock: GhostClock | None = None
         self.appliedPaceTarget: float | None = None
+        # --- selected approved-profile metadata (§11); None when running legacy segments ---
+        self.selectedPaceProfileId: str | None = None
+        self.selectedPaceProfileVersion: str | None = None
+        self.selectedPaceProfileSource: str | None = None
+        self.selectedPaceProfileType: str | None = None
+        self.profileCoachLocked: bool = False
+        self.resolvedStartModes: dict[int, str] = {}
+        self.poolLengthM: int | None = None
+        self.workoutGoal: str | None = None
+        self.defaultStartMode: str | None = None
         self.pendingCoachPacingReset: PendingCoachReset | None = None
         self.recordedSplits: dict[int, RecordedSplit] = {}
         self.recordedSplitsById: dict[str, str] = {}
@@ -233,7 +255,10 @@ class SessionAggregate:
     def _adaptation(
         self,
     ) -> tuple[AdaptationMode, float | None, float | None, float | None]:
-        assert self.workout is not None
+        # Profile-run sessions have no 1.0 AdaptationPolicy; live auto-adaptation is off and
+        # the coach-approved profile is authoritative (ML/rule cannot auto-apply, §12).
+        if self.workout is None:
+            return AdaptationMode.off, None, None, None
         # current block resolved from the current interval, not hard-coded blocks[0]
         block = self.workout.blocks[self._current_interval().blockIndex]
         ad = block.adaptation
@@ -250,6 +275,10 @@ class SessionAggregate:
     def _create(self, command: CreateSession) -> list[EventEnvelope]:
         if self.state is not None:
             raise InvalidSessionTransitionError("session already created")
+
+        if command.paceProfileRef is not None:
+            return self._create_from_profile(command)
+
         workout = self._workouts.get(command.workoutRef)
         if workout is None:
             raise SessionWorkoutValidationError(f"unknown workoutRef {command.workoutRef}")
@@ -263,31 +292,159 @@ class SessionAggregate:
         except Exception as exc:  # noqa: BLE001 - normalized to a domain error, atomic
             raise SessionWorkoutValidationError(f"timeline compilation failed: {exc}") from exc
 
-        # commit
+        # Build ALL events first (event-id generation may fail); only commit aggregate state
+        # after the whole batch is produced, so a failure leaves the aggregate untouched (2.8).
+        session_id = f"session-{command.clientCommandId}"
+        now = self._clock.now_ms()
+        events = self._events.build_batch(
+            [
+                (
+                    EventType.WorkoutValidated,
+                    WorkoutValidatedPayload(
+                        workoutRef=command.workoutRef,
+                        isValid=True,
+                        errorCount=0,
+                        warningCount=len(result.warnings),
+                    ),
+                    now,
+                ),
+                (
+                    EventType.SessionCreated,
+                    SessionCreatedPayload(
+                        sessionId=session_id,
+                        workoutRef=command.workoutRef,
+                        workoutSchemaVersion=workout.schemaVersion,
+                        poolLengthM=workout.poolLengthM,
+                    ),
+                    now,
+                ),
+            ],
+            session_id,
+            command.clientCommandId,
+        )
+
+        # commit (only after the event batch fully succeeded)
         self.workout = workout
         self.paceTimeline = timeline
-        self.sessionId = f"session-{command.clientCommandId}"
-        self.appliedPaceTarget = workout.blocks[0].segments[0].targetPaceSecPer100M
+        self.sessionId = session_id
+        self.poolLengthM = workout.poolLengthM
+        # Applied target is the CURRENT interval target, not blocks[0] permanently (2.14):
+        # at creation the current distance is 0, so the first interval is the current one.
+        self.appliedPaceTarget = timeline.intervals[0].startPaceSecPer100M
+        self.state = SessionState.CREATED
+        return events
+
+    def _create_from_profile(self, command: CreateSession) -> list[EventEnvelope]:
+        """Mainline path: run a coach-approved distance-specific profile (ADR-034).
+
+        Requires a Workout 1.1 (for pool/stroke/start policy) plus an approved profile from
+        the aggregate's profile registry. The deterministic core compiles and executes the
+        already-approved profile; it never generates one.
+        """
+        wk11 = self._workouts_v1_1.get(command.workoutRef)
+        if wk11 is None:
+            raise SessionWorkoutValidationError(
+                f"unknown 1.1 workoutRef {command.workoutRef} for profile session"
+            )
+        result = validate_workout(wk11, self._ctx)
+        if not result.isValid:
+            raise SessionWorkoutValidationError(
+                f"workout 1.1 failed semantic validation: {[i.rule for i in result.errors]}"
+            )
+        profile = self._profiles.get(command.paceProfileRef or "")
+        if profile is None:
+            raise SessionWorkoutValidationError(f"unknown paceProfileRef {command.paceProfileRef}")
+        # Deterministic profile selection (single candidate here, but the authority order
+        # and eligibility still apply so a DRAFT/REJECTED profile cannot start a session).
+        try:
+            selected = select_live_pace_profile(
+                [profile],
+                ProfileSelectionPolicy(allowDefaultModelGenerated=command.allowDefaultModelProfile),
+            )
+        except Exception as exc:  # noqa: BLE001 - normalized to a domain error, atomic
+            raise SessionWorkoutValidationError(f"profile not live-eligible: {exc}") from exc
+        resolved_start = resolve_repeat_start_mode(wk11, 0, command.firstRepeatIndex)
+        # The workout's official total distance for the resolved repeat is the block distance;
+        # the profile must cover exactly this, not merely its own declared total.
+        block = wk11.blocks[0]
+        workout_distance_m = float(block.distanceM)
+        # Semantic profile validation surfaces §21 rule codes as machine-readable issues before
+        # the deterministic compiler runs.
+        profile_issues = validate_approved_pace_profile(
+            selected,
+            pool_length_m=wk11.poolLengthM,
+            resolved_start_mode=resolved_start,
+            stroke=wk11.stroke,
+            workout_distance_m=workout_distance_m,
+            allow_default_model=command.allowDefaultModelProfile,
+        )
+        if profile_issues:
+            raise SessionWorkoutValidationError(
+                f"pace profile failed semantic validation: {[i.rule for i in profile_issues]}"
+            )
+        try:
+            timeline = compile_approved_pace_profile(
+                selected,
+                pool_length_m=wk11.poolLengthM,
+                resolved_start_mode=resolved_start,
+                stroke=wk11.stroke,
+                total_distance_m=workout_distance_m,
+            )
+        except Exception as exc:  # noqa: BLE001 - normalized to a domain error, atomic
+            raise SessionWorkoutValidationError(f"profile compilation failed: {exc}") from exc
+
+        session_id = f"session-{command.clientCommandId}"
+        default_start_mode = resolve_default_start_mode(wk11).value
         now = self._clock.now_ms()
-        events = [
-            self._emit(
-                EventType.WorkoutValidated,
-                WorkoutValidatedPayload(
-                    workoutRef=command.workoutRef,
-                    isValid=True,
-                    errorCount=0,
-                    warningCount=len(result.warnings),
+        # Build the whole event batch before mutating any aggregate field (atomicity, 2.8).
+        events = self._events.build_batch(
+            [
+                (
+                    EventType.WorkoutValidated,
+                    WorkoutValidatedPayload(
+                        workoutRef=command.workoutRef,
+                        isValid=True,
+                        errorCount=0,
+                        warningCount=len(result.warnings),
+                    ),
+                    now,
                 ),
-                now,
-                command.clientCommandId,
-            ),
-            self._emit(
-                EventType.SessionCreated,
-                SessionCreatedPayload(sessionId=self.sessionId, workoutRef=command.workoutRef),
-                now,
-                command.clientCommandId,
-            ),
-        ]
+                (
+                    EventType.SessionCreated,
+                    SessionCreatedPayload(
+                        sessionId=session_id,
+                        workoutRef=command.workoutRef,
+                        workoutSchemaVersion=wk11.schemaVersion,
+                        poolLengthM=wk11.poolLengthM,
+                        defaultStartMode=default_start_mode,
+                        selectedPaceProfileId=selected.profileId,
+                        selectedPaceProfileVersion=selected.profileVersion,
+                        selectedPaceProfileSource=selected.source.value,
+                        selectedPaceProfileType=selected.profileType.value,
+                        profileCoachLocked=selected.coachLocked,
+                        workoutGoal=wk11.workoutGoal.value,
+                    ),
+                    now,
+                ),
+            ],
+            session_id,
+            command.clientCommandId,
+        )
+
+        # commit (only after the event batch fully succeeded)
+        self.workout = None
+        self.paceTimeline = timeline
+        self.sessionId = session_id
+        self.poolLengthM = wk11.poolLengthM
+        self.workoutGoal = wk11.workoutGoal.value
+        self.defaultStartMode = default_start_mode
+        self.resolvedStartModes = {command.firstRepeatIndex: resolved_start.value}
+        self.selectedPaceProfileId = selected.profileId
+        self.selectedPaceProfileVersion = selected.profileVersion
+        self.selectedPaceProfileSource = selected.source.value
+        self.selectedPaceProfileType = selected.profileType.value
+        self.profileCoachLocked = selected.coachLocked
+        self.appliedPaceTarget = timeline.intervals[0].startPaceSecPer100M
         self.state = SessionState.CREATED
         return events
 
@@ -311,8 +468,8 @@ class SessionAggregate:
         now = self._clock.now_ms()
         active = ActiveClock()
         active.start(now)
-        assert self.paceTimeline is not None and self.workout is not None
-        ghost = GhostClock(self.paceTimeline, active, self.workout.poolLengthM)
+        assert self.paceTimeline is not None and self.poolLengthM is not None
+        ghost = GhostClock(self.paceTimeline, active, self.poolLengthM)
         # commit
         self.activeClock = active
         self.ghostClock = ghost
@@ -320,7 +477,18 @@ class SessionAggregate:
         return [
             self._emit(
                 EventType.SessionStarted,
-                SessionStartedPayload(sessionId=self._sid(), startedAtMs=now),
+                SessionStartedPayload(
+                    sessionId=self._sid(),
+                    startedAtMs=now,
+                    resolvedFirstStartMode=(
+                        self.resolvedStartModes.get(0) or self.defaultStartMode
+                    ),
+                    targetTotalActiveTimeSec=(
+                        self.paceTimeline.totalActiveDurationSec
+                        if self.paceTimeline is not None
+                        else None
+                    ),
+                ),
                 now,
                 command.clientCommandId,
             )
@@ -369,7 +537,7 @@ class SessionAggregate:
             raise PendingReconciliationError("cannot complete with pending wall reconciliation")
         if self.pendingCoachPacingReset is not None:
             raise WorkoutNotCompletedError("cannot complete with a pending coach pacing reset")
-        pool = self._wk().poolLengthM
+        pool = self._pool()
         total = self.paceTimeline.totalDistanceM if self.paceTimeline is not None else 0.0
         expected_lengths = round(total / pool)
         # every official length split recorded, in order, ending at the final wall
@@ -414,7 +582,7 @@ class SessionAggregate:
     # ------------------------------------------------------------------ splits
     def _record_split(self, command: RecordSplit) -> list[EventEnvelope]:
         self._require_running("RecordSplit")
-        pool = self._wk().poolLengthM
+        pool = self._pool()
         total = self.paceTimeline.totalDistanceM if self.paceTimeline is not None else 0.0
         # --- 2.4 every split must sit on the correct official wall boundary ---
         if command.distanceM is None:
@@ -675,6 +843,9 @@ class SessionAggregate:
         self._require_running("ApplyCoachPaceTarget")
         assert self.appliedPaceTarget is not None
         mode, fastest, slowest, max_change = self._adaptation()
+        current_interval = self._current_interval()
+        # Current target comes from the current profile leg / segment, never blocks[0].
+        current_target = current_interval.startPaceSecPer100M
         wall_distance = (
             command.currentWallDistanceM
             if command.currentWallDistanceM is not None
@@ -683,24 +854,30 @@ class SessionAggregate:
         at_wall = (
             command.isWallBoundary
             if command.isWallBoundary is not None
-            else is_wall_boundary(wall_distance, self._wk().poolLengthM)
+            else is_wall_boundary(wall_distance, self._pool())
         )
+        adaptation_source = self._adaptation_source_for(command.source)
         request = PaceChangeRequest(
             suggestedPaceSecPer100M=command.suggestedPaceSecPer100M,
             source=command.source,
-            adaptationSource=ControlAdaptationSource.rule_based,
+            adaptationSource=adaptation_source,
             confidence=command.confidence,
             inputDataQuality=command.dataQuality,
         )
         context = SafetyContext(
             currentAppliedPaceSecPer100M=self.appliedPaceTarget,
-            coachTargetPaceSecPer100M=self.appliedPaceTarget,
+            coachTargetPaceSecPer100M=current_target,
             adaptationMode=mode,
             fastestAllowedPaceSecPer100M=fastest,
             slowestAllowedPaceSecPer100M=slowest,
             maxChangePercentPerLength=max_change,
             currentWallDistanceM=wall_distance,
             isWallBoundary=at_wall,
+            coachLocked=self.profileCoachLocked,
+            profileSource=self.selectedPaceProfileSource,
+            profileCoachLocked=self.profileCoachLocked,
+            currentProfileLegIndex=current_interval.profileLegIndex,
+            currentTargetPaceSecPer100M=current_target,
         )
         decision = self._safety.decide(request, context)
         now = self._clock.now_ms()
@@ -711,7 +888,7 @@ class SessionAggregate:
                     decision=self._decision_action(decision.decision),
                     reasonCodes=[r.value for r in decision.reasonCodes],
                     reasonCode=self._first_reason(decision),
-                    adaptationSource=ControlAdaptationSource.rule_based,
+                    adaptationSource=adaptation_source,
                     requestSource=command.source,
                     suggestedPaceSecPer100M=command.suggestedPaceSecPer100M,
                     appliedPaceSecPer100M=(
@@ -742,13 +919,33 @@ class SessionAggregate:
                         sessionId=self._sid(),
                         effectiveFromLength=len(self.recordedSplits),
                         appliedPaceSecPer100M=decision.appliedPaceSecPer100M,
-                        origin=PaceTargetOrigin.COACH_OVERRIDE,
+                        origin=self._origin_for(command.source),
                     ),
                     now,
                     command.clientCommandId,
                 )
             )
         return events
+
+    @staticmethod
+    def _adaptation_source_for(source: object) -> ControlAdaptationSource:
+        from contracts.enums import PaceRequestSource
+
+        if source is PaceRequestSource.ML:
+            return ControlAdaptationSource.ml
+        if source is PaceRequestSource.RULE_BASED:
+            return ControlAdaptationSource.rule_based
+        return ControlAdaptationSource.none  # COACH_MANUAL is not an ML/rule adaptation
+
+    @staticmethod
+    def _origin_for(source: object) -> PaceTargetOrigin:
+        from contracts.enums import PaceRequestSource
+
+        if source is PaceRequestSource.ML:
+            return PaceTargetOrigin.ML_ADAPTATION
+        if source is PaceRequestSource.RULE_BASED:
+            return PaceTargetOrigin.RULE_ADAPTATION
+        return PaceTargetOrigin.COACH_OVERRIDE
 
     def _decision_action(self, d: SafetyDecision) -> ControlDecisionAction:
         return {
@@ -775,7 +972,17 @@ class SessionAggregate:
             SafetyReasonCode.COACH_PLAN_FALLBACK: ReasonCode.ADAPTATION_OFF,
             SafetyReasonCode.APPLIED_WITHIN_BOUNDS: ReasonCode.APPLIED,
             SafetyReasonCode.HEART_RATE_ONLY_REJECTED: ReasonCode.SENSOR_QUALITY,
+            SafetyReasonCode.COACH_PROFILE_LOCKED: ReasonCode.COACH_PROFILE_LOCKED,
+            SafetyReasonCode.ML_CONFIDENCE_MISSING: ReasonCode.ML_CONFIDENCE_MISSING,
+            SafetyReasonCode.DATA_QUALITY_MISSING: ReasonCode.DATA_QUALITY_MISSING,
+            SafetyReasonCode.PROFILE_SOURCE_NOT_ELIGIBLE: ReasonCode.PROFILE_SOURCE_NOT_ELIGIBLE,
+            SafetyReasonCode.CURRENT_PROFILE_LEG_TARGET: ReasonCode.CURRENT_PROFILE_LEG_TARGET,
         }
+        # Exhaustive: any unmapped SafetyReasonCode is a programming error, not a silent
+        # default. This will raise (KeyError) in tests if a new code is added without a map.
+        missing = set(SafetyReasonCode) - set(mapping)
+        if missing:
+            raise SessionError(f"unmapped SafetyReasonCode(s): {sorted(m.value for m in missing)}")
         return mapping[primary]
 
     # ------------------------------------------------------------------ coach pacing reset
@@ -788,7 +995,7 @@ class SessionAggregate:
             raise PacingResetAlreadyPendingError(
                 "a different coach pacing reset is already pending"
             )
-        pool = self._wk().poolLengthM
+        pool = self._pool()
         applied_after = len(self.recordedSplits)
         expected_wall = (applied_after + 1) * pool
         self.pendingCoachPacingReset = PendingCoachReset(
@@ -839,6 +1046,11 @@ class SessionAggregate:
     def _wk(self) -> WorkoutTemplateVersion:
         assert self.workout is not None
         return self.workout
+
+    def _pool(self) -> int:
+        """Pool length for either path (legacy 1.0 workout or approved-profile session)."""
+        assert self.poolLengthM is not None
+        return self.poolLengthM
 
     def is_terminal(self) -> bool:
         return self.state in TERMINAL_STATES

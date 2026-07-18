@@ -12,3 +12,16 @@ Proprietary (the only source for final production claims).
   (import-linter forbidden rule).
 - Merging race / training / adaptive-swim records without `data_domain` is forbidden.
 - No external dataset can earn production eligibility on its own.
+
+## Planning-model provenance (mainline, §15)
+
+`DataSourceRegistryEntry` now carries explicit planning-model provenance: `sourceUrl`,
+`license`, `licenseVerified`, `retrievedAt`, `transformationVersion`, `dataQualityLevel`,
+`allowedUsage`. A source is planning-model eligible only when its license is explicitly
+verified and not left as `TBD_VERIFICATION_REQUIRED`. `NormalizedSwimmingRecord` gains
+optional planning features (total/split times, split ratio, start mode, turn count, reaction
+time, 15 m/final-section times, HR zone/recovery, stroke rate/count, distance-per-stroke,
+percent-of-personal-best, biomechanical/physiological feature maps). All new fields are
+optional — missingness is preserved and never fake-filled — and the synthetic-data and
+no-production-eligibility rules are unchanged. The first planning model is trained on
+licensed open data and must pass the Planning Model Gate P1–P7 (ADR-035) before live use.

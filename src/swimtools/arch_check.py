@@ -98,15 +98,26 @@ def _scan_file(path: Path) -> list[str]:
     return problems
 
 
+def _check_package_purity(pkg: str) -> list[str]:
+    problems: list[str] = []
+    pkg_dir = _SRC / pkg
+    if not pkg_dir.exists():
+        return problems
+    for path in sorted(pkg_dir.rglob("*.py")):
+        problems.extend(_scan_file(path))
+    return problems
+
+
 def check_purity() -> list[str]:
     problems: list[str] = []
     for pkg in _PURE_PACKAGES:
-        pkg_dir = _SRC / pkg
-        if not pkg_dir.exists():
-            continue
-        for path in sorted(pkg_dir.rglob("*.py")):
-            problems.extend(_scan_file(path))
+        problems.extend(_check_package_purity(pkg))
     return problems
+
+
+def check_swimcore_purity() -> list[str]:
+    """Purity violations scoped to the ``swimcore`` package only."""
+    return _check_package_purity("swimcore")
 
 
 def run_import_linter() -> int:

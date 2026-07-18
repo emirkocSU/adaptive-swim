@@ -46,6 +46,24 @@ class DataSourceRegistryEntry(StrictModel):
     retrievalDate: str | None = None
     contentHashOrVersion: str | None = None
     notes: str | None = None
+    # --- planning-model provenance (§15). Explicit license verification is mandatory before
+    #     a source may feed a production planning model. ---
+    sourceUrl: str | None = None
+    license: str | None = None
+    licenseVerified: bool = False
+    retrievedAt: str | None = None
+    transformationVersion: str | None = None
+    dataQualityLevel: str | None = None
+    allowedUsage: list[str] = []
+
+    @property
+    def is_planning_model_eligible(self) -> bool:
+        """A source is planning-model eligible only when its license is explicitly verified
+        and not left as TBD_VERIFICATION_REQUIRED."""
+        return (
+            self.licenseVerified
+            and self.licenseStatus is not VerificationStatus.TBD_VERIFICATION_REQUIRED
+        )
 
 
 class ExternalRecordProvenance(StrictModel):
@@ -80,6 +98,31 @@ class NormalizedSwimmingRecord(StrictModel):
     sensor_quality: float | None = None
     incident_like_flag: bool | None = None
     quality_flag: str | None = None
+    # --- planning-model features (§15). All optional; missingness is preserved (no fake
+    #     filling). These map the newest document's normalized-record vocabulary. ---
+    total_time_sec: float | None = None
+    split_time_sec: float | None = None
+    split_ratio: float | None = None
+    distance_m: float | None = None
+    age_years: int | None = None
+    age_group: str | None = None
+    sex_category: str | None = None
+    athlete_level: str | None = None
+    start_mode: str | None = None
+    turn_count: int | None = None
+    reaction_time_sec: float | None = None
+    start_15m_time_sec: float | None = None
+    final_section_time_sec: float | None = None
+    pace_profile_type: str | None = None
+    distance_per_stroke: float | None = None
+    heart_rate_zone: str | None = None
+    recovery_heart_rate: float | None = None
+    workout_goal: str | None = None
+    effort_level: float | None = None
+    race_or_training_context: str | None = None
+    percent_of_personal_best: float | None = None
+    biomechanical_features: dict[str, float] | None = None
+    physiological_features: dict[str, float] | None = None
     synthetic: bool = False
     provenance_ref: ExternalRecordProvenance
 

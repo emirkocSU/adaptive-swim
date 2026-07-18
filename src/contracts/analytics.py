@@ -151,6 +151,56 @@ class TrainingEfficiencyMetrics(StrictModel):
         return self
 
 
+class ProfileLegOutcome(StrictModel):
+    """Target vs actual for a single profile leg (leg != official wall split)."""
+
+    legIndex: NonNegInt
+    fromM: NonNegFloat
+    toM: NonNegFloat
+    targetDurationSec: NonNegFloat
+    actualDurationSec: NonNegFloat | None = None
+    deviationSec: float | None = None
+    phaseType: str | None = None
+
+
+class PaceProfileReportContext(StrictModel):
+    """Optional distance-specific pace-profile context for the session report (§20).
+
+    Natural planned fade (short-distance positive split) and an unexpected collapse are
+    separate fields, so a planned fast-start-and-fade is never auto-flagged as bad.
+    """
+
+    poolLengthM: int | None = None
+    defaultStartMode: str | None = None
+    resolvedStartModes: list[str] | None = None
+    paceProfileId: str | None = None
+    paceProfileVersion: str | None = None
+    paceProfileSource: str | None = None
+    paceProfileType: str | None = None
+    targetTotalTimeSec: NonNegFloat | None = None
+    modelConfidence: UnitRatio | None = None
+    coachLocked: bool = False
+    coachEditedLegIndices: list[NonNegInt] | None = None
+    targetLegs: list[ProfileLegOutcome] | None = None
+    actualOfficialSplits: list[NonNegFloat] | None = None
+    perSplitDeviationSec: list[float] | None = None
+    startUnderwaterPhaseSec: NonNegFloat | None = None
+    turnEffectSec: float | None = None
+    firstVsLastSectionDifferenceSec: float | None = None
+    expectedPaceFadeSec: float | None = None
+    actualPaceFadeSec: float | None = None
+    #: Separate from expected/actual fade: the *unexpected* collapse beyond planned fade.
+    unexpectedCollapseDeltaSec: float | None = None
+    targetHeartRate: NonNegFloat | None = None
+    actualHeartRate: NonNegFloat | None = None
+    heartRatePaceRelationship: float | None = None
+    strokeRateTrend: float | None = None
+    stopPauseDurationsSec: list[NonNegFloat] | None = None
+    generalModelVersion: str | None = None
+    personalCalibrationVersion: str | None = None
+    nextSessionCalibrationSuggestion: str | None = None
+
+
 class SessionReport(StrictModel):
     sessionId: str
     workoutRef: str
@@ -158,4 +208,6 @@ class SessionReport(StrictModel):
     trainingEfficiency: TrainingEfficiencyMetrics
     lengthOutcomes: list[LengthOutcome]
     stopPauseSummary: StopPauseSummary
+    #: Optional distance-specific pace-profile context (§20). Absent for legacy sessions.
+    paceProfileContext: PaceProfileReportContext | None = None
     notes: str | None = None

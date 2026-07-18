@@ -51,9 +51,11 @@ def resolve_curve_endpoints(
 ) -> tuple[float, float]:
     """Return the resolved ``(p0, p1)`` linear endpoints for a segment mode.
 
-    Also enforces pace direction so the compiler never silently accepts a wrong-way curve:
-    controlled_start must start slower-or-equal (``start >= target``); progressive must end
-    faster-or-equal (``end <= target``). Smaller sec/100m = faster.
+    The math layer faithfully reflects the given endpoints and only validates that each
+    supplied pace is finite and present. Pace *direction* (controlled_start must start
+    slower-or-equal; progressive must end faster-or-equal) is a semantic concern owned by
+    the Commit-3 validator (RULE-004 and the controlled_start direction rule), so it is not
+    re-enforced here — the compiler never applies a silent correction.
     """
     validate_pace(target_pace)
     if mode in (_EVEN, _NEGATIVE_SPLIT):
@@ -62,19 +64,11 @@ def resolve_curve_endpoints(
         if start_pace is None:
             raise InvalidPaceCurveError("controlled_start requires startPaceSecPer100M")
         validate_pace(start_pace)
-        if start_pace < target_pace - EPSILON:
-            raise InvalidPaceCurveError(
-                f"controlled_start startPace {start_pace} must be >= target {target_pace}"
-            )
         return start_pace, target_pace
     if mode == _PROGRESSIVE:
         if end_pace is None:
             raise InvalidPaceCurveError("progressive requires endPaceSecPer100M")
         validate_pace(end_pace)
-        if end_pace > target_pace + EPSILON:
-            raise InvalidPaceCurveError(
-                f"progressive endPace {end_pace} must be <= target {target_pace}"
-            )
         return target_pace, end_pace
     raise UnsupportedPaceModeError(f"unsupported pace mode: {mode}")
 
