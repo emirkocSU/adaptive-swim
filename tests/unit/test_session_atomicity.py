@@ -151,7 +151,6 @@ def test_failed_split_does_not_clear_pending_reconciliation() -> None:
     assert agg._reconciliation_pending is True
 
 
-
 def test_failed_record_split_event_creation_rolls_back_split_state() -> None:
     agg, _ = started()
     before = _snapshot(agg)

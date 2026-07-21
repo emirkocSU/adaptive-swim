@@ -178,6 +178,25 @@ class StopPauseResolvedPayload(_StopPausePayload):
     durationSec: NonNegFloat
 
 
+# --------------------------------------------------------------------------- recovery payload
+class SessionRecoveredPayload(StrictModel):
+    """Explicit recovery marker (Commit 7).
+
+    Never produced automatically while reading a journal and never auto-appended to the
+    historical source log. It is built only by an explicit orchestration helper
+    (``persistence.recovery.build_session_recovered_event``) with an injected Clock and
+    EventIdGenerator. Replay does not change the lifecycle state for this event; it only
+    increments ``recoveryCount``.
+    """
+
+    sessionId: NonEmptyStr
+    recoveredEventCount: NonNegInt
+    lastRecoveredSeq: NonNegInt
+    tailTruncated: bool = False
+    truncatedByteCount: NonNegInt = 0
+    recoveryReason: NonEmptyStr
+
+
 # --------------------------------------------------------------------------- pacing payloads
 class PaceTargetChangedPayload(StrictModel):
     sessionId: NonEmptyStr
@@ -189,11 +208,21 @@ class PaceTargetChangedPayload(StrictModel):
 class CoachPacingResetRequestedPayload(StrictModel):
     sessionId: NonEmptyStr
     reason: str | None = None
+    #: Continuous-curve replacement provenance (ADR-038); None for a plain pace realignment.
+    replacementPaceProfileId: str | None = None
+    replacementPaceProfileVersion: str | None = None
+    replacementTargetTotalTimeSec: float | None = None
 
 
 class CoachPacingResetAppliedPayload(StrictModel):
     sessionId: NonEmptyStr
     effectiveFromLength: NonNegInt
+    #: Profile metadata swapped in at the wall (ADR-038); None for a plain pace realignment.
+    previousPaceProfileId: str | None = None
+    previousPaceProfileVersion: str | None = None
+    replacementPaceProfileId: str | None = None
+    replacementPaceProfileVersion: str | None = None
+    replacementTargetTotalTimeSec: float | None = None
 
 
 class ControlDecisionMadePayload(StrictModel):
@@ -279,6 +308,7 @@ EventPayload = (
     | CoachPacingResetRequestedPayload
     | CoachPacingResetAppliedPayload
     | ControlDecisionMadePayload
+    | SessionRecoveredPayload
     | PaceProfileGeneratedPayload
     | PaceProfileEditedPayload
     | PaceProfileApprovedPayload
@@ -307,6 +337,7 @@ PAYLOAD_FOR_EVENT: dict[EventType, type[StrictModel]] = {
     EventType.CoachPacingResetRequested: CoachPacingResetRequestedPayload,
     EventType.CoachPacingResetApplied: CoachPacingResetAppliedPayload,
     EventType.ControlDecisionMade: ControlDecisionMadePayload,
+    EventType.SessionRecovered: SessionRecoveredPayload,
     EventType.PaceProfileGenerated: PaceProfileGeneratedPayload,
     EventType.PaceProfileEdited: PaceProfileEditedPayload,
     EventType.PaceProfileApproved: PaceProfileApprovedPayload,
@@ -314,8 +345,8 @@ PAYLOAD_FOR_EVENT: dict[EventType, type[StrictModel]] = {
     EventType.PaceProfileSelected: PaceProfileSelectedPayload,
     EventType.PaceProfileLocked: PaceProfileLockedPayload,
 }
-# SessionRecovered is a replay-only marker handled in a later commit; it carries no
-# domain payload contract here.
+# SessionRecovered is an explicit recovery marker (Commit 7): typed payload above; it is
+# produced only by the persistence recovery helper, never automatically during a read.
 
 
 class EventEnvelope(StrictModel):

@@ -29,6 +29,66 @@
           "title": "Effectivefromlength",
           "type": "integer"
         },
+        "previousPaceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previouspaceprofileid"
+        },
+        "previousPaceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previouspaceprofileversion"
+        },
+        "replacementPaceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofileid"
+        },
+        "replacementPaceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofileversion"
+        },
+        "replacementTargetTotalTimeSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementtargettotaltimesec"
+        },
         "sessionId": {
           "minLength": 1,
           "title": "Sessionid",
@@ -56,6 +116,42 @@
           ],
           "default": null,
           "title": "Reason"
+        },
+        "replacementPaceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofileid"
+        },
+        "replacementPaceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofileversion"
+        },
+        "replacementTargetTotalTimeSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementtargettotaltimesec"
         },
         "sessionId": {
           "minLength": 1,
@@ -1265,6 +1361,51 @@
       "title": "SessionPausedPayload",
       "type": "object"
     },
+    "SessionRecoveredPayload": {
+      "additionalProperties": false,
+      "description": "Explicit recovery marker (Commit 7).\n\nNever produced automatically while reading a journal and never auto-appended to the\nhistorical source log. It is built only by an explicit orchestration helper\n(``persistence.recovery.build_session_recovered_event``) with an injected Clock and\nEventIdGenerator. Replay does not change the lifecycle state for this event; it only\nincrements ``recoveryCount``.",
+      "properties": {
+        "lastRecoveredSeq": {
+          "minimum": 0,
+          "title": "Lastrecoveredseq",
+          "type": "integer"
+        },
+        "recoveredEventCount": {
+          "minimum": 0,
+          "title": "Recoveredeventcount",
+          "type": "integer"
+        },
+        "recoveryReason": {
+          "minLength": 1,
+          "title": "Recoveryreason",
+          "type": "string"
+        },
+        "sessionId": {
+          "minLength": 1,
+          "title": "Sessionid",
+          "type": "string"
+        },
+        "tailTruncated": {
+          "default": false,
+          "title": "Tailtruncated",
+          "type": "boolean"
+        },
+        "truncatedByteCount": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Truncatedbytecount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sessionId",
+        "recoveredEventCount",
+        "lastRecoveredSeq",
+        "recoveryReason"
+      ],
+      "title": "SessionRecoveredPayload",
+      "type": "object"
+    },
     "SessionResumedPayload": {
       "additionalProperties": false,
       "properties": {
@@ -1995,6 +2136,9 @@
         },
         {
           "$ref": "#/$defs/ControlDecisionMadePayload"
+        },
+        {
+          "$ref": "#/$defs/SessionRecoveredPayload"
         },
         {
           "$ref": "#/$defs/PaceProfileGeneratedPayload"

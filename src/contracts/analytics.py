@@ -163,6 +163,29 @@ class ProfileLegOutcome(StrictModel):
     phaseType: str | None = None
 
 
+class ContinuousCurveReportContext(StrictModel):
+    """Optional continuous pace-curve context for the session report (ADR-038 §23).
+
+    Contract-only, forward-compatible fields — Commit 8 does not compute these (that is
+    Commit 9 analytics). They never replace the official split reports; they add
+    curve-adherence detail for a continuous profile.
+    """
+
+    targetContinuousCurveRef: str | None = None
+    actualSmoothedCurveRef: str | None = None
+    curveDeviationMean: float | None = None
+    curveDeviationByPhase: dict[str, float] | None = None
+    peakPositiveDeviation: float | None = None
+    peakNegativeDeviation: float | None = None
+    startCurveAdherence: float | None = None
+    turnCurveAdherence: float | None = None
+    surfaceCurveAdherence: float | None = None
+    finishCurveAdherence: float | None = None
+    curveRepresentation: str | None = None
+    curveCompilerVersion: str | None = None
+    curveReconciliationErrorSec: float | None = None
+
+
 class PaceProfileReportContext(StrictModel):
     """Optional distance-specific pace-profile context for the session report (§20).
 
@@ -199,6 +222,8 @@ class PaceProfileReportContext(StrictModel):
     generalModelVersion: str | None = None
     personalCalibrationVersion: str | None = None
     nextSessionCalibrationSuggestion: str | None = None
+    #: Optional continuous pace-curve adherence context (ADR-038); None for 1.0 profiles.
+    continuousCurve: ContinuousCurveReportContext | None = None
 
 
 class SessionReport(StrictModel):

@@ -3,6 +3,11 @@
 - **Status:** ACTIVE (Faz 1)
 - **Date:** 2026-07-18
 - **Supersedes / Superseded by:** extends the legacy `PaceSegment` model; does not replace it
+- **Extended by:** ADR-038 (Commit 8) introduces continuous pace curves. ADR-038
+  **extends and partially supersedes the constant-leg *execution*** described here: a leg or
+  official split duration becomes a *time constraint* while the within-length pace comes from
+  an approved continuous curve. The **authority order, approval flow, source priority and
+  coach-lock decisions of this ADR remain fully in force** for both 1.0 and 1.1 profiles.
 
 ## Context / Problem
 

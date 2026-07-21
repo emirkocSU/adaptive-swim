@@ -33,6 +33,34 @@ repository. It is authoritative. Read it before writing code.
 16. Natural planned sprint fade (a short-distance positive split) is not a StopPause and not
     an incident; the `SafetyController` must not treat it as a pace collapse.
 
+17. One command's events are exactly one `EventBatchRecord` = one canonical JSONL line; a
+    torn final line removes the whole command batch (a partial command never replays).
+18. A journal append reports success only after write **and** fsync; the final partial line
+    is recoverable and middle corruption is never skipped or auto-repaired.
+19. Historical replay is pure and event-derived: it runs no commands, never rewinds the
+    runtime clocks, and reuses the authoritative transition table (no second state machine).
+20. Lifecycle pause and StopPause are separate duration axes; `elapsed = active + stopped`
+    and `wall = elapsed + lifecyclePaused` always hold. The retroactive StopPause start is
+    the payload `startedAtMs`, never the confirmation timestamp.
+21. Commit 7 adds no SQLite/DB/ORM/WAL, no simulator/analytics/UI, and no network; SQLite is
+    a Faz 2 projection (ADR-003). `swimcore` never imports `persistence`.
+22. `SessionRecovered` is never auto-produced or auto-appended when reading a journal; on
+    replay it changes no lifecycle state and only increments `recoveryCount`.
+23. A profile leg duration is a time constraint, not proof of constant within-leg speed
+    (ADR-038).
+24. Approved continuous curves are compiled before the live session.
+25. Live runtime never calls planning ML.
+26. The PCHIP implementation exists only in `swimcore.pacing`.
+27. The simulator must never duplicate curve, pace, ghost, clock, safety or replay logic.
+28. Official distance remains wall/geometry authoritative.
+29. Zero/negative approved target velocity is forbidden.
+30. Locked split durations are hard constraints.
+31. Exact target-time reconciliation is mandatory (reject, never clamp).
+32. Coach continuous-profile replacement applies only at a safe official wall.
+33. Coach curve reset is not a StopPause.
+34. Synthetic simulator data is never production performance evidence.
+35. ADR-037 remains event persistence; continuous curves use ADR-038.
+
 ## Ghost alignment rule (StopPause model — CORRECTED)
 
 Repositioning the ghost mid-length while unverified, or during normal / large pace loss,
@@ -148,9 +176,52 @@ repositions ghost mid-pool / erases performance. All pace changes go through the
 not-at-wall abstain; NaN/inf/heart-rate-only reject; reason codes always present). Time +
 event ids injected; inputs never mutated; atomic (validate before mutating clock/ghost).
 
-Do NOT add here: persistence, replay, filesystem, DB, network, cloud, UI/FastAPI, real
+Do NOT add here (in the Commit-6 session layer): persistence, replay, filesystem, DB, network, cloud, UI/FastAPI, real
 simulator swimmer, wearable/sensor processing, ML runtime, analytics report, hardware adapter
 (Commit 7+). Do not rewrite pace/ghost/clock implementations.
+
+## Persistence & replay (Commit 7, done — `persistence/`, `swimcore/replay/`, ADR-037)
+
+`contracts.event_log.EventBatchRecord`: one command's events as one canonical JSONL line
+(schema `event-batch-record-1.0.json`). `persistence.JsonlSessionEventLog`: append-only,
+fsync-per-command-batch, parent-dir sync on create, partial-write/EINTR-safe, exact-duplicate
+idempotency (`ALREADY_PRESENT`), `EventLogDurabilityUncertainError` retry, explicit tail
+recovery (`recover_and_read` → `LogTailTruncated` for a torn tail, `MissingFinalNewlineRepaired`
+for a valid-but-unterminated final record); middle corruption / newline-terminated invalid
+final line / blank line → `CorruptEventLogError`. `persistence.build_session_recovered_event`
+is the only producer of `SessionRecovered` (injected Clock/EventIdGenerator; never
+auto-appended). `swimcore.replay.replay_session` folds events into `HistoricalSessionState`
+(pure; reuses the transition table; separate active/stopped/lifecycle-paused/elapsed/wall axes
+with enforced invariants; retroactive StopPause start from payload; geometry-only official
+distance). `swimcore` never imports `persistence`; `persistence` may import `swimcore.replay`.
+
+Do NOT add here: SQLite/DB/ORM/WAL (Faz 2, ADR-003), network/web, a simulator, analytics, or
+a live command-ready aggregate recovery; do not rewrite the session transition table.
+
+## Continuous pace curves & simulator (Commit 8, done — ADR-038)
+
+`ApprovedPaceProfile` **1.1** (`contracts/continuous_pace.py`): a leg/split duration is a
+*time constraint*; within-length pace is an approved **curve** (PCHIP native;
+CONSTANT_SPEED for legacy/templates). Curve knots carry strictly-positive finite speed.
+`swimcore/pacing/pchip.py` is the single Fritsch–Carlson PCHIP (no SciPy/NumPy).
+`continuous_profile_compiler.py` compiles to the existing `PaceTimeline` with **exact
+total-time + locked-split reconciliation** (reject, never clamp; central constants
+`CONTINUOUS_CURVE_MAX_STEP_M=0.10`, `CURVE_TIME_TOLERANCE_SEC=1e-6`); it recomputes the
+authoritative `CurveValidationSummary` and only `validationPassed` may run live.
+`continuous_migration.py` is a pure 1.0→1.1 migration (constant-speed, no smoothing).
+Runtime: `select_live_pace_profile`, the aggregate registry and `compile_live_profile`
+accept both versions; the GhostClock is unchanged. `CoachPacingReset.replacementPaceProfileRef`
++ `GhostClock.apply_timeline_reset_at_wall` do a **safe-wall** curve swap (not a StopPause:
+no clock freeze, no stopped duration, splits preserved). Planning ML (Phase-aware Conditional
+Transformer + Spline Decoder) is contract direction only — nothing is trained or run.
+
+Simulator (`src/simulator/`): a deterministic headless harness that drives the **real**
+`SessionAggregate` + real `JsonlSessionEventLog` + real replay — it duplicates no core logic.
+Deterministic splitmix64 virtual swimmer, 8 failure scenarios, provenance
+(`SYNTHETIC_SIMULATION`, `usedRealHumanData=False`), CLI at `swimtools.run_scenario`. Every
+scenario yields byte-identical journals. Do NOT: run planning ML live, add a second PCHIP or
+ghost/clock, clamp reconciliation, treat a coach curve reset as a StopPause, let a wearable
+estimate become official distance, or treat synthetic data as performance evidence.
 
 ## Commands / test expectations
 

@@ -78,8 +78,8 @@ semantic validator, pace timeline, ActiveClock, GhostClock, and SafetyController
 in-memory flow. `handle(command) -> list[EventEnvelope]` dispatches typed commands, enforces
 the lifecycle state machine (CREATED → ARMED → RUNNING ⇄ PAUSED, → COMPLETED/ABORTED), and
 produces typed domain events with a monotonic session-local sequence. Time and event ids are
-injected (no system clock/randomness); input models are never mutated; no persistence or
-replay (Commit 7).
+injected (no system clock/randomness); input models are never mutated; persistence and
+replay live one layer up (Commit 7, see below).
 
 **StopPause is not a lifecycle state.** During a confirmed StopPause the session stays
 RUNNING, the ghost is STOP_PAUSED, and the active clock is frozen. `MarkStopPause` drives
@@ -152,11 +152,76 @@ Each length/report carries three durations: `activeDurationSec`, `stoppedDuratio
 If stop timing/alignment is reliable, the length is not discarded (active and stopped are
 kept separate); if unreliable, the length may be excluded from analysis.
 
+## Persistence & historical replay (Commit 7, `persistence/`, `swimcore/replay/`, ADR-037)
+
+Durability is log-first. All events of one `handle(command)` call are one
+`EventBatchRecord` = one canonical JSONL line (`persistence.codec`: UTF-8, no BOM,
+`sort_keys`, compact, one `\n`, NaN/Infinity rejected). `JsonlSessionEventLog` appends
+append-only and `os.fsync`s per command batch (parent dir synced on file creation),
+reporting success only after write **and** fsync; the write loop is partial-write- and
+EINTR-safe. Resending the exact same batch is idempotent (`ALREADY_PRESENT`); an fsync
+failure is a typed `EventLogDurabilityUncertainError` whose line is recognised on retry.
+Recovery is explicit: a torn final line is truncated only via `recover_and_read()`
+(`LogTailTruncated`), a valid-but-unterminated final record is repaired with only a newline
+(`MissingFinalNewlineRepaired`), and any middle corruption is `CorruptEventLogError` (never
+skipped). `fsync` is a durability *request*: surviving `kill -9` is not surviving a power
+cut, and no hardware guarantee is claimed.
+
+`swimcore.replay.replay_session` is pure: it folds typed events into a
+`HistoricalSessionState` read model. It executes no commands, never rewinds the runtime
+`ActiveClock`/`GhostClock`, reconstructs no exact mid-pool ghost metre, and reuses the
+authoritative transition table (no second state machine). Duration axes are separate and
+invariant-checked (`elapsed = active + stopped`, `wall = elapsed + lifecyclePaused`); the
+retroactive StopPause start comes from the payload, not the confirmation timestamp; official
+distance is pool geometry only (ADR-036). `persistence` may import `swimcore.replay`;
+`swimcore` never imports `persistence`. SQLite is a Faz 2 projection (ADR-003).
+
+## Continuous pace curves & headless simulator (Commit 8, ADR-038)
+
+A profile leg / official split duration is a **time constraint**; the within-length target
+pace is carried by an approved **continuous curve**. `contracts/continuous_pace.py` adds
+`ApprovedContinuousPaceProfile` (schema 1.1, `approved-pace-profile-1.1.json`) alongside the
+unchanged 1.0 profile; `ApprovedPaceProfileVersion` is the union. Curves are **PCHIP**
+(Fritsch–Carlson, `swimcore/pacing/pchip.py`, the only PCHIP in the tree, stdlib-only) for
+native profiles or **CONSTANT_SPEED** for legacy migration and explicit templates; approved
+knot speeds are strictly positive and finite.
+
+`continuous_profile_compiler.py` compiles a 1.1 profile into the **existing** `PaceTimeline`
+(no second ghost/time engine): deterministic breakpoints (knots ∪ phases ∪ locked splits ∪
+walls ∪ a 0.10 m grid) → target speeds → `pace = 100/speed` → piecewise-linear
+`PaceInterval`s → **exact total-time and locked-split reconciliation** (each locked region
+scaled to its target, the remainder to `target − Σlocked`; reject, never clamp on negative
+remainder / non-finite / non-positive speed / post-reconciliation bound violation). The
+compiler recomputes an authoritative `CurveValidationSummary`; only `validationPassed` runs
+live. Central constants: `CONTINUOUS_CURVE_MAX_STEP_M = 0.10`, `CURVE_TIME_TOLERANCE_SEC =
+1e-6`. `continuous_migration.py` turns each legacy leg into a constant-speed segment + locked
+split (pure, non-mutating, no smoothing — leg boundaries reproduce bit-identically).
+
+Runtime is backward compatible: `select_live_pace_profile`, the aggregate profile registry
+and `compile_live_profile` accept both versions; the **GhostClock is unchanged** (still
+consumes a `PaceTimeline`). `CoachPacingReset.replacementPaceProfileRef` +
+`GhostClock.apply_timeline_reset_at_wall` implement a **safe-wall** continuous-curve reset —
+resolved/compiled atomically at request time, applied at the next official wall. It is **not**
+a StopPause: no clock freeze, no `stoppedDuration`, prior splits/gap history preserved, ghost
+wall-continuity kept. Planning ML (Phase-aware Conditional Transformer + Spline Decoder) is a
+contract direction only — nothing is trained or run, and live runtime never calls it.
+
+The **headless simulator** (`src/simulator/`) is a deterministic test harness that embeds the
+**real** `SessionAggregate` + real `JsonlSessionEventLog` + real replay and duplicates no
+domain logic (enforced by `tests/architecture/test_simulator_boundaries.py`). A splitmix64
+virtual swimmer, eight failure scenarios, `SYNTHETIC_SIMULATION` provenance
+(`usedRealHumanData=False`, `licenseVerified=False`) and a CLI (`swimtools.run_scenario`)
+produce byte-identical journals for a given scenario. External-data records gain optional
+continuous-curve columns (missingness preserved); `swimtools/swimming_features.py` holds pure
+feature-extraction helpers; `ContinuousCurveReportContext` is an optional, not-yet-computed
+report field (Commit 9).
+
 ## What is NOT here in Phase 1
 
-`cloud/`, `ml/` runtime, `ui/`, device drivers, partner adapters, database, FastAPI,
-wearable connectors, rule-based/ML adaptation engines. These arrive in later phases with
-their own ADRs and triggers.
+`cloud/`, `ml/` runtime, `ui/`, device drivers, partner adapters, an SQL database / ORM /
+WAL projection (the Commit 7 journal is plain append-only JSONL; SQLite is Faz 2, ADR-003),
+FastAPI, wearable connectors, rule-based/ML adaptation engines. These arrive in later phases
+with their own ADRs and triggers.
 
 ## Distance-specific approved pace profiles (mainline)
 

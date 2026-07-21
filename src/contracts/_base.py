@@ -39,6 +39,9 @@ PosFloat = Annotated[float, Field(gt=0)]
 #: Ratio / probability in the closed unit interval.
 UnitRatio = Annotated[float, Field(ge=0, le=1)]
 
+#: Strictly positive integer (counts that may not be zero).
+PosInt = Annotated[int, Field(ge=1)]
+
 #: Session-monotonic sequence number (>= 1).
 SeqInt = Annotated[int, Field(ge=1)]
 

@@ -104,6 +104,61 @@ class TotalTimeReconciliationMode(_StrEnum):
     ALLOW_INCONSISTENT_DRAFT = "ALLOW_INCONSISTENT_DRAFT"
 
 
+# --------------------------------------------------------------------------- continuous pace curves (ADR-038)
+class ContinuousPacePhaseType(_StrEnum):
+    """Within-length phase of a continuous pace curve (ADR-038, Workout 1.1 pacing).
+
+    A phase boundary is NOT an official wall boundary and never an official split; it is an
+    analytical span used to shape the within-length target-speed curve. Distinct from the
+    1.0 ``PaceProfilePhase`` enum, which is preserved unchanged for the 1.0 contract.
+    """
+
+    START_ACCELERATION = "START_ACCELERATION"
+    START_UNDERWATER = "START_UNDERWATER"
+    BREAKOUT_TRANSITION = "BREAKOUT_TRANSITION"
+    SURFACE_SWIM = "SURFACE_SWIM"
+    MID_LENGTH_ADJUSTMENT = "MID_LENGTH_ADJUSTMENT"
+    WALL_APPROACH = "WALL_APPROACH"
+    TURN_ENTRY = "TURN_ENTRY"
+    TURN_TRANSITION = "TURN_TRANSITION"
+    TURN_UNDERWATER = "TURN_UNDERWATER"
+    FINAL_ACCELERATION = "FINAL_ACCELERATION"
+    FINISH = "FINISH"
+    CUSTOM = "CUSTOM"
+
+
+class PaceCurveRepresentation(_StrEnum):
+    """Continuous curve representation (ADR-038).
+
+    Phase 1 supports exactly two: ``PCHIP`` (authoritative for native continuous profiles)
+    and ``CONSTANT_SPEED`` (legacy-migration and explicit templates only). No generic
+    unbounded cubic spline is offered.
+    """
+
+    PCHIP = "PCHIP"
+    CONSTANT_SPEED = "CONSTANT_SPEED"
+
+
+class TargetTimeSource(_StrEnum):
+    """Where a continuous profile's target total time came from (ADR-038)."""
+
+    COACH = "COACH"
+    MODEL_RECOMMENDED = "MODEL_RECOMMENDED"
+    TEMPLATE = "TEMPLATE"
+    LEGACY_MIGRATION = "LEGACY_MIGRATION"
+
+
+class ContinuousCurveGenerationMode(_StrEnum):
+    """How the continuous curve was produced (ADR-038 provenance)."""
+
+    AUTO_GENERATE = "AUTO_GENERATE"
+    GENERATE_AND_EDIT = "GENERATE_AND_EDIT"
+    MANUAL_SPLIT_CONSTRAINTS = "MANUAL_SPLIT_CONSTRAINTS"
+    MANUAL_CONTINUOUS_PROFILE = "MANUAL_CONTINUOUS_PROFILE"
+    TEMPLATE = "TEMPLATE"
+    LEGACY_MIGRATION = "LEGACY_MIGRATION"
+
+
 class ProfileGenerationMode(_StrEnum):
     """Coach-screen authoring mode (Phase 2 UI; contract-only in Phase 1)."""
 

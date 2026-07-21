@@ -133,3 +133,7 @@ class CoachPacingReset(Command):
     commandType: Literal["CoachPacingReset"] = "CoachPacingReset"
     sessionId: str
     reason: str | None = None
+    #: Optional continuous-curve replacement (ADR-038). When omitted, the reset keeps the
+    #: existing pace-realignment behaviour. When set, the replacement profile is resolved,
+    #: compiled and applied at the next safe official wall (never mid-length).
+    replacementPaceProfileRef: str | None = None

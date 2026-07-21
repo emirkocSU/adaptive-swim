@@ -33,6 +33,10 @@ from contracts.commands import (
     StartSession,
     VerifySplit,
 )
+from contracts.continuous_pace import (
+    ApprovedContinuousPaceProfile,
+    ApprovedPaceProfileVersion,
+)
 from contracts.enums import (
     AdaptationMode,
     AlignmentQuality,
@@ -43,10 +47,12 @@ from contracts.enums import (
     PaceTargetOrigin,
     ReasonCode,
     SplitQualityFlag,
+    StartMode,
     StopDetectionSource,
     StopPauseTrigger,
     StopSignalQuality,
     StopStartTimeQuality,
+    Stroke,
 )
 from contracts.events import Clock as ClockProto
 from contracts.events import (
@@ -71,7 +77,6 @@ from contracts.events import (
     StopPauseStartedPayload,
     WorkoutValidatedPayload,
 )
-from contracts.pace_profiles import ApprovedPaceProfile
 from contracts.workout import WorkoutTemplateV1_1, WorkoutTemplateVersion
 from contracts.workout import WorkoutTemplateVersion as _WTV  # noqa: F401
 from swimcore.control import (
@@ -84,7 +89,9 @@ from swimcore.control import (
 )
 from swimcore.ghost import GhostClock
 from swimcore.pacing import PaceInterval, PaceTimeline, compile_pace_timeline, is_wall_boundary
-from swimcore.pacing.profile_compiler import compile_approved_pace_profile
+from swimcore.pacing.profile_compiler import (
+    compile_live_profile,
+)
 from swimcore.pacing.profile_selection import (
     ProfileSelectionPolicy,
     select_live_pace_profile,
@@ -162,11 +169,11 @@ class SessionAggregate:
         id_gen: EventIdGenerator,
         safety: SafetyController | None = None,
         validation_context: WorkoutValidationContext | None = None,
-        profiles: Mapping[str, ApprovedPaceProfile] | None = None,
+        profiles: Mapping[str, ApprovedPaceProfileVersion] | None = None,
         workouts_v1_1: Mapping[str, WorkoutTemplateV1_1] | None = None,
     ) -> None:
         self._workouts = workouts
-        self._profiles: Mapping[str, ApprovedPaceProfile] = profiles or {}
+        self._profiles: Mapping[str, ApprovedPaceProfileVersion] = profiles or {}
         self._workouts_v1_1: Mapping[str, WorkoutTemplateV1_1] = workouts_v1_1 or {}
         self._clock = clock
         self._events = EventFactory(id_gen)
@@ -189,6 +196,9 @@ class SessionAggregate:
         self.resolvedStartModes: dict[int, str] = {}
         self.poolLengthM: int | None = None
         self.workoutGoal: str | None = None
+        #: Resolved workout context captured for a continuous-curve replacement (ADR-038).
+        self._sessionStroke: Stroke | None = None
+        self._sessionTotalDistanceM: float | None = None
         self.defaultStartMode: str | None = None
         self.pendingCoachPacingReset: PendingCoachReset | None = None
         self.recordedSplits: dict[int, RecordedSplit] = {}
@@ -425,22 +435,26 @@ class SessionAggregate:
         # the profile must cover exactly this, not merely its own declared total.
         block = wk11.blocks[0]
         workout_distance_m = float(block.distanceM)
-        # Semantic profile validation surfaces §21 rule codes as machine-readable issues before
-        # the deterministic compiler runs.
-        profile_issues = validate_approved_pace_profile(
-            selected,
-            pool_length_m=wk11.poolLengthM,
-            resolved_start_mode=resolved_start,
-            stroke=wk11.stroke,
-            workout_distance_m=workout_distance_m,
-            allow_default_model=command.allowDefaultModelProfile,
-        )
-        if profile_issues:
-            raise SessionWorkoutValidationError(
-                f"pace profile failed semantic validation: {[i.rule for i in profile_issues]}"
+        # Semantic profile validation surfaces §21 rule codes as machine-readable issues
+        # before the deterministic compiler runs. The §21 validator targets the 1.0 leg
+        # model; a 1.1 continuous profile is validated by its contract + the continuous
+        # compiler's exact reconciliation (ADR-038), so the §21 leg validator is skipped for
+        # it (its own authority/pool/start-mode checks still run in the compiler).
+        if not isinstance(selected, ApprovedContinuousPaceProfile):
+            profile_issues = validate_approved_pace_profile(
+                selected,
+                pool_length_m=wk11.poolLengthM,
+                resolved_start_mode=resolved_start,
+                stroke=wk11.stroke,
+                workout_distance_m=workout_distance_m,
+                allow_default_model=command.allowDefaultModelProfile,
             )
+            if profile_issues:
+                raise SessionWorkoutValidationError(
+                    f"pace profile failed semantic validation: {[i.rule for i in profile_issues]}"
+                )
         try:
-            timeline = compile_approved_pace_profile(
+            timeline = compile_live_profile(
                 selected,
                 pool_length_m=wk11.poolLengthM,
                 resolved_start_mode=resolved_start,
@@ -501,6 +515,8 @@ class SessionAggregate:
         self.selectedPaceProfileSource = selected.source.value
         self.selectedPaceProfileType = selected.profileType.value
         self.profileCoachLocked = selected.coachLocked
+        self._sessionStroke = wk11.stroke
+        self._sessionTotalDistanceM = workout_distance_m
         self.appliedPaceTarget = timeline.intervals[0].startPaceSecPer100M
         self.state = SessionState.CREATED
         return events
@@ -1055,18 +1071,77 @@ class SessionAggregate:
         pool = self._pool()
         applied_after = len(self.recordedSplits)
         expected_wall = (applied_after + 1) * pool
+
+        # Optional continuous-curve replacement (ADR-038): resolve, authority-check and
+        # compile NOW; if anything fails the whole command is rejected atomically (no event).
+        replacement_timeline: PaceTimeline | None = None
+        replacement_id: str | None = None
+        replacement_version: str | None = None
+        replacement_target: float | None = None
+        if command.replacementPaceProfileRef is not None:
+            replacement = self._profiles.get(command.replacementPaceProfileRef)
+            if replacement is None:
+                raise SessionWorkoutValidationError(
+                    f"unknown replacement paceProfileRef {command.replacementPaceProfileRef}"
+                )
+            try:
+                selected = select_live_pace_profile(
+                    [replacement],
+                    ProfileSelectionPolicy(allowDefaultModelGenerated=False),
+                )
+            except Exception as exc:  # noqa: BLE001 - normalized to a domain error, atomic
+                raise SessionWorkoutValidationError(
+                    f"replacement profile not live-eligible: {exc}"
+                ) from exc
+            resolved_start_val = self.resolvedStartModes.get(0) or self.defaultStartMode
+            assert resolved_start_val is not None
+            assert self._sessionStroke is not None and self._sessionTotalDistanceM is not None
+            if selected.poolLengthM != pool:
+                raise SessionWorkoutValidationError("replacement profile pool mismatch")
+            if selected.stroke is not self._sessionStroke:
+                raise SessionWorkoutValidationError("replacement profile stroke mismatch")
+            if selected.startMode.value != resolved_start_val:
+                raise SessionWorkoutValidationError("replacement profile start-mode mismatch")
+            try:
+                replacement_timeline = compile_live_profile(
+                    selected,
+                    pool_length_m=pool,
+                    resolved_start_mode=StartMode(resolved_start_val),
+                    stroke=self._sessionStroke,
+                    total_distance_m=self._sessionTotalDistanceM,
+                )
+            except Exception as exc:  # noqa: BLE001 - normalized to a domain error, atomic
+                raise SessionWorkoutValidationError(
+                    f"replacement profile compilation failed: {exc}"
+                ) from exc
+            replacement_id = selected.profileId
+            replacement_version = selected.profileVersion
+            replacement_target = replacement_timeline.totalActiveDurationSec
+
         self.pendingCoachPacingReset = PendingCoachReset(
             clientCommandId=command.clientCommandId,
             reason=command.reason,
             requestedAfterLengthIndex=applied_after,
             expectedApplicationWallM=float(expected_wall),
             requestedBy="coach",
+            replacementTimeline=replacement_timeline,
+            replacementProfileId=replacement_id,
+            replacementProfileVersion=replacement_version,
+            replacementTargetTotalTimeSec=replacement_target,
+            previousProfileId=self.selectedPaceProfileId,
+            previousProfileVersion=self.selectedPaceProfileVersion,
         )
         now = self._clock.now_ms()
         return [
             self._emit(
                 EventType.CoachPacingResetRequested,
-                CoachPacingResetRequestedPayload(sessionId=self._sid(), reason=command.reason),
+                CoachPacingResetRequestedPayload(
+                    sessionId=self._sid(),
+                    reason=command.reason,
+                    replacementPaceProfileId=replacement_id,
+                    replacementPaceProfileVersion=replacement_version,
+                    replacementTargetTotalTimeSec=replacement_target,
+                ),
                 now,
                 command.clientCommandId,
             )
@@ -1083,17 +1158,36 @@ class SessionAggregate:
         ):
             return []  # not the reset's wall yet; keep pending
         assert self.ghostClock is not None
-        # move the ghost display anchor to this wall (no StopPause, no clock freeze)
-        self.ghostClock.apply_coach_pacing_reset_at_wall(
-            split.distanceM, self._eff(split.wallTimestampMs)
+        if pending.replacementTimeline is not None:
+            # continuous-curve replacement: swap the timeline in at this wall (no StopPause,
+            # no clock freeze), then adopt the new profile metadata for downstream state.
+            new_timeline = pending.replacementTimeline
+            assert isinstance(new_timeline, PaceTimeline)
+            self.ghostClock.apply_timeline_reset_at_wall(
+                new_timeline, split.distanceM, self._eff(split.wallTimestampMs)
+            )
+            self.paceTimeline = new_timeline
+            self.selectedPaceProfileId = pending.replacementProfileId
+            self.selectedPaceProfileVersion = pending.replacementProfileVersion
+        else:
+            # plain pace realignment: move the ghost display anchor to this wall
+            self.ghostClock.apply_coach_pacing_reset_at_wall(
+                split.distanceM, self._eff(split.wallTimestampMs)
+            )
+        applied_payload = CoachPacingResetAppliedPayload(
+            sessionId=self._sid(),
+            effectiveFromLength=split.lengthIndex,
+            previousPaceProfileId=pending.previousProfileId,
+            previousPaceProfileVersion=pending.previousProfileVersion,
+            replacementPaceProfileId=pending.replacementProfileId,
+            replacementPaceProfileVersion=pending.replacementProfileVersion,
+            replacementTargetTotalTimeSec=pending.replacementTargetTotalTimeSec,
         )
         self.pendingCoachPacingReset = None
         return [
             self._emit(
                 EventType.CoachPacingResetApplied,
-                CoachPacingResetAppliedPayload(
-                    sessionId=self._sid(), effectiveFromLength=split.lengthIndex
-                ),
+                applied_payload,
                 split.wallTimestampMs,
                 split.clientCommandId,
             )

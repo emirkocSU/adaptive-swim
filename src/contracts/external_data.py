@@ -55,6 +55,15 @@ class DataSourceRegistryEntry(StrictModel):
     transformationVersion: str | None = None
     dataQualityLevel: str | None = None
     allowedUsage: list[str] = []
+    # --- continuous-curve capability flags (ADR-038). Optional; describe whether a source
+    #     can supply continuous position/time and phase labels for curve extraction. ---
+    continuousPositionTimeAvailable: bool | None = None
+    phaseLabelsAvailable: bool | None = None
+    samplingFrequencyHz: float | None = None
+    trackingMethod: str | None = None
+    velocitySmoothingMethod: str | None = None
+    curveExtractionVersion: str | None = None
+    curveConfidenceAvailable: bool | None = None
 
     @property
     def is_planning_model_eligible(self) -> bool:
@@ -123,6 +132,35 @@ class NormalizedSwimmingRecord(StrictModel):
     percent_of_personal_best: float | None = None
     biomechanical_features: dict[str, float] | None = None
     physiological_features: dict[str, float] | None = None
+    # --- continuous pace-curve features (ADR-038). All optional; missingness preserved, no
+    #     fake filling. Split-only data must NOT be presented as continuous ground truth. ---
+    timestamp_ms: int | None = None
+    raw_velocity_mps: float | None = None
+    smoothed_velocity_mps: float | None = None
+    target_velocity_envelope_mps: float | None = None
+    phase_type: str | None = None
+    phase_start_m: float | None = None
+    phase_end_m: float | None = None
+    phase_duration_sec: float | None = None
+    event_distance_m: float | None = None
+    turn_index: int | None = None
+    distance_to_wall_m: float | None = None
+    split_speed_mps: float | None = None
+    free_swimming_distance_m: float | None = None
+    free_swimming_time_sec: float | None = None
+    clean_swimming_speed_mps: float | None = None
+    stroke_length_m_per_cycle: float | None = None
+    stroke_rate_cycles_per_min: float | None = None
+    stroke_index: float | None = None
+    sampling_frequency_hz: float | None = None
+    tracking_method: str | None = None
+    curve_smoothing_method: str | None = None
+    curve_extraction_version: str | None = None
+    velocity_extraction_method: str | None = None
+    curve_integral_time_sec: float | None = None
+    curve_reconciliation_error_sec: float | None = None
+    curve_confidence: float | None = None
+    velocity_confidence: float | None = None
     synthetic: bool = False
     provenance_ref: ExternalRecordProvenance
 

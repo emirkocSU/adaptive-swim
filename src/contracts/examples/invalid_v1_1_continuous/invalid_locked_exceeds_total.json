@@ -1,0 +1,58 @@
+{
+  "approvalStatus": "COACH_APPROVED",
+  "coachLocked": false,
+  "curve": {
+    "knots": [
+      {
+        "distanceM": 0.0,
+        "knotIndex": 0,
+        "targetSpeedMps": 1.25
+      },
+      {
+        "distanceM": 100.0,
+        "knotIndex": 1,
+        "targetSpeedMps": 1.25
+      }
+    ],
+    "representation": "PCHIP",
+    "segments": []
+  },
+  "curveProvenance": {
+    "generationMode": "MANUAL_CONTINUOUS_PROFILE",
+    "targetTimeSource": "COACH"
+  },
+  "phases": [
+    {
+      "fromM": 0.0,
+      "phaseIndex": 0,
+      "phaseType": "SURFACE_SWIM",
+      "toM": 100.0
+    }
+  ],
+  "poolLengthM": 25,
+  "profileId": "inv",
+  "profileType": "EVEN_PACE",
+  "profileVersion": "1",
+  "reportingSplitGranularityM": 25,
+  "schemaVersion": "1.1",
+  "source": "COACH_AUTHORED",
+  "splitTimeConstraints": [
+    {
+      "fromM": 0.0,
+      "lockedByCoach": true,
+      "splitIndex": 0,
+      "targetDurationSec": 90.0,
+      "toM": 50.0
+    }
+  ],
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "targetTimeConstraint": {
+    "coachLocked": false,
+    "source": "COACH",
+    "targetTotalTimeSec": 80.0,
+    "toleranceSec": 1e-06
+  },
+  "totalDistanceM": 100.0,
+  "workoutGoal": "RACE_PACE"
+}

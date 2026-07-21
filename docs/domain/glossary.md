@@ -106,3 +106,39 @@
   SafetyController (gated by G1–G7). Neither controls the ghost/clock/StopPause.
 - **Natural planned fade** — a short-distance positive split that is part of the plan; not a
   StopPause and not an incident.
+- **EventBatchRecord** — one command's full event output as one persisted unit; exactly one
+  canonical JSONL line per command (Commit 7). A half-written final line removes the whole
+  command batch — a partial command never replays.
+- **Event journal** — the append-only, fsync-per-command-batch JSONL file per session; the
+  authoritative history (SQLite is a Faz 2 projection, ADR-003/037).
+- **Historical replay** — the pure fold of typed events into `HistoricalSessionState`. It
+  executes no commands, never rewinds runtime clocks, and reconstructs no exact mid-pool
+  ghost metre; it is a historical read model, not a live aggregate (ADR-037).
+- **Tail recovery** — truncating only a torn final journal line (`LogTailTruncated`) or
+  appending only a missing final newline (`MissingFinalNewlineRepaired`); middle corruption
+  is never skipped (`CorruptEventLogError`).
+- **SessionRecovered** — an explicit, typed recovery marker built only by the persistence
+  recovery helper with injected Clock/EventIdGenerator; never auto-appended; on replay it
+  changes no lifecycle state and only increments `recoveryCount`.
+
+## Continuous pace curves (Commit 8, ADR-038)
+
+- **Continuous pace curve** — the approved within-length target-speed function of a 1.1
+  profile. PCHIP (native) or CONSTANT_SPEED (legacy/templates). Knot speeds are strictly
+  positive and finite.
+- **Time constraint** — a leg / official split / total duration is a *time budget* for a
+  distance span, not a claim of constant speed across it.
+- **PCHIP** — Fritsch–Carlson shape-preserving monotone cubic Hermite interpolation; the
+  single curve evaluator, in `swimcore.pacing.pchip` (stdlib only, deterministic).
+- **Reconciliation** — scaling compiled intervals so the integral hits the target total and
+  each locked split exactly; rejects (never clamps) on negative remainder / non-finite /
+  non-positive speed / post-scale bound violation.
+- **CurveValidationSummary** — the compiler-recomputed, authoritative validity record; only
+  `validationPassed` may run live.
+- **Continuous-curve reset** — a coach swap of the approved curve applied at the next safe
+  official wall (`replacementPaceProfileRef`). NOT a StopPause.
+- **Phase (1.1)** — an analytical within-length span (start/underwater/breakout/surface/turn/
+  finish…), never an official wall or split.
+- **Headless simulator** — a deterministic harness embedding the real aggregate + journal +
+  replay to exercise failure scenarios; produces byte-identical, `SYNTHETIC_SIMULATION`
+  provenance journals and never duplicates core logic.

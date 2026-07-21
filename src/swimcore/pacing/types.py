@@ -44,6 +44,11 @@ class PaceInterval:
     profileSource: str | None = None
     profileType: str | None = None
     phaseType: str | None = None
+    #: Continuous-curve provenance (ADR-038); populated by the continuous compiler path.
+    continuousPhaseIndex: int | None = None
+    curveSegmentIndex: int | None = None
+    curveRepresentation: str | None = None
+    curveProfileVersion: str | None = None
 
     @property
     def lengthM(self) -> float:

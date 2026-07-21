@@ -29,14 +29,10 @@ test-property:
 	else echo "PENDING (property tests arrive in a later commit)"; fi
 
 test-replay:
-	@if ls tests/replay/test_*.py >/dev/null 2>&1; then \
-		$(PYTEST) -q tests/replay ; \
-	else echo "PENDING (replay tests arrive in a later commit)"; fi
+	$(PYTEST) -q tests/replay --disable-socket
 
 test-simulator:
-	@if ls tests/simulator/test_*.py >/dev/null 2>&1; then \
-		$(PYTEST) -q tests/simulator ; \
-	else echo "PENDING (simulator tests arrive in a later commit)"; fi
+	$(PYTEST) -q tests/simulator --disable-socket
 
 test-architecture:
 	lint-imports && $(PYTEST) -q tests/architecture

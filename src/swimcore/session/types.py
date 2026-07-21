@@ -47,3 +47,11 @@ class PendingCoachReset:
     requestedAfterLengthIndex: int = 0
     expectedApplicationWallM: float | None = None
     requestedBy: str = "coach"
+    #: Continuous-curve replacement (ADR-038). When set, this compiled timeline is swapped in
+    #: at the wall instead of a plain pace realignment.
+    replacementTimeline: object | None = None
+    replacementProfileId: str | None = None
+    replacementProfileVersion: str | None = None
+    replacementTargetTotalTimeSec: float | None = None
+    previousProfileId: str | None = None
+    previousProfileVersion: str | None = None

@@ -1,0 +1,125 @@
+{
+  "approvalStatus": "COACH_APPROVED",
+  "approvedAtMs": null,
+  "approvedBy": null,
+  "coachLocked": false,
+  "coachMetadata": null,
+  "createdAtMs": null,
+  "curve": {
+    "knots": [
+      {
+        "distanceM": 0.0,
+        "knotIndex": 0,
+        "targetSpeedMps": 1.6
+      },
+      {
+        "distanceM": 50.0,
+        "knotIndex": 1,
+        "targetSpeedMps": 1.48
+      },
+      {
+        "distanceM": 100.0,
+        "knotIndex": 2,
+        "targetSpeedMps": 1.45
+      },
+      {
+        "distanceM": 150.0,
+        "knotIndex": 3,
+        "targetSpeedMps": 1.46
+      },
+      {
+        "distanceM": 200.0,
+        "knotIndex": 4,
+        "targetSpeedMps": 1.52
+      }
+    ],
+    "representation": "PCHIP",
+    "segments": []
+  },
+  "curveProvenance": {
+    "coachConstraintVersion": null,
+    "curveExtractionVersion": null,
+    "generalModelVersion": null,
+    "generationMode": "MANUAL_CONTINUOUS_PROFILE",
+    "legacyProfileId": null,
+    "legacyProfileVersion": null,
+    "migratedFromSchemaVersion": null,
+    "migrationVersion": null,
+    "modelVersion": null,
+    "personalCalibrationVersion": null,
+    "profileGenerationId": null,
+    "smoothingMethod": null,
+    "sourceDataQuality": null,
+    "targetTimeSource": "COACH"
+  },
+  "curveValidationSummary": null,
+  "modelMetadata": null,
+  "phases": [
+    {
+      "fromM": 0.0,
+      "phaseIndex": 0,
+      "phaseType": "START_UNDERWATER",
+      "toM": 15.0
+    },
+    {
+      "fromM": 15.0,
+      "phaseIndex": 1,
+      "phaseType": "SURFACE_SWIM",
+      "toM": 185.0
+    },
+    {
+      "fromM": 185.0,
+      "phaseIndex": 2,
+      "phaseType": "FINISH",
+      "toM": 200.0
+    }
+  ],
+  "physiologyTarget": null,
+  "poolLengthM": 50,
+  "profileId": "fixture3-200m-50m",
+  "profileType": "EVEN_PACE",
+  "profileVersion": "1",
+  "reportingSplitGranularityM": 25,
+  "schemaVersion": "1.1",
+  "source": "COACH_AUTHORED",
+  "splitTimeConstraints": [
+    {
+      "fromM": 0.0,
+      "lockedByCoach": true,
+      "splitIndex": 0,
+      "targetDurationSec": 32.0,
+      "toM": 50.0
+    },
+    {
+      "fromM": 50.0,
+      "lockedByCoach": true,
+      "splitIndex": 1,
+      "targetDurationSec": 34.5,
+      "toM": 100.0
+    },
+    {
+      "fromM": 100.0,
+      "lockedByCoach": true,
+      "splitIndex": 2,
+      "targetDurationSec": 34.5,
+      "toM": 150.0
+    },
+    {
+      "fromM": 150.0,
+      "lockedByCoach": true,
+      "splitIndex": 3,
+      "targetDurationSec": 34.0,
+      "toM": 200.0
+    }
+  ],
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "targetTimeConstraint": {
+    "coachLocked": false,
+    "source": "COACH",
+    "targetTotalTimeSec": 135.0,
+    "toleranceSec": 1e-06
+  },
+  "totalDistanceM": 200.0,
+  "workoutGoal": "RACE_PACE"
+}

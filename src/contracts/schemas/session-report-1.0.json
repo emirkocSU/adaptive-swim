@@ -8,6 +8,173 @@
       "title": "AnalyticsExclusionReason",
       "type": "string"
     },
+    "ContinuousCurveReportContext": {
+      "additionalProperties": false,
+      "description": "Optional continuous pace-curve context for the session report (ADR-038 §23).\n\nContract-only, forward-compatible fields — Commit 8 does not compute these (that is\nCommit 9 analytics). They never replace the official split reports; they add\ncurve-adherence detail for a continuous profile.",
+      "properties": {
+        "actualSmoothedCurveRef": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualsmoothedcurveref"
+        },
+        "curveCompilerVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvecompilerversion"
+        },
+        "curveDeviationByPhase": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvedeviationbyphase"
+        },
+        "curveDeviationMean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvedeviationmean"
+        },
+        "curveReconciliationErrorSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvereconciliationerrorsec"
+        },
+        "curveRepresentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curverepresentation"
+        },
+        "finishCurveAdherence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finishcurveadherence"
+        },
+        "peakNegativeDeviation": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peaknegativedeviation"
+        },
+        "peakPositiveDeviation": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peakpositivedeviation"
+        },
+        "startCurveAdherence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startcurveadherence"
+        },
+        "surfaceCurveAdherence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surfacecurveadherence"
+        },
+        "targetContinuousCurveRef": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetcontinuouscurveref"
+        },
+        "turnCurveAdherence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turncurveadherence"
+        }
+      },
+      "title": "ContinuousCurveReportContext",
+      "type": "object"
+    },
     "LengthOutcome": {
       "additionalProperties": false,
       "properties": {
@@ -158,6 +325,17 @@
           "default": false,
           "title": "Coachlocked",
           "type": "boolean"
+        },
+        "continuousCurve": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContinuousCurveReportContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "defaultStartMode": {
           "anyOf": [

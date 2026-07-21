@@ -105,3 +105,45 @@ __all__ = [
     "ProfileCompilationError",
     "compile_approved_pace_profile",
 ]
+
+
+def compile_live_profile(
+    profile: object,
+    *,
+    pool_length_m: int,
+    resolved_start_mode: object,
+    stroke: object,
+    total_distance_m: float,
+) -> PaceTimeline:
+    """Dispatch to the correct compiler for a 1.0 or 1.1 approved profile → ``PaceTimeline``.
+
+    A ``PaceTimeline`` is returned in both cases so the existing GhostClock consumes it
+    unchanged. For continuous (1.1) profiles the reconciled timeline is used; the
+    authoritative validation summary is discarded here (callers needing it use the
+    continuous compiler directly).
+    """
+    from contracts.continuous_pace import ApprovedContinuousPaceProfile
+    from contracts.pace_profiles import ApprovedPaceProfile
+
+    if isinstance(profile, ApprovedContinuousPaceProfile):
+        from swimcore.pacing.continuous_profile_compiler import (
+            compile_continuous_pace_profile,
+        )
+
+        plan = compile_continuous_pace_profile(
+            profile,
+            pool_length_m=pool_length_m,
+            resolved_start_mode=resolved_start_mode,  # type: ignore[arg-type]
+            stroke=stroke,  # type: ignore[arg-type]
+            total_distance_m=total_distance_m,
+        )
+        return plan.timeline
+    if isinstance(profile, ApprovedPaceProfile):
+        return compile_approved_pace_profile(
+            profile,
+            pool_length_m=pool_length_m,
+            resolved_start_mode=resolved_start_mode,  # type: ignore[arg-type]
+            stroke=stroke,  # type: ignore[arg-type]
+            total_distance_m=total_distance_m,
+        )
+    raise ProfileCompilationError(f"unsupported profile type {type(profile).__name__}")

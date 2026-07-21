@@ -1,0 +1,986 @@
+{
+  "$defs": {
+    "CoachProfileMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "authoredBy": {
+          "minLength": 1,
+          "title": "Authoredby",
+          "type": "string"
+        },
+        "editedLegIndices": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Editedlegindices",
+          "type": "array"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "authoredBy"
+      ],
+      "title": "CoachProfileMetadata",
+      "type": "object"
+    },
+    "ConstantSpeedCurveSegment": {
+      "additionalProperties": false,
+      "description": "One constant-speed span (legacy migration / explicit template only).",
+      "properties": {
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "segmentIndex": {
+          "minimum": 0,
+          "title": "Segmentindex",
+          "type": "integer"
+        },
+        "targetSpeedMps": {
+          "exclusiveMinimum": 0,
+          "title": "Targetspeedmps",
+          "type": "number"
+        },
+        "toM": {
+          "exclusiveMinimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "segmentIndex",
+        "fromM",
+        "toM",
+        "targetSpeedMps"
+      ],
+      "title": "ConstantSpeedCurveSegment",
+      "type": "object"
+    },
+    "ContinuousCurveGenerationMode": {
+      "description": "How the continuous curve was produced (ADR-038 provenance).",
+      "enum": [
+        "AUTO_GENERATE",
+        "GENERATE_AND_EDIT",
+        "MANUAL_SPLIT_CONSTRAINTS",
+        "MANUAL_CONTINUOUS_PROFILE",
+        "TEMPLATE",
+        "LEGACY_MIGRATION"
+      ],
+      "title": "ContinuousCurveGenerationMode",
+      "type": "string"
+    },
+    "ContinuousPaceCurve": {
+      "additionalProperties": false,
+      "description": "The approved within-length target-speed curve.\n\nExactly one representation is populated: PCHIP → ``knots`` (>= 2, first at 0 m, last at\ntotal distance, strictly increasing, positive finite speeds); CONSTANT_SPEED →\n``segments`` (contiguous, gap/overlap-free, preserving legacy leg boundaries).",
+      "properties": {
+        "knots": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PaceCurveKnot"
+          },
+          "title": "Knots",
+          "type": "array"
+        },
+        "representation": {
+          "$ref": "#/$defs/PaceCurveRepresentation"
+        },
+        "segments": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ConstantSpeedCurveSegment"
+          },
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "representation"
+      ],
+      "title": "ContinuousPaceCurve",
+      "type": "object"
+    },
+    "ContinuousPacePhase": {
+      "additionalProperties": false,
+      "description": "An analytical within-length phase span. Not an official wall/split boundary.",
+      "properties": {
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "phaseIndex": {
+          "minimum": 0,
+          "title": "Phaseindex",
+          "type": "integer"
+        },
+        "phaseType": {
+          "$ref": "#/$defs/ContinuousPacePhaseType"
+        },
+        "toM": {
+          "exclusiveMinimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "phaseIndex",
+        "fromM",
+        "toM",
+        "phaseType"
+      ],
+      "title": "ContinuousPacePhase",
+      "type": "object"
+    },
+    "ContinuousPacePhaseType": {
+      "description": "Within-length phase of a continuous pace curve (ADR-038, Workout 1.1 pacing).\n\nA phase boundary is NOT an official wall boundary and never an official split; it is an\nanalytical span used to shape the within-length target-speed curve. Distinct from the\n1.0 ``PaceProfilePhase`` enum, which is preserved unchanged for the 1.0 contract.",
+      "enum": [
+        "START_ACCELERATION",
+        "START_UNDERWATER",
+        "BREAKOUT_TRANSITION",
+        "SURFACE_SWIM",
+        "MID_LENGTH_ADJUSTMENT",
+        "WALL_APPROACH",
+        "TURN_ENTRY",
+        "TURN_TRANSITION",
+        "TURN_UNDERWATER",
+        "FINAL_ACCELERATION",
+        "FINISH",
+        "CUSTOM"
+      ],
+      "title": "ContinuousPacePhaseType",
+      "type": "string"
+    },
+    "CurveProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "coachConstraintVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coachconstraintversion"
+        },
+        "curveExtractionVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curveextractionversion"
+        },
+        "generalModelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generalmodelversion"
+        },
+        "generationMode": {
+          "$ref": "#/$defs/ContinuousCurveGenerationMode"
+        },
+        "legacyProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Legacyprofileid"
+        },
+        "legacyProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Legacyprofileversion"
+        },
+        "migratedFromSchemaVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Migratedfromschemaversion"
+        },
+        "migrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Migrationversion"
+        },
+        "modelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "personalCalibrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Personalcalibrationversion"
+        },
+        "profileGenerationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profilegenerationid"
+        },
+        "smoothingMethod": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Smoothingmethod"
+        },
+        "sourceDataQuality": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcedataquality"
+        },
+        "targetTimeSource": {
+          "$ref": "#/$defs/TargetTimeSource"
+        }
+      },
+      "required": [
+        "generationMode",
+        "targetTimeSource"
+      ],
+      "title": "CurveProvenance",
+      "type": "object"
+    },
+    "CurveValidationSummary": {
+      "additionalProperties": false,
+      "description": "Compiler-authoritative summary. The compiler recomputes rather than trusting input.",
+      "properties": {
+        "compiledIntervalCount": {
+          "minimum": 0,
+          "title": "Compiledintervalcount",
+          "type": "integer"
+        },
+        "compilerVersion": {
+          "minLength": 1,
+          "title": "Compilerversion",
+          "type": "string"
+        },
+        "integratedTotalTimeSec": {
+          "minimum": 0,
+          "title": "Integratedtotaltimesec",
+          "type": "number"
+        },
+        "knotCount": {
+          "minimum": 0,
+          "title": "Knotcount",
+          "type": "integer"
+        },
+        "lookupResolutionM": {
+          "exclusiveMinimum": 0,
+          "title": "Lookupresolutionm",
+          "type": "number"
+        },
+        "maxSplitReconciliationErrorSec": {
+          "minimum": 0,
+          "title": "Maxsplitreconciliationerrorsec",
+          "type": "number"
+        },
+        "maxTargetSpeedMps": {
+          "exclusiveMinimum": 0,
+          "title": "Maxtargetspeedmps",
+          "type": "number"
+        },
+        "minTargetSpeedMps": {
+          "exclusiveMinimum": 0,
+          "title": "Mintargetspeedmps",
+          "type": "number"
+        },
+        "phaseCount": {
+          "minimum": 0,
+          "title": "Phasecount",
+          "type": "integer"
+        },
+        "physicalBoundsChecked": {
+          "title": "Physicalboundschecked",
+          "type": "boolean"
+        },
+        "representation": {
+          "$ref": "#/$defs/PaceCurveRepresentation"
+        },
+        "targetTotalTimeSec": {
+          "minimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        },
+        "totalReconciliationErrorSec": {
+          "minimum": 0,
+          "title": "Totalreconciliationerrorsec",
+          "type": "number"
+        },
+        "validationPassed": {
+          "title": "Validationpassed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "integratedTotalTimeSec",
+        "targetTotalTimeSec",
+        "totalReconciliationErrorSec",
+        "maxSplitReconciliationErrorSec",
+        "minTargetSpeedMps",
+        "maxTargetSpeedMps",
+        "phaseCount",
+        "knotCount",
+        "compiledIntervalCount",
+        "representation",
+        "compilerVersion",
+        "lookupResolutionM",
+        "physicalBoundsChecked",
+        "validationPassed"
+      ],
+      "title": "CurveValidationSummary",
+      "type": "object"
+    },
+    "EffortTargetType": {
+      "enum": [
+        "HR_ZONE",
+        "MAX_HR_PERCENT_RANGE",
+        "AEROBIC_THRESHOLD",
+        "ANAEROBIC_THRESHOLD",
+        "RPE",
+        "CONTROLLED_RACE_EFFORT",
+        "MAX_PERFORMANCE"
+      ],
+      "title": "EffortTargetType",
+      "type": "string"
+    },
+    "HrControlMode": {
+      "enum": [
+        "OFF",
+        "ADVISORY"
+      ],
+      "title": "HrControlMode",
+      "type": "string"
+    },
+    "ModelProfileMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "coachConstraintVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coachconstraintversion"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "generalModelVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generalmodelversion"
+        },
+        "generatedAtMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generatedatms"
+        },
+        "modelVersion": {
+          "minLength": 1,
+          "title": "Modelversion",
+          "type": "string"
+        },
+        "personalCalibrationVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Personalcalibrationversion"
+        },
+        "profileGenerationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profilegenerationid"
+        }
+      },
+      "required": [
+        "modelVersion"
+      ],
+      "title": "ModelProfileMetadata",
+      "type": "object"
+    },
+    "PaceCurveKnot": {
+      "additionalProperties": false,
+      "description": "One PCHIP control knot: a target *speed* (m/s) at a distance (m).",
+      "properties": {
+        "distanceM": {
+          "minimum": 0,
+          "title": "Distancem",
+          "type": "number"
+        },
+        "knotIndex": {
+          "minimum": 0,
+          "title": "Knotindex",
+          "type": "integer"
+        },
+        "targetSpeedMps": {
+          "exclusiveMinimum": 0,
+          "title": "Targetspeedmps",
+          "type": "number"
+        }
+      },
+      "required": [
+        "knotIndex",
+        "distanceM",
+        "targetSpeedMps"
+      ],
+      "title": "PaceCurveKnot",
+      "type": "object"
+    },
+    "PaceCurveRepresentation": {
+      "description": "Continuous curve representation (ADR-038).\n\nPhase 1 supports exactly two: ``PCHIP`` (authoritative for native continuous profiles)\nand ``CONSTANT_SPEED`` (legacy-migration and explicit templates only). No generic\nunbounded cubic spline is offered.",
+      "enum": [
+        "PCHIP",
+        "CONSTANT_SPEED"
+      ],
+      "title": "PaceCurveRepresentation",
+      "type": "string"
+    },
+    "PaceProfileSource": {
+      "description": "Authoritative priority (highest first):\n\nCOACH_AUTHORED > COACH_APPROVED_MODEL > DEFAULT_MODEL_GENERATED.\nTEMPLATE and LEGACY_SEGMENTS are positioned explicitly by the selector.",
+      "enum": [
+        "COACH_AUTHORED",
+        "COACH_APPROVED_MODEL",
+        "DEFAULT_MODEL_GENERATED",
+        "TEMPLATE",
+        "LEGACY_SEGMENTS"
+      ],
+      "title": "PaceProfileSource",
+      "type": "string"
+    },
+    "PaceProfileType": {
+      "enum": [
+        "SPRINT_POSITIVE_SPLIT",
+        "FAST_START_HOLD",
+        "FAST_START_CONTROLLED_FADE",
+        "EVEN_PACE",
+        "CONTROLLED_START",
+        "PROGRESSIVE_BUILD",
+        "NEGATIVE_SPLIT",
+        "FINAL_ACCELERATION",
+        "CUSTOM_COACH_PROFILE",
+        "MODEL_GENERATED_CUSTOM",
+        "DISTANCE_SPECIFIC_MIXED"
+      ],
+      "title": "PaceProfileType",
+      "type": "string"
+    },
+    "PhysiologyTarget": {
+      "additionalProperties": false,
+      "description": "Optional physiological target attached to a workout or approved pace profile.",
+      "properties": {
+        "effortTargetType": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EffortTargetType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "hrControlMode": {
+          "$ref": "#/$defs/HrControlMode",
+          "default": "ADVISORY"
+        },
+        "maxHrPercentMax": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxhrpercentmax"
+        },
+        "maxHrPercentMin": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxhrpercentmin"
+        },
+        "rpeTarget": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rpetarget"
+        },
+        "targetHrZone": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targethrzone"
+        }
+      },
+      "title": "PhysiologyTarget",
+      "type": "object"
+    },
+    "ProfileApprovalStatus": {
+      "enum": [
+        "DRAFT",
+        "COACH_APPROVED",
+        "COACH_LOCKED",
+        "APPROVED_BY_EXPLICIT_DEFAULT_POLICY",
+        "REJECTED"
+      ],
+      "title": "ProfileApprovalStatus",
+      "type": "string"
+    },
+    "SplitTimeConstraint": {
+      "additionalProperties": false,
+      "description": "A locked/soft time constraint on a distance span. Boundaries follow pool geometry.",
+      "properties": {
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "lockedByCoach": {
+          "default": false,
+          "title": "Lockedbycoach",
+          "type": "boolean"
+        },
+        "splitIndex": {
+          "minimum": 0,
+          "title": "Splitindex",
+          "type": "integer"
+        },
+        "targetDurationSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targetdurationsec",
+          "type": "number"
+        },
+        "toM": {
+          "exclusiveMinimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "splitIndex",
+        "fromM",
+        "toM",
+        "targetDurationSec"
+      ],
+      "title": "SplitTimeConstraint",
+      "type": "object"
+    },
+    "StartMode": {
+      "description": "How a length / repeat begins. Affects the first-segment pace distribution.\n\nThe official distance at start is always 0 m regardless of start mode (ADR-036).",
+      "enum": [
+        "DIVE_START",
+        "IN_WATER_PUSH_START",
+        "IN_WATER_STATIC_START"
+      ],
+      "title": "StartMode",
+      "type": "string"
+    },
+    "Stroke": {
+      "enum": [
+        "freestyle",
+        "backstroke",
+        "breaststroke",
+        "butterfly",
+        "medley",
+        "mixed"
+      ],
+      "title": "Stroke",
+      "type": "string"
+    },
+    "TargetTimeConstraint": {
+      "additionalProperties": false,
+      "properties": {
+        "coachLocked": {
+          "default": false,
+          "title": "Coachlocked",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/TargetTimeSource"
+        },
+        "targetTotalTimeSec": {
+          "exclusiveMinimum": 0,
+          "title": "Targettotaltimesec",
+          "type": "number"
+        },
+        "toleranceSec": {
+          "default": 1e-06,
+          "minimum": 0,
+          "title": "Tolerancesec",
+          "type": "number"
+        }
+      },
+      "required": [
+        "targetTotalTimeSec",
+        "source"
+      ],
+      "title": "TargetTimeConstraint",
+      "type": "object"
+    },
+    "TargetTimeSource": {
+      "description": "Where a continuous profile's target total time came from (ADR-038).",
+      "enum": [
+        "COACH",
+        "MODEL_RECOMMENDED",
+        "TEMPLATE",
+        "LEGACY_MIGRATION"
+      ],
+      "title": "TargetTimeSource",
+      "type": "string"
+    },
+    "WorkoutGoal": {
+      "enum": [
+        "RACE_PACE",
+        "THRESHOLD",
+        "AEROBIC",
+        "TECHNIQUE",
+        "TEST",
+        "RECOVERY",
+        "MAX_PERFORMANCE",
+        "CONTROLLED_RACE_EFFORT",
+        "CUSTOM"
+      ],
+      "title": "WorkoutGoal",
+      "type": "string"
+    }
+  },
+  "$id": "https://schemas.adaptiveswim.dev/approved-pace-profile-1.1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Approved continuous pace profile (schema 1.1).\n\nBackward compatibility: this is an ADDITIVE contract. Split/leg durations are time\nconstraints; the within-length pace comes from the approved ``curve``. Only a profile\nwith ``curveValidationSummary.validationPassed`` may run live (enforced by the compiler).",
+  "properties": {
+    "approvalStatus": {
+      "$ref": "#/$defs/ProfileApprovalStatus"
+    },
+    "approvedAtMs": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approvedatms"
+    },
+    "approvedBy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approvedby"
+    },
+    "coachLocked": {
+      "default": false,
+      "title": "Coachlocked",
+      "type": "boolean"
+    },
+    "coachMetadata": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CoachProfileMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "createdAtMs": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Createdatms"
+    },
+    "curve": {
+      "$ref": "#/$defs/ContinuousPaceCurve"
+    },
+    "curveProvenance": {
+      "$ref": "#/$defs/CurveProvenance"
+    },
+    "curveValidationSummary": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CurveValidationSummary"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "modelMetadata": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ModelProfileMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "phases": {
+      "items": {
+        "$ref": "#/$defs/ContinuousPacePhase"
+      },
+      "minItems": 1,
+      "title": "Phases",
+      "type": "array"
+    },
+    "physiologyTarget": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PhysiologyTarget"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "poolLengthM": {
+      "title": "Poollengthm",
+      "type": "integer"
+    },
+    "profileId": {
+      "minLength": 1,
+      "title": "Profileid",
+      "type": "string"
+    },
+    "profileType": {
+      "$ref": "#/$defs/PaceProfileType"
+    },
+    "profileVersion": {
+      "minLength": 1,
+      "title": "Profileversion",
+      "type": "string"
+    },
+    "reportingSplitGranularityM": {
+      "default": 25,
+      "title": "Reportingsplitgranularitym",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "const": "1.1",
+      "default": "1.1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/PaceProfileSource"
+    },
+    "splitTimeConstraints": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SplitTimeConstraint"
+      },
+      "title": "Splittimeconstraints",
+      "type": "array"
+    },
+    "startMode": {
+      "$ref": "#/$defs/StartMode"
+    },
+    "stroke": {
+      "$ref": "#/$defs/Stroke"
+    },
+    "targetTimeConstraint": {
+      "$ref": "#/$defs/TargetTimeConstraint"
+    },
+    "totalDistanceM": {
+      "exclusiveMinimum": 0,
+      "title": "Totaldistancem",
+      "type": "number"
+    },
+    "workoutGoal": {
+      "$ref": "#/$defs/WorkoutGoal"
+    }
+  },
+  "required": [
+    "profileId",
+    "profileVersion",
+    "source",
+    "profileType",
+    "approvalStatus",
+    "poolLengthM",
+    "startMode",
+    "stroke",
+    "workoutGoal",
+    "totalDistanceM",
+    "targetTimeConstraint",
+    "curve",
+    "phases",
+    "curveProvenance"
+  ],
+  "title": "ApprovedContinuousPaceProfile",
+  "type": "object"
+}

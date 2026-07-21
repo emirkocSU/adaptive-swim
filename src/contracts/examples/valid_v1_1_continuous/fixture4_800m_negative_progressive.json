@@ -1,0 +1,90 @@
+{
+  "approvalStatus": "COACH_APPROVED",
+  "approvedAtMs": null,
+  "approvedBy": null,
+  "coachLocked": false,
+  "coachMetadata": null,
+  "createdAtMs": null,
+  "curve": {
+    "knots": [
+      {
+        "distanceM": 0.0,
+        "knotIndex": 0,
+        "targetSpeedMps": 1.38
+      },
+      {
+        "distanceM": 200.0,
+        "knotIndex": 1,
+        "targetSpeedMps": 1.4
+      },
+      {
+        "distanceM": 400.0,
+        "knotIndex": 2,
+        "targetSpeedMps": 1.43
+      },
+      {
+        "distanceM": 600.0,
+        "knotIndex": 3,
+        "targetSpeedMps": 1.46
+      },
+      {
+        "distanceM": 800.0,
+        "knotIndex": 4,
+        "targetSpeedMps": 1.52
+      }
+    ],
+    "representation": "PCHIP",
+    "segments": []
+  },
+  "curveProvenance": {
+    "coachConstraintVersion": null,
+    "curveExtractionVersion": null,
+    "generalModelVersion": null,
+    "generationMode": "AUTO_GENERATE",
+    "legacyProfileId": null,
+    "legacyProfileVersion": null,
+    "migratedFromSchemaVersion": null,
+    "migrationVersion": null,
+    "modelVersion": "demo-planner-0",
+    "personalCalibrationVersion": null,
+    "profileGenerationId": null,
+    "smoothingMethod": null,
+    "sourceDataQuality": null,
+    "targetTimeSource": "MODEL_RECOMMENDED"
+  },
+  "curveValidationSummary": null,
+  "modelMetadata": null,
+  "phases": [
+    {
+      "fromM": 0.0,
+      "phaseIndex": 0,
+      "phaseType": "SURFACE_SWIM",
+      "toM": 400.0
+    },
+    {
+      "fromM": 400.0,
+      "phaseIndex": 1,
+      "phaseType": "FINAL_ACCELERATION",
+      "toM": 800.0
+    }
+  ],
+  "physiologyTarget": null,
+  "poolLengthM": 25,
+  "profileId": "fixture4-800m-negative",
+  "profileType": "PROGRESSIVE_BUILD",
+  "profileVersion": "1",
+  "reportingSplitGranularityM": 25,
+  "schemaVersion": "1.1",
+  "source": "COACH_APPROVED_MODEL",
+  "splitTimeConstraints": [],
+  "startMode": "IN_WATER_PUSH_START",
+  "stroke": "freestyle",
+  "targetTimeConstraint": {
+    "coachLocked": false,
+    "source": "MODEL_RECOMMENDED",
+    "targetTotalTimeSec": 560.0,
+    "toleranceSec": 1e-06
+  },
+  "totalDistanceM": 800.0,
+  "workoutGoal": "THRESHOLD"
+}

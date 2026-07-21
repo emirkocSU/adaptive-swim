@@ -35,7 +35,10 @@ from swimcore.pacing import (
     is_wall_boundary,
     next_wall_boundary,
 )
-from swimcore.pacing.timeline import ghost_distance_at_active_time
+from swimcore.pacing.timeline import (
+    ghost_distance_at_active_time,
+    target_active_time_at_distance,
+)
 from swimcore.time import ActiveClock
 
 _WALL_TOL = 1e-6
@@ -67,6 +70,7 @@ class GhostClock:
         self._state = GhostState.ACTIVE
         self._alignment_active = False
         self._wall_reconciliation_pending = False
+        self._plan_time_offset_ms = 0
         self._expected_reconciliation_wall_m: float | None = None
         self._anchor = GhostAnchor(
             anchorActiveElapsedSec=0.0,
@@ -76,7 +80,12 @@ class GhostClock:
 
     # ---------------------------------------------------------------- helpers
     def _timeline_distance_at_active(self, active_ms: int) -> tuple[float, float]:
-        active_sec = active_ms / 1000.0
+        # After a continuous-curve reset the replacement plan's clock is offset so that its
+        # plan-time at the reset wall aligns with the real active time at reset.
+        plan_ms = active_ms + self._plan_time_offset_ms
+        if plan_ms < 0:
+            plan_ms = 0
+        active_sec = plan_ms / 1000.0
         res = ghost_distance_at_active_time(self._timeline, active_sec, clamp=True)
         return res.distanceM, res.paceSecPer100M
 
@@ -195,6 +204,75 @@ class GhostClock:
         self._wall_reconciliation_pending = False
         self._expected_reconciliation_wall_m = None
         return self._build_snapshot(reconciled_at_ms)
+
+    def apply_timeline_reset_at_wall(
+        self,
+        new_timeline: PaceTimeline,
+        wall_distance_m: float,
+        applied_at_ms: int,
+    ) -> GhostSnapshot:
+        """Swap in a replacement pace timeline at an official wall (ADR-038).
+
+        Continuous-curve replacement, NOT a StopPause: it creates no StopPause, adds no
+        stopped duration, does not freeze the active clock, and does not erase prior
+        gap/split data. Only valid in ACTIVE state, on a real wall, with no pending StopPause
+        reconciliation. The replacement timeline must have the same total distance and pool
+        walls as the current one, and ``wall_distance_m`` must be an exact wall in it. Future
+        ghost movement comes from the replacement timeline; the active time and display anchor
+        at the wall are preserved so the ghost keeps continuity (no mid-pool teleport).
+        """
+        if self._state is not GhostState.ACTIVE:
+            raise InvalidWallReconciliationError("timeline reset requires ACTIVE state")
+        if self._wall_reconciliation_pending:
+            raise InvalidWallReconciliationError(
+                "timeline reset not allowed while a StopPause reconciliation is pending"
+            )
+        self._check_finite(wall_distance_m, "wall_distance_m")
+        if not is_wall_boundary(wall_distance_m, self._pool_length_m):
+            raise InvalidWallReconciliationError(
+                f"{wall_distance_m} is not a wall boundary (pool {self._pool_length_m}); "
+                "timeline reset must land on a wall (no mid-pool)"
+            )
+        if not math.isfinite(new_timeline.totalDistanceM) or new_timeline.totalDistanceM <= 0.0:
+            raise InvalidWallReconciliationError(
+                f"replacement timeline total distance invalid: {new_timeline.totalDistanceM}"
+            )
+        if abs(new_timeline.totalDistanceM - self._timeline.totalDistanceM) > _WALL_TOL:
+            raise InvalidWallReconciliationError(
+                f"replacement timeline total {new_timeline.totalDistanceM} != current "
+                f"{self._timeline.totalDistanceM}"
+            )
+        if not is_wall_boundary(new_timeline.totalDistanceM, self._pool_length_m):
+            raise InvalidWallReconciliationError(
+                "replacement timeline total distance is not a wall boundary"
+            )
+        if (
+            wall_distance_m < -_WALL_TOL
+            or wall_distance_m > new_timeline.totalDistanceM + _WALL_TOL
+        ):
+            raise InvalidWallReconciliationError(
+                f"wall distance {wall_distance_m} out of the replacement timeline range"
+            )
+        # Preserve the current active time and display position at this wall, then re-anchor
+        # so the *replacement* plan continues from the wall onward. The replacement plan's
+        # own plan-time at this wall is offset to the current active time, so from here the
+        # ghost tracks the replacement timeline with continuity (no mid-pool teleport).
+        current = self._build_snapshot(applied_at_ms)
+        new_plan_time_at_wall_ms = int(
+            round(
+                target_active_time_at_distance(new_timeline, wall_distance_m).elapsedActiveSec
+                * 1000.0
+            )
+        )
+        self._timeline = new_timeline
+        # offset added to real active time before querying the replacement plan
+        self._plan_time_offset_ms = new_plan_time_at_wall_ms - current.activeElapsedMs
+        self._anchor = GhostAnchor(
+            anchorActiveElapsedSec=current.activeElapsedMs / 1000.0,
+            anchorTimelineDistanceM=wall_distance_m,
+            anchorDisplayDistanceM=wall_distance_m,
+        )
+        return self._build_snapshot(applied_at_ms)
 
     def apply_coach_pacing_reset_at_wall(
         self,

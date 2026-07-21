@@ -29,3 +29,13 @@ SWIMMING -> POSSIBLE_STOP -> STOPPED -> RESUMED
 ```
 Bu gecisler ghost'u durdurmaz; ghost Durum A'da ilerler. Yalnizca StopPause trigger'i dogrulaninca
 (Durum C) ghost durur ve kontrollu hizalanir.
+
+## Historical replay (Commit 7, ADR-037)
+
+Replay, event akisini saf bir fold ile `HistoricalSessionState`'e indirger ve **ayni**
+lifecycle gecis tablosunu (`swimcore/session/transitions.py`) yeniden kullanir — ikinci bir
+gecis tablosu yazmak yasaktir. Terminal durumdan sonra normal domain event reddedilir
+(`SessionRecovered` isaretleyicisi haric; o lifecycle'i degistirmez). StopPause lifecycle
+state'i DEGILDIR: replay sirasinda da session RUNNING kalir; acik lifecycle pause + acik
+StopPause ayni anda gorulurse stream corruption sayilir. Sure eksenleri ayridir:
+`elapsed = active + stopped`, `wall = elapsed + lifecyclePaused`.

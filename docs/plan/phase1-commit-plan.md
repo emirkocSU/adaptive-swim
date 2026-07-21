@@ -107,8 +107,50 @@ integration is now implemented as a set of mainline corrections/backports *befor
   now for forward-compatible persistence/replay.
 - New semantic rule codes (§21) and ADR-034/035/036.
 
-No real ML, UI, wearable connector, persistence/replay, or analytics implementation is added
-in this pass. Commit 7 (append-only event log + replay) is still not started.
+No real ML, UI, wearable connector, or analytics implementation is added in this pass.
+
+## Commit 7 (append-only event journal + deterministic replay) — completed
+
+Commit 7 is implemented and covered by tests (ADR-037):
+
+- `contracts.event_log.EventBatchRecord` (one command = one canonical JSONL line) with the
+  generated schema `event-batch-record-1.0.json`; `SessionRecovered` gains its typed
+  payload.
+- `persistence` package: canonical byte codec, `JsonlSessionEventLog` (append-only,
+  fsync-per-command-batch, parent-dir sync on create, partial-write/EINTR-safe loop,
+  exact-duplicate idempotency, durability-uncertain retry, explicit tail recovery —
+  torn-tail truncation vs missing-newline repair, middle corruption never skipped), and the
+  explicit `build_session_recovered_event` helper.
+- `swimcore.replay` package: pure `replay_session` folding events into
+  `HistoricalSessionState`, reusing the authoritative transition table; separate
+  active/stopped/lifecycle-paused/elapsed/wall duration axes with enforced invariants;
+  retroactive StopPause start from payload; official distance from geometry only.
+- Three byte-deterministic golden journals (`tests/replay/goldens/`), property invariants
+  (`tests/property/test_replay_invariants.py`), and boundary tests
+  (`tests/architecture/test_replay_boundaries.py`). `make test-replay` is a real target.
+- SQLite remains a Faz 2 projection (ADR-003); no DB/web/network in Commit 7.
+
+## Commit 8 (continuous pace curves + deterministic headless simulator) — completed
+
+Commit 8 is implemented and covered by tests (ADR-038):
+
+- `ApprovedPaceProfile` **1.1** (`approved-pace-profile-1.1.json`): a leg/split duration is a
+  time constraint, within-length pace is an approved PCHIP (or CONSTANT_SPEED) curve. The 1.0
+  contract and schema are unchanged.
+- Pure Fritsch–Carlson PCHIP + deterministic compiler with **exact total-time and
+  locked-split reconciliation** (reject, not clamp) reusing the existing `PaceTimeline`; pure
+  1.0→1.1 migration (no smoothing).
+- Backward-compatible runtime (both versions selectable/compilable; GhostClock unchanged) and
+  a **safe-wall coach continuous-curve reset** (not a StopPause).
+- Optional continuous-curve external-data fields, pure feature-extraction helpers, and a
+  `ContinuousCurveReportContext` (contract only).
+- A **deterministic headless simulator** embedding the real core: 8 failure scenarios,
+  splitmix64 virtual swimmer, provenance, `swimtools.run_scenario` CLI, byte-identical
+  journals, 3 committed simulator goldens; `make test-simulator` is a real target.
+- Planning ML (Phase-aware Conditional Transformer + Spline Decoder) is contract direction
+  only; nothing is trained or run, and live runtime never calls it.
+
+Commit 9 (incident-aware analytics / session report) is not started.
 
 ## Roadmap phases (updated for the mainline)
 

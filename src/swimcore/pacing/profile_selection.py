@@ -13,9 +13,18 @@ rather than silently picking one.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol
 
 from contracts.enums import PaceProfileSource
-from contracts.pace_profiles import ApprovedPaceProfile
+
+
+class _SelectableProfile(Protocol):
+    """Minimal surface the selector needs (satisfied by both 1.0 and 1.1 profiles)."""
+
+    source: PaceProfileSource
+
+    @property
+    def is_live_eligible(self) -> bool: ...
 
 
 class PaceProfileSelectionError(Exception):
@@ -51,11 +60,16 @@ _PRIORITY: dict[PaceProfileSource, int] = {
 }
 
 
-def select_live_pace_profile(
-    candidates: list[ApprovedPaceProfile],
+def select_live_pace_profile[T: _SelectableProfile](
+    candidates: list[T],
     policy: ProfileSelectionPolicy | None = None,
-) -> ApprovedPaceProfile:
-    """Return the single authoritative live profile, or raise on emptiness/ambiguity."""
+) -> T:
+    """Return the single authoritative live profile, or raise on emptiness/ambiguity.
+
+    Accepts either legacy ``ApprovedPaceProfile`` (1.0) or ``ApprovedContinuousPaceProfile``
+    (1.1) candidates — both expose ``source`` and ``is_live_eligible``; the ADR-034 authority
+    order and default-model opt-in are unchanged.
+    """
     pol = policy if policy is not None else ProfileSelectionPolicy()
 
     eligible = [c for c in candidates if c.is_live_eligible]

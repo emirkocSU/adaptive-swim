@@ -1,0 +1,92 @@
+{
+  "approvalStatus": "COACH_APPROVED",
+  "approvedAtMs": null,
+  "approvedBy": null,
+  "coachLocked": false,
+  "coachMetadata": null,
+  "createdAtMs": null,
+  "curve": {
+    "knots": [],
+    "representation": "CONSTANT_SPEED",
+    "segments": [
+      {
+        "fromM": 0.0,
+        "segmentIndex": 0,
+        "targetSpeedMps": 1.0416666666666667,
+        "toM": 50.0
+      },
+      {
+        "fromM": 50.0,
+        "segmentIndex": 1,
+        "targetSpeedMps": 0.9615384615384616,
+        "toM": 100.0
+      }
+    ]
+  },
+  "curveProvenance": {
+    "coachConstraintVersion": null,
+    "curveExtractionVersion": null,
+    "generalModelVersion": null,
+    "generationMode": "LEGACY_MIGRATION",
+    "legacyProfileId": "fixture5-legacy-migrated",
+    "legacyProfileVersion": "1",
+    "migratedFromSchemaVersion": "1.0",
+    "migrationVersion": "1.0->1.1-v1",
+    "modelVersion": null,
+    "personalCalibrationVersion": null,
+    "profileGenerationId": null,
+    "smoothingMethod": null,
+    "sourceDataQuality": null,
+    "targetTimeSource": "LEGACY_MIGRATION"
+  },
+  "curveValidationSummary": null,
+  "modelMetadata": null,
+  "phases": [
+    {
+      "fromM": 0.0,
+      "phaseIndex": 0,
+      "phaseType": "SURFACE_SWIM",
+      "toM": 50.0
+    },
+    {
+      "fromM": 50.0,
+      "phaseIndex": 1,
+      "phaseType": "FINISH",
+      "toM": 100.0
+    }
+  ],
+  "physiologyTarget": null,
+  "poolLengthM": 25,
+  "profileId": "fixture5-legacy-migrated",
+  "profileType": "EVEN_PACE",
+  "profileVersion": "1",
+  "reportingSplitGranularityM": 25,
+  "schemaVersion": "1.1",
+  "source": "LEGACY_SEGMENTS",
+  "splitTimeConstraints": [
+    {
+      "fromM": 0.0,
+      "lockedByCoach": true,
+      "splitIndex": 0,
+      "targetDurationSec": 48.0,
+      "toM": 50.0
+    },
+    {
+      "fromM": 50.0,
+      "lockedByCoach": true,
+      "splitIndex": 1,
+      "targetDurationSec": 52.0,
+      "toM": 100.0
+    }
+  ],
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "targetTimeConstraint": {
+    "coachLocked": false,
+    "source": "LEGACY_MIGRATION",
+    "targetTotalTimeSec": 100.0,
+    "toleranceSec": 1e-06
+  },
+  "totalDistanceM": 100.0,
+  "workoutGoal": "RACE_PACE"
+}

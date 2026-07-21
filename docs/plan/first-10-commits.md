@@ -19,8 +19,10 @@ Terminoloji: StopPause modeli (ADR-031). "Incident" yalnizca bir StopTrigger tur
    CoachPacingReset; StopDetected/LongStopConfirmed/StopPauseStarted/StopPauseResolved; controller
    karar tablosu (oneri motoru yok).
 7. **Append-only event log and replay** — log-first durability (son satir kesme + LogTailTruncated;
-   50 ms penceresi yalnizca son fsync sonrasi; kill -9 != elektrik/disk), deterministik replay,
-   StopPause/stopped-duration yeniden uretimi. SQLite Faz 2'ye.
+   fsync-per-command-batch; kill -9 != elektrik/disk), deterministik replay,
+   StopPause/stopped-duration yeniden uretimi. SQLite Faz 2'ye. **[TAMAMLANDI — ADR-037;**
+   **komut-basi-tek-satir EventBatchRecord, canonical codec, idempotent retry, tail recovery,**
+   **saf `swimcore.replay`, 3 golden journal.]**
 8. **Headless simulator and failure scenarios** — VirtualSwimmer, deterministik seed + deterministik
    id, StopPause senaryolari (tempo kaybi / long stop / manual stop / cift-isaret idempotency /
    dinlenme-ici stop / konum-zaman guvenilmez -> length analiz disi + duvarda reconcile /

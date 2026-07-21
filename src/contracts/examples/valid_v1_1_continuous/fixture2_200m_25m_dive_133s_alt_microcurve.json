@@ -1,0 +1,163 @@
+{
+  "approvalStatus": "COACH_APPROVED",
+  "approvedAtMs": null,
+  "approvedBy": null,
+  "coachLocked": false,
+  "coachMetadata": null,
+  "createdAtMs": null,
+  "curve": {
+    "knots": [
+      {
+        "distanceM": 0.0,
+        "knotIndex": 0,
+        "targetSpeedMps": 2.1
+      },
+      {
+        "distanceM": 12.5,
+        "knotIndex": 1,
+        "targetSpeedMps": 1.95
+      },
+      {
+        "distanceM": 25.0,
+        "knotIndex": 2,
+        "targetSpeedMps": 1.1
+      },
+      {
+        "distanceM": 50.0,
+        "knotIndex": 3,
+        "targetSpeedMps": 1.52
+      },
+      {
+        "distanceM": 100.0,
+        "knotIndex": 4,
+        "targetSpeedMps": 1.46
+      },
+      {
+        "distanceM": 150.0,
+        "knotIndex": 5,
+        "targetSpeedMps": 1.48
+      },
+      {
+        "distanceM": 200.0,
+        "knotIndex": 6,
+        "targetSpeedMps": 1.55
+      }
+    ],
+    "representation": "PCHIP",
+    "segments": []
+  },
+  "curveProvenance": {
+    "coachConstraintVersion": null,
+    "curveExtractionVersion": null,
+    "generalModelVersion": null,
+    "generationMode": "GENERATE_AND_EDIT",
+    "legacyProfileId": null,
+    "legacyProfileVersion": null,
+    "migratedFromSchemaVersion": null,
+    "migrationVersion": null,
+    "modelVersion": null,
+    "personalCalibrationVersion": null,
+    "profileGenerationId": null,
+    "smoothingMethod": null,
+    "sourceDataQuality": null,
+    "targetTimeSource": "COACH"
+  },
+  "curveValidationSummary": null,
+  "modelMetadata": null,
+  "phases": [
+    {
+      "fromM": 0.0,
+      "phaseIndex": 0,
+      "phaseType": "START_ACCELERATION",
+      "toM": 15.0
+    },
+    {
+      "fromM": 15.0,
+      "phaseIndex": 1,
+      "phaseType": "SURFACE_SWIM",
+      "toM": 185.0
+    },
+    {
+      "fromM": 185.0,
+      "phaseIndex": 2,
+      "phaseType": "FINAL_ACCELERATION",
+      "toM": 200.0
+    }
+  ],
+  "physiologyTarget": null,
+  "poolLengthM": 25,
+  "profileId": "fixture2-200m-25m-dive-altcurve",
+  "profileType": "NEGATIVE_SPLIT",
+  "profileVersion": "1",
+  "reportingSplitGranularityM": 25,
+  "schemaVersion": "1.1",
+  "source": "COACH_AUTHORED",
+  "splitTimeConstraints": [
+    {
+      "fromM": 0.0,
+      "lockedByCoach": true,
+      "splitIndex": 0,
+      "targetDurationSec": 15.5,
+      "toM": 25.0
+    },
+    {
+      "fromM": 25.0,
+      "lockedByCoach": true,
+      "splitIndex": 1,
+      "targetDurationSec": 16.8,
+      "toM": 50.0
+    },
+    {
+      "fromM": 50.0,
+      "lockedByCoach": true,
+      "splitIndex": 2,
+      "targetDurationSec": 17.0,
+      "toM": 75.0
+    },
+    {
+      "fromM": 75.0,
+      "lockedByCoach": true,
+      "splitIndex": 3,
+      "targetDurationSec": 17.2,
+      "toM": 100.0
+    },
+    {
+      "fromM": 100.0,
+      "lockedByCoach": true,
+      "splitIndex": 4,
+      "targetDurationSec": 16.9,
+      "toM": 125.0
+    },
+    {
+      "fromM": 125.0,
+      "lockedByCoach": true,
+      "splitIndex": 5,
+      "targetDurationSec": 16.8,
+      "toM": 150.0
+    },
+    {
+      "fromM": 150.0,
+      "lockedByCoach": true,
+      "splitIndex": 6,
+      "targetDurationSec": 16.5,
+      "toM": 175.0
+    },
+    {
+      "fromM": 175.0,
+      "lockedByCoach": true,
+      "splitIndex": 7,
+      "targetDurationSec": 16.3,
+      "toM": 200.0
+    }
+  ],
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "targetTimeConstraint": {
+    "coachLocked": true,
+    "source": "COACH",
+    "targetTotalTimeSec": 133.0,
+    "toleranceSec": 1e-06
+  },
+  "totalDistanceM": 200.0,
+  "workoutGoal": "RACE_PACE"
+}

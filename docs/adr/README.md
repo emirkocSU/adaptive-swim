@@ -39,6 +39,8 @@ Statuses: **ACTIVE**, **REVISED**, **DEFERRED** (design ready, build gated by a 
 | **034** | **Distance-specific approved pace profiles** (leg ≠ official split; exact total-time reconciliation) | **ACTIVE (Faz 1)** |
 | **035** | **Pre-session planning ML vs live adaptation ML; coach authority; Planning Model Gate P1–P7** | **ACTIVE (Faz 1: contract/gate only)** |
 | **036** | **Start mode & official-distance authority** (wearable estimate never rewrites official distance) | **ACTIVE (Faz 1)** |
+| **037** | **Append-only event journal + deterministic historical replay** (command-batch-per-line JSONL; fsync-per-batch; pure event-derived replay; SQLite → Faz 2) | **ACTIVE (Faz 1)** |
+| **038** | **Continuous pace curves + phase-aware model generation** (leg/split duration = time constraint; PCHIP curve; exact total/locked-split reconciliation; safe-wall coach curve reset; planning ML contract only) | **ACTIVE (Faz 1)** |
 
-Full ADR text lives in this directory. ADR-031, ADR-032, ADR-034, ADR-035, and ADR-036 are
+Full ADR text lives in this directory. ADR-031, ADR-032, ADR-034, ADR-035, ADR-036, ADR-037, and ADR-038 are
 in Phase 1 scope (034/035/036 as contracts, deterministic core, and docs — no real ML/UI).

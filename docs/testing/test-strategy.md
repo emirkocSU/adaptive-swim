@@ -152,3 +152,64 @@ unverified or normal pace loss must not reposition the ghost mid-length.
 - **Property invariants:** deterministic selection respecting priority; compiled duration
   equals profile total; official distance is a pool-length multiple
   (`tests/property/test_profile_and_session_invariants`).
+
+## Commit 7 — append-only event journal + deterministic replay
+
+- One command = one `EventBatchRecord` = one canonical JSONL line; contract tests reject
+  empty/mixed/discontinuous/duplicate batches.
+- Codec tests: byte-identical re-encoding, exactly one LF, sorted compact JSON,
+  NaN/Infinity rejection (encode + decode), unknown recordVersion, blank/BOM lines, and
+  wrapped (never raw) JSON/Unicode/Pydantic errors.
+- Journal tests: append creates + fsyncs (file and, on creation, parent dir), partial
+  `os.write` and EINTR handled, session/seq/timestamp/eventId validation, order preserved.
+- Retry tests: exact duplicate → `ALREADY_PRESENT` without a second line; same
+  seq/commandId with different content and partial overlaps conflict; injected fsync
+  failure → `EventLogDurabilityUncertainError`, safe re-fsync retry (§26 adversarial).
+- Tail recovery tests: valid log untouched; valid-but-unterminated final record retained
+  (repair adds only `\n`); torn tail truncated with exact byte-count notice; repair is
+  idempotent; middle corruption and newline-terminated invalid final lines are
+  `CorruptEventLogError` (never skipped); blank lines rejected.
+- Replay tests: lifecycle (incl. §26 pause example), retroactive StopPause (§26 numbers:
+  wall 35 s / stopped 25 s / active 10 s), open stop at horizon, overlap/mismatch
+  rejection, splits + verification, official distance from pool geometry (wearable source
+  never rewrites it), coach reset (not a StopPause; splits preserved), pace target and
+  control-decision reason preservation, profile metadata, stream validation (§17), and
+  `SessionRecovered` semantics (§18).
+- Golden replay journals (`tests/replay/goldens/`): committed bytes equal the
+  deterministically regenerated ones; the same history in two directories is sha256-equal.
+- Property tests (Hypothesis): codec round-trip byte identity; contiguous flattened seq;
+  read order == append order; duplicate appends never grow the file; tail repair never
+  touches bytes before the last complete newline; duration invariants
+  (`elapsed = active + stopped`, `wall = elapsed + lifecyclePaused`, all >= 0);
+  non-overlapping completed StopPauses; pool-multiple official distance; replay never
+  mutates its input.
+- Architecture tests: `swimcore.replay` imports no persistence/filesystem/time/randomness/
+  uuid and no `ActiveClock`/`GhostClock`/`SessionAggregate`; `persistence` uses no
+  SQLite/web/network; `swimcore` never imports `persistence`; the layered import-linter
+  contract is unchanged.
+
+## Commit 8 — continuous pace curves + deterministic simulator (ADR-038)
+
+- Contract tests: 1.1 profile validation (knots, phases, locked splits, pool alignment,
+  coach-lock), 5 valid fixtures load, 12 invalid fixtures reject.
+- PCHIP: exact knot interpolation, no adjacent-value overshoot, determinism, degenerate-input
+  rejection, finite derivative.
+- Compiler: exact total-time and locked-split reconciliation, distance↔time inverse
+  round-trip, bit-identical compilation, physical-bounds accept/reject (incl.
+  post-reconciliation), compiler-authoritative summary.
+- Migration: non-mutating, timeline-preserving (Demonstration B), provenance, 25/50 m pools,
+  pool-mismatch rejection.
+- Session integration: 1.1 profile drives create→arm→start; profile-selection authority;
+  default-model opt-in; official distance from geometry; normal pace loss is not a StopPause.
+- Coach continuous-curve reset: applies at the next wall, swaps profile, not a StopPause,
+  atomic rejection on unknown/mismatched replacement.
+- Feature extraction: pure, deterministic, rejects NaN/inf/zero-denominator/negative.
+- External-data + report: optional continuous fields accepted, missingness preserved,
+  synthetic-domain rule intact, `ContinuousCurveReportContext` optional.
+- Property: curve invariants (deterministic, exact total, positive speeds, round-trip,
+  no-mutation) and simulator determinism (byte-identical journals, synthetic provenance).
+- Simulator: all 8 scenarios reach COMPLETED via the real core, live↔replay agree, official
+  distance is a pool multiple, StopPause/coach-reset scenarios behave correctly, 3 committed
+  goldens match, CLI list/run/alias/hash.
+- Architecture: the simulator redefines no core type, PCHIP is defined once, no
+  network/sleep/sqlite, swimcore imports neither simulator nor persistence nor external_data.

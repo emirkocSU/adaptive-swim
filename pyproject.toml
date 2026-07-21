@@ -33,6 +33,7 @@ markers = [
     "property: property-based invariants (later commits)",
     "replay: golden replay determinism (later commits)",
     "architecture: architecture/purity guardrails",
+    "simulator: deterministic headless simulator scenarios",
 ]
 
 [tool.mypy]

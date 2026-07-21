@@ -18,6 +18,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from contracts.analytics import SessionReport
+from contracts.continuous_pace import ApprovedContinuousPaceProfile
+from contracts.event_log import EventBatchRecord
 from contracts.events import EventEnvelope
 from contracts.pace_profiles import ApprovedPaceProfile
 from contracts.workout import WorkoutTemplateV1_1, WorkoutTemplateVersion
@@ -28,7 +30,9 @@ _MODELS: dict[str, type[BaseModel]] = {
     "workout-1.0.json": WorkoutTemplateVersion,
     "workout-1.1.json": WorkoutTemplateV1_1,
     "approved-pace-profile-1.0.json": ApprovedPaceProfile,
+    "approved-pace-profile-1.1.json": ApprovedContinuousPaceProfile,
     "event-envelope-1.0.json": EventEnvelope,
+    "event-batch-record-1.0.json": EventBatchRecord,
     "session-report-1.0.json": SessionReport,
 }
 

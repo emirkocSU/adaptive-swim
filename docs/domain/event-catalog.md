@@ -27,3 +27,25 @@ CoachPacingReset  {resetId, requestedAtMs, effectiveBoundaryLengthIndex, reason}
 ```
 StopTrigger: MANUAL_INCIDENT | LONG_STOP_THRESHOLD | COACH_STOP | SENSOR_STOP.
 Idempotency: her komut `clientCommandId` tasir; tekrar ikinci pause/saat-dusumu/reset uretmez.
+
+## Persistence: EventBatchRecord (Commit 7, ADR-037)
+
+Bir komutun TUM eventleri tek `EventBatchRecord` = tek canonical JSONL satiridir
+(recordVersion 1.0; uretilen sema: `event-batch-record-1.0.json`, elle duzenlenmez):
+```
+EventBatchRecord {recordType:"EVENT_BATCH", recordVersion:"1.0", sessionId,
+                  clientCommandId, firstSeq, lastSeq, eventCount, events[]}
+```
+Kurallar: bos batch yok; seq kesintisiz; tek session + tek clientCommandId; ts azalmaz;
+eventId benzersiz; NaN/Infinity codec'te reddedilir. Canonical encoding: UTF-8, BOM yok,
+sort_keys, compact separators, tam bir `\n`.
+
+## SessionRecovered (Commit 7, ADR-037)
+
+```
+SessionRecovered {sessionId, recoveredEventCount, lastRecoveredSeq,
+                  tailTruncated, truncatedByteCount, recoveryReason}
+```
+Journal okunurken OTOMATIK uretilmez ve loga otomatik append edilmez; yalnizca
+`persistence.recovery.build_session_recovered_event` (enjekte Clock + EventIdGenerator) ile
+uretilir. Replay'de lifecycle'i degistirmez; sadece `recoveryCount`'u artirir.
