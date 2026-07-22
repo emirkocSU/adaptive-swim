@@ -102,6 +102,7 @@ def test_eintr_is_retried(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     assert interrupted["n"] == 3
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support directory fsync")
 def test_new_file_parent_directory_synced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     synced_dirs: list[bool] = []
     real_fsync = os.fsync

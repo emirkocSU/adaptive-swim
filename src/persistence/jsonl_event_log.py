@@ -55,6 +55,7 @@ from persistence.types import (
 )
 
 _NEWLINE = b"\n"
+_BINARY_FLAG = getattr(os, "O_BINARY", 0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,7 +231,7 @@ class JsonlSessionEventLog:
 
     def _write_line_and_fsync(self, canonical: bytes, record: EventBatchRecord) -> None:
         try:
-            fd = os.open(self._path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+            fd = os.open(self._path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | _BINARY_FLAG, 0o644)
         except OSError as exc:
             raise EventLogWriteError(f"cannot open journal {self._path}: {exc}") from exc
         try:
@@ -272,7 +273,7 @@ class JsonlSessionEventLog:
     def _fsync_existing(self) -> None:
         """Re-fsync the journal file to reinforce durability of an already-present line."""
         try:
-            fd = os.open(self._path, os.O_RDONLY)
+            fd = os.open(self._path, os.O_RDWR | _BINARY_FLAG)
         except OSError as exc:
             raise EventLogDurabilityUncertainError(
                 f"cannot open journal for re-fsync: {exc}"
@@ -389,7 +390,7 @@ class JsonlSessionEventLog:
 
     def _truncate_to(self, offset: int) -> None:
         try:
-            fd = os.open(self._path, os.O_RDWR)
+            fd = os.open(self._path, os.O_RDWR | _BINARY_FLAG)
         except OSError as exc:
             raise EventLogWriteError(f"cannot open journal for repair: {exc}") from exc
         try:
@@ -402,7 +403,7 @@ class JsonlSessionEventLog:
 
     def _append_final_newline(self) -> None:
         try:
-            fd = os.open(self._path, os.O_WRONLY | os.O_APPEND)
+            fd = os.open(self._path, os.O_WRONLY | os.O_APPEND | _BINARY_FLAG)
         except OSError as exc:
             raise EventLogWriteError(f"cannot open journal for repair: {exc}") from exc
         try:
