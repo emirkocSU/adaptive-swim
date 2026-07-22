@@ -148,9 +148,7 @@ def _member_basename(name: str) -> str:
     return name.rsplit("/", 1)[-1]
 
 
-def _record_invalid_value(
-    invalid: dict[str, dict[str, int]], column: str, value: str
-) -> None:
+def _record_invalid_value(invalid: dict[str, dict[str, int]], column: str, value: str) -> None:
     values = invalid.setdefault(column, {})
     if value in values:
         values[value] += 1
@@ -212,8 +210,7 @@ def _stream_member(
                 if column in header_set
             }
             allowed_values = {
-                column: set(values)
-                for column, values in manifest_file.allowedColumnValues.items()
+                column: set(values) for column, values in manifest_file.allowedColumnValues.items()
             }
 
             count = 0

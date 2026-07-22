@@ -19,7 +19,7 @@ class FeatureExtractionError(ValueError):
 
 
 def _finite(value: float, label: str) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+    if isinstance(value, bool) or not isinstance(value, int | float):
         raise FeatureExtractionError(f"{label} must be a real number, got {value!r}")
     if not math.isfinite(value):
         raise FeatureExtractionError(f"{label} must be finite, got {value}")

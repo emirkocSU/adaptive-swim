@@ -177,7 +177,6 @@ def test_failed_pace_decision_does_not_change_applied_target() -> None:
 
 
 def test_failed_reconciliation_leaves_pending_intact() -> None:
-
     agg, clk = started()
     agg.handle(
         MarkStopPause(

@@ -244,8 +244,7 @@ class DatasetAssetManifest(StrictModel):
             DatasetEvidenceLevel.UNPROVENANCED,
         ):
             raise ValueError(
-                f"evidence level {self.evidenceLevel.value} cannot claim "
-                "continuousCurveGroundTruth"
+                f"evidence level {self.evidenceLevel.value} cannot claim continuousCurveGroundTruth"
             )
         return self
 

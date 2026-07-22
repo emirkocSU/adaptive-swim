@@ -30,7 +30,7 @@ def _defined_names(path: Path) -> set[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     names: set[str] = set()
     for node in ast.walk(tree):
-        if isinstance(node, (ast.ClassDef, ast.FunctionDef)):
+        if isinstance(node, ast.ClassDef | ast.FunctionDef):
             names.add(node.name)
     return names
 
