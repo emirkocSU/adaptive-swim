@@ -55,3 +55,10 @@ class PendingCoachReset:
     replacementTargetTotalTimeSec: float | None = None
     previousProfileId: str | None = None
     previousProfileVersion: str | None = None
+    #: Full replacement metadata (§2.5) — the profile swap must update ALL selected-profile
+    #: state fields, not just id/version.
+    replacementProfileSource: str | None = None
+    replacementProfileType: str | None = None
+    replacementProfileCoachLocked: bool | None = None
+    replacementCurveRepresentation: str | None = None
+    replacementCurveCompilerVersion: str | None = None

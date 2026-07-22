@@ -56,6 +56,8 @@ from swimcore.pacing.timeline import (
     next_wall_boundary,
     previous_wall_boundary,
     target_active_time_at_distance,
+    target_pace_at_distance,
+    target_speed_at_distance,
 )
 from swimcore.pacing.types import (
     EPSILON,
@@ -112,4 +114,6 @@ __all__ = [
     "segment_active_duration_sec",
     "select_live_pace_profile",
     "target_active_time_at_distance",
+    "target_pace_at_distance",
+    "target_speed_at_distance",
 ]

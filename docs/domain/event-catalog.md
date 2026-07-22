@@ -49,3 +49,27 @@ SessionRecovered {sessionId, recoveredEventCount, lastRecoveredSeq,
 Journal okunurken OTOMATIK uretilmez ve loga otomatik append edilmez; yalnizca
 `persistence.recovery.build_session_recovered_event` (enjekte Clock + EventIdGenerator) ile
 uretilir. Replay'de lifecycle'i degistirmez; sadece `recoveryCount`'u artirir.
+
+
+## Commit 8 correction — payload additions (backward compatible)
+
+All fields below are optional with safe defaults; existing journals parse unchanged.
+
+**`SessionCreated`**
+- `selectedProfileTargetTotalTimeSec`, `selectedCurveRepresentation`,
+  `selectedCurveCompilerVersion` — the selected profile's timeline metadata, so historical
+  replay carries the same profile state axes as the live aggregate.
+
+**`CoachPacingResetRequested`**
+- `replacementPaceProfileSource`, `replacementPaceProfileType`,
+  `replacementProfileCoachLocked`, `replacementCurveRepresentation`,
+  `replacementCurveCompilerVersion`.
+
+**`CoachPacingResetApplied`**
+- the same five fields plus `replacementAppliedPaceSecPer100M` — the replacement timeline's
+  current target just after the application wall.
+
+Rule: when a continuous-curve replacement is applied, **every** selected-profile field is
+adopted from the replacement — an earlier `COACH_AUTHORED` source must not survive a
+`COACH_APPROVED_MODEL` replacement, and a coach-locked replacement must read as locked in
+both live and replay state.

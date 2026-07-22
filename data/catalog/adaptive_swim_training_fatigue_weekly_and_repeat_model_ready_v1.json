@@ -1,0 +1,106 @@
+{
+  "allowedModelTasks": [
+    "TRAINING_DOMAIN_CORRECTION_TRAINING",
+    "REPEAT_FATIGUE_FORECASTING"
+  ],
+  "assetId": "adaptive_swim_training_fatigue_weekly_and_repeat_model_ready_v1",
+  "bundleFileName": "adaptive_swim_training_fatigue_weekly_and_repeat_model_ready_v1.zip",
+  "bundleSha256": "369e4c3f29d2dd5c1521eec654bd53af1237ee6ba8fc79e539c264f6e5ed05cb",
+  "continuousCurveGroundTruth": false,
+  "domain": "TRAINING",
+  "eligibility": "RESEARCH_ELIGIBLE",
+  "evidenceLevel": "TRAINING_OBSERVATION",
+  "files": [
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "OPEN_DATA_CC_BY_4_0_REPORTED_BY_SOURCE",
+          "LICENSE_TBD_SOURCE_PAGE_REVIEW_REQUIRED"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ],
+        "record_granularity": [
+          "ATHLETE_WEEK",
+          "SPRINT_REPEAT"
+        ]
+      },
+      "expectedColumnCount": 111,
+      "expectedRowCount": 396,
+      "fileName": "adaptive_swim_training_fatigue_weekly_and_repeat_model_ready_v1.csv",
+      "forbiddenFeatureColumns": [
+        "next_week_sprint_time_sec",
+        "next_week_sprint_time_change_sec",
+        "next_week_performance_decline_flag"
+      ],
+      "granularity": "ATHLETE_WEEK",
+      "granularityColumn": "record_granularity",
+      "granularityRowCounts": {
+        "ATHLETE_WEEK": 228,
+        "SPRINT_REPEAT": 168
+      },
+      "groupingKeys": [
+        "source_participant_id",
+        "session_or_trial_id"
+      ],
+      "normalizedColumnMapping": {
+        "record_granularity": "record_type",
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "Real discriminator is record_granularity (228 ATHLETE_WEEK + 168 SPRINT_REPEAT); record_type is normalized-only.",
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "record_granularity",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "week_index",
+        "trial_index",
+        "repeat_index",
+        "sprint_time_sec",
+        "training_load_au",
+        "rpe",
+        "next_week_sprint_time_sec",
+        "next_week_performance_decline_flag",
+        "official_distance_authority",
+        "license_status"
+      ],
+      "sha256": "1a2f6442bbec9b1c28cfbde07876dd66a51b20157e50d6cc9038028d206edbdc"
+    }
+  ],
+  "leakageRules": [
+    "athlete-week partitions are time-aware",
+    "source_participant_id does not cross partitions",
+    "repeats of one session_or_trial_id stay together",
+    "next_week_* columns stay outside feature allowlists"
+  ],
+  "licenseEligibility": "MIXED_BY_SOURCE",
+  "licenseNotes": "ATHLETE_WEEK rows report CC BY 4.0; SPRINT_REPEAT rows report LICENSE_TBD. Eligibility remains source/row gated.",
+  "manifestVersion": "1.1.0",
+  "officialDistanceAuthority": false,
+  "productionTrainingEligible": false,
+  "qaWarnings": [],
+  "restrictions": [
+    {
+      "code": "GRANULARITY_MUST_STAY_SEPARATE",
+      "description": "ATHLETE_WEEK and SPRINT_REPEAT are separate target tables."
+    },
+    {
+      "code": "PER_SOURCE_LICENSE_GATE",
+      "description": "License eligibility is decided per row/source."
+    },
+    {
+      "code": "NEXT_WEEK_IS_A_LABEL",
+      "description": "next_week_* columns are forecast labels, never input features."
+    }
+  ],
+  "roles": [
+    "TRAINING_DOMAIN_CORRECTION",
+    "REPEAT_FATIGUE_PRIOR",
+    "RECOVERY_ADVISORY"
+  ],
+  "sourceDescription": "Weekly training-load and sprint-repeat fatigue observations.",
+  "validationPrimary": true
+}

@@ -39,3 +39,19 @@ gecis tablosu yazmak yasaktir. Terminal durumdan sonra normal domain event redde
 state'i DEGILDIR: replay sirasinda da session RUNNING kalir; acik lifecycle pause + acik
 StopPause ayni anda gorulurse stream corruption sayilir. Sure eksenleri ayridir:
 `elapsed = active + stopped`, `wall = elapsed + lifecyclePaused`.
+
+
+## Commit 8 correction — behaviours pinned by the required scenarios
+
+The eight required simulator scenarios are the executable statement of these state rules:
+
+| Scenario | State-machine rule pinned |
+|---|---|
+| `normal-pace-loss` | a growing pace gap is not an incident: no StopPause, the ghost and ActiveClock keep running |
+| `long-stop-mid-length` | the retroactive stop start (payload `startedAtMs`) precedes confirmation; the tracked mid-pool alignment never becomes official distance; exactly one wall reconciliation follows the resolve |
+| `manual-stop-at-verified-wall` | a manual stop aligned at an official wall reconciles at that wall; a StopPause is never a lifecycle pause |
+| `duplicate-stop-mark` | command idempotency: the same clientCommandId with identical content yields zero new events and zero new journal batches |
+| `stop-during-planned-rest` | planned rest is a schedule-level concept; it creates no StopPause, adds no stopped duration and no synthetic lifecycle state |
+| `unreliable-position-time` | low position confidence is a display axis only; official distance and completed lengths follow pool geometry and verified walls |
+| `complete-while-stop-paused` | `CompleteSession` is rejected while a StopPause is open and mutates nothing; it succeeds after the resolve and the final official wall |
+| `coach-continuous-curve-reset` | a mid-length reset request applies only at the next official wall, swaps the full profile metadata, is not a StopPause and preserves split history |

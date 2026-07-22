@@ -125,8 +125,121 @@ def stroke_index(
     return v * sl
 
 
+# --------------------------------------------------------------------------- ADR-039 helpers
+#: Central epsilon for log/softmax stabilisation in the training-distribution helper.
+RATIO_EPSILON: float = 1e-9
+
+#: Tolerance for "ratios sum to one" checks.
+RATIO_SUM_TOLERANCE: float = 1e-6
+
+
+def cumulative_time_share(split_time_shares: list[float]) -> list[float]:
+    """Running sum of per-segment time shares (each in (0, 1], total ≈ 1).
+
+    The input is not mutated. Non-finite, non-positive or badly-summing shares raise.
+    """
+    if not split_time_shares:
+        raise FeatureExtractionError("split_time_shares must be non-empty")
+    shares = [_positive(v, "split_time_share") for v in split_time_shares]
+    total = math.fsum(shares)
+    if abs(total - 1.0) > 1e-3:
+        raise FeatureExtractionError(f"time shares must sum to ~1, got {total}")
+    out: list[float] = []
+    running = 0.0
+    for share in shares:
+        running += share
+        out.append(running)
+    return out
+
+
+def race_average_speed_mps(total_distance_m: float, total_time_sec: float) -> float:
+    """Mean race speed: ``total distance / total time`` (m/s)."""
+    d = _positive(total_distance_m, "total_distance_m")
+    t = _positive(total_time_sec, "total_time_sec")
+    return d / t
+
+
+def segment_speed_ratio_to_race_average(
+    segment_speed_mps_value: float, race_average_speed_mps_value: float
+) -> float:
+    """Segment speed expressed as a ratio of the race average (1.0 = exactly average)."""
+    v = _positive(segment_speed_mps_value, "segment_speed_mps")
+    avg = _positive(race_average_speed_mps_value, "race_average_speed_mps")
+    return v / avg
+
+
+def target_intensity_ratio(target_time_sec: float, reference_best_time_sec: float) -> float:
+    """Training intensity as ``reference best / target`` (1.0 = at reference pace).
+
+    Values below 1.0 mean the target is slower than the reference best; the helper never
+    invents a physiological interpretation.
+    """
+    target = _positive(target_time_sec, "target_time_sec")
+    reference = _positive(reference_best_time_sec, "reference_best_time_sec")
+    return reference / target
+
+
+def softmax_normalized_training_distribution(
+    race_ratios: list[float],
+    training_deltas: list[float] | None = None,
+    *,
+    epsilon: float = RATIO_EPSILON,
+) -> list[float]:
+    """``p_train[i] = softmax(log(p_race[i] + eps) + delta_train[i])``.
+
+    A small, regularized correction of a coarse race split prior toward the training
+    domain. Inputs are positive ratios; the output ratios are positive and sum to 1 within
+    tolerance. Inputs are never mutated; NaN/infinity are rejected.
+    """
+    if not race_ratios:
+        raise FeatureExtractionError("race_ratios must be non-empty")
+    ratios = [_positive(v, "race_ratio") for v in race_ratios]
+    if training_deltas is None:
+        deltas = [0.0] * len(ratios)
+    else:
+        if len(training_deltas) != len(ratios):
+            raise FeatureExtractionError(
+                f"training_deltas length {len(training_deltas)} != race_ratios length {len(ratios)}"
+            )
+        deltas = [_finite(v, "training_delta") for v in training_deltas]
+    eps = _positive(epsilon, "epsilon")
+    logits = [math.log(r + eps) + d for r, d in zip(ratios, deltas, strict=True)]
+    peak = max(logits)
+    exps = [math.exp(x - peak) for x in logits]
+    total = math.fsum(exps)
+    if total <= 0.0 or not math.isfinite(total):
+        raise FeatureExtractionError("softmax normalisation degenerated")
+    out = [e / total for e in exps]
+    if abs(math.fsum(out) - 1.0) > RATIO_SUM_TOLERANCE:
+        raise FeatureExtractionError("normalized training distribution does not sum to 1")
+    if any(v <= 0.0 for v in out):
+        raise FeatureExtractionError("normalized training distribution must be strictly positive")
+    return out
+
+
+def time_density_scale_factor(
+    reference_total_time_sec: float, target_total_time_sec: float
+) -> float:
+    """Uniform time-density scale between a reference plan and a target total time.
+
+    Used to reason about how a coarse prior stretches or compresses before the exact
+    deterministic reconciliation runs — it is NOT itself a reconciliation.
+    """
+    reference = _positive(reference_total_time_sec, "reference_total_time_sec")
+    target = _positive(target_total_time_sec, "target_total_time_sec")
+    return target / reference
+
+
 __all__ = [
+    "RATIO_EPSILON",
+    "RATIO_SUM_TOLERANCE",
     "FeatureExtractionError",
+    "cumulative_time_share",
+    "race_average_speed_mps",
+    "segment_speed_ratio_to_race_average",
+    "softmax_normalized_training_distribution",
+    "target_intensity_ratio",
+    "time_density_scale_factor",
     "clean_swimming_speed_mps",
     "cumulative_times_sec",
     "split_ratios",

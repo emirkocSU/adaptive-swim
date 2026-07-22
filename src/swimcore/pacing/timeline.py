@@ -24,6 +24,7 @@ from swimcore.pacing.errors import (
     InvalidDistanceError,
     InvalidDurationError,
     InvalidPaceCurveError,
+    InvalidPaceError,
     InvalidPoolLengthError,
     TimeOutsideTimelineError,
 )
@@ -203,6 +204,24 @@ def target_active_time_at_distance(
         elapsedActiveSec=timeline.totalActiveDurationSec,
         paceSecPer100M=last.endPaceSecPer100M,
     )
+
+
+def target_pace_at_distance(timeline: PaceTimeline, distance_m: float) -> float:
+    """Target pace (sec/100 m) of the compiled timeline at a distance.
+
+    The single authoritative distance→pace query. Callers outside the pace engine (the
+    session aggregate's post-reset current target, the simulator's ghost query) use this
+    instead of doing their own interval interpolation.
+    """
+    return target_active_time_at_distance(timeline, distance_m).paceSecPer100M
+
+
+def target_speed_at_distance(timeline: PaceTimeline, distance_m: float) -> float:
+    """Target speed (m/s) of the compiled timeline at a distance (pace inverted here only)."""
+    pace = target_pace_at_distance(timeline, distance_m)
+    if pace <= 0.0 or not _finite(pace):
+        raise InvalidPaceError(f"timeline produced a non-usable pace {pace} at {distance_m} m")
+    return 100.0 / pace
 
 
 def ghost_distance_at_active_time(

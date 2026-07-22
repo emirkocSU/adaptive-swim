@@ -53,6 +53,42 @@
           "default": null,
           "title": "Previouspaceprofileversion"
         },
+        "replacementAppliedPaceSecPer100M": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementappliedpacesecper100M"
+        },
+        "replacementCurveCompilerVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementcurvecompilerversion"
+        },
+        "replacementCurveRepresentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementcurverepresentation"
+        },
         "replacementPaceProfileId": {
           "anyOf": [
             {
@@ -65,6 +101,30 @@
           "default": null,
           "title": "Replacementpaceprofileid"
         },
+        "replacementPaceProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofilesource"
+        },
+        "replacementPaceProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofiletype"
+        },
         "replacementPaceProfileVersion": {
           "anyOf": [
             {
@@ -76,6 +136,18 @@
           ],
           "default": null,
           "title": "Replacementpaceprofileversion"
+        },
+        "replacementProfileCoachLocked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementprofilecoachlocked"
         },
         "replacementTargetTotalTimeSec": {
           "anyOf": [
@@ -117,6 +189,30 @@
           "default": null,
           "title": "Reason"
         },
+        "replacementCurveCompilerVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementcurvecompilerversion"
+        },
+        "replacementCurveRepresentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementcurverepresentation"
+        },
         "replacementPaceProfileId": {
           "anyOf": [
             {
@@ -129,6 +225,30 @@
           "default": null,
           "title": "Replacementpaceprofileid"
         },
+        "replacementPaceProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofilesource"
+        },
+        "replacementPaceProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementpaceprofiletype"
+        },
         "replacementPaceProfileVersion": {
           "anyOf": [
             {
@@ -140,6 +260,18 @@
           ],
           "default": null,
           "title": "Replacementpaceprofileversion"
+        },
+        "replacementProfileCoachLocked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementprofilecoachlocked"
         },
         "replacementTargetTotalTimeSec": {
           "anyOf": [
@@ -1250,6 +1382,30 @@
           "title": "Profilecoachlocked",
           "type": "boolean"
         },
+        "selectedCurveCompilerVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedcurvecompilerversion"
+        },
+        "selectedCurveRepresentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedcurverepresentation"
+        },
         "selectedPaceProfileId": {
           "anyOf": [
             {
@@ -1297,6 +1453,18 @@
           ],
           "default": null,
           "title": "Selectedpaceprofileversion"
+        },
+        "selectedProfileTargetTotalTimeSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedprofiletargettotaltimesec"
         },
         "sessionId": {
           "minLength": 1,

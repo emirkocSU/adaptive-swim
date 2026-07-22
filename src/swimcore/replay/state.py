@@ -80,6 +80,11 @@ class HistoricalSessionState:
     selectedPaceProfileSource: str | None
     selectedPaceProfileType: str | None
     profileCoachLocked: bool
+    #: Selected-profile timeline metadata (§2.5); adopted from a replacement on a coach
+    #: continuous-curve reset just like the live aggregate.
+    selectedProfileTargetTotalTimeSec: float | None
+    selectedCurveRepresentation: str | None
+    selectedCurveCompilerVersion: str | None
     workoutGoal: str | None
     startedAtMs: int | None
     endedAtMs: int | None

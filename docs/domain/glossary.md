@@ -142,3 +142,36 @@
 - **Headless simulator** — a deterministic harness embedding the real aggregate + journal +
   replay to exercise failure scenarios; produces byte-identical, `SYNTHETIC_SIMULATION`
   provenance journals and never duplicates core logic.
+
+
+## Commit 8 correction terms (ADR-039)
+
+- **Operational target velocity envelope** — the within-length target-speed curve the ghost
+  follows. It is a plan, bounded and reconciled; it is *not* a claim about the swimmer's
+  measured instantaneous velocity. Synonym: *operational ghost velocity curve*. Never call
+  it `predictedMeasuredVelocity`.
+- **Measured instantaneous velocity** — real continuous position-time truth. None of the
+  current datasets provides it across distances, so no model here predicts it.
+- **Coarse conditional split prior** — the first data-driven planning model: a sequence-level
+  split-ratio distribution conditioned on stroke, distance, pool, start mode and performance
+  band. Never a total time, never a velocity trace.
+- **Training-domain residual correction** — a small regularized shift of a race prior toward
+  the training domain: `p_train = softmax(log(p_race + eps) + delta_train)`.
+- **Curve evidence level** — how much real evidence stands behind a curve's *shape*
+  (`DETERMINISTIC_BASELINE`, `COARSE_SPLIT_DERIVED`, `CONTROLLED_STUDY_AUGMENTED`,
+  `TRAINING_EXPORT_PERSONALIZED`, `PILOT_PERSONALIZED`).
+- **Visual shape source** — where the drawn within-length shape comes from
+  (`CONSTANT_SEGMENT`, `BOUNDED_TEMPLATE`, `LEARNED_COARSE_LATENT`, `FORM_DERIVED`,
+  `PERSONALIZED_FORM_DERIVED`, `COACH_AUTHORED`).
+- **Dataset eligibility** — `RESEARCH_ELIGIBLE`, `PRODUCTION_ELIGIBLE`, `LICENSE_BLOCKED`,
+  `QUALITY_BLOCKED`, `QUARANTINED`, `SMOKE_TEST_ONLY`. A non-verified license can never
+  yield production eligibility.
+- **Quarantined asset** — a dataset with unusable provenance. Pipeline smoke tests only;
+  never production, never primary research.
+- **Forecast vs target** — `coachTargetTimeSec` is a target; `predictedNextRepeatTimeSec` is
+  a forecast. A forecast never mutates a target.
+- **Simulation run manifest** — the deterministic identity of a simulator run
+  (`synthetic=true`, scenario id/version, seed, versions, plan identity, `runId` =
+  sha256 of that identity; no timestamp, no UUID).
+- **Swimmer observation** — one immutable per-tick record from the virtual swimmer. Its
+  estimated position is a visual observation only and is never official distance.

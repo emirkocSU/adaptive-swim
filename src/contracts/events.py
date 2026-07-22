@@ -71,6 +71,11 @@ class SessionCreatedPayload(StrictModel):
     selectedPaceProfileType: str | None = None
     profileCoachLocked: bool = False
     workoutGoal: str | None = None
+    # --- selected-profile timeline metadata (§2.5, optional/back-compat) so historical
+    # replay can carry the same profile state axes as the live aggregate.
+    selectedProfileTargetTotalTimeSec: float | None = None
+    selectedCurveRepresentation: str | None = None
+    selectedCurveCompilerVersion: str | None = None
 
 
 class SessionArmedPayload(StrictModel):
@@ -212,6 +217,12 @@ class CoachPacingResetRequestedPayload(StrictModel):
     replacementPaceProfileId: str | None = None
     replacementPaceProfileVersion: str | None = None
     replacementTargetTotalTimeSec: float | None = None
+    # --- full replacement metadata (Commit 8 correction §2.5, optional/back-compat) ---
+    replacementPaceProfileSource: str | None = None
+    replacementPaceProfileType: str | None = None
+    replacementProfileCoachLocked: bool | None = None
+    replacementCurveRepresentation: str | None = None
+    replacementCurveCompilerVersion: str | None = None
 
 
 class CoachPacingResetAppliedPayload(StrictModel):
@@ -223,6 +234,16 @@ class CoachPacingResetAppliedPayload(StrictModel):
     replacementPaceProfileId: str | None = None
     replacementPaceProfileVersion: str | None = None
     replacementTargetTotalTimeSec: float | None = None
+    # --- full replacement metadata (Commit 8 correction §2.5, optional/back-compat).
+    # When a continuous-curve replacement is applied, ALL selected-profile state fields
+    # come from the replacement profile — not just id/version.
+    replacementPaceProfileSource: str | None = None
+    replacementPaceProfileType: str | None = None
+    replacementProfileCoachLocked: bool | None = None
+    #: Current target pace of the replacement timeline just after the application wall.
+    replacementAppliedPaceSecPer100M: float | None = None
+    replacementCurveRepresentation: str | None = None
+    replacementCurveCompilerVersion: str | None = None
 
 
 class ControlDecisionMadePayload(StrictModel):

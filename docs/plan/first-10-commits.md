@@ -33,3 +33,9 @@ Terminoloji: StopPause modeli (ADR-031). "Incident" yalnizca bir StopTrigger tur
 10. **Full vertical-slice verification + phase1-completeness** — golden replay, property invariants,
     state-machine, agi kapali e2e (iki ornek antrenman), 20 degismezin test kimligine baglanmasi,
     phase1-completeness-check (hicbir PENDING kalmaz).
+
+
+> **Status note (Commit 8 correction):** the authoritative Phase 1 status table lives in
+> `docs/plan/phase1-commit-plan.md`. Commits 1–8 are done (Commit 8 including the ADR-039
+> dataset evidence plan); Commit 9 (analytics/report) and Commit 10 (e2e vertical slice) are
+> pending. See also `docs/plan/model-roadmap.md` for Phase 5A–5E.

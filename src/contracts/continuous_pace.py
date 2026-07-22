@@ -20,15 +20,19 @@ from pydantic import Field, model_validator
 
 from contracts._base import (
     FLOAT_TOLERANCE,
+    FiniteFloat,
     NonEmptyStr,
-    NonNegFloat,
+    NonNegFiniteFloat,
     NonNegInt,
-    PosFloat,
+    PosFiniteFloat,
     StrictModel,
+    UnitFiniteRatio,
 )
 from contracts.enums import (
     ContinuousCurveGenerationMode,
     ContinuousPacePhaseType,
+    CurveEvidenceLevel,
+    CurveOrigin,
     PaceCurveRepresentation,
     PaceProfileSource,
     PaceProfileType,
@@ -36,6 +40,7 @@ from contracts.enums import (
     StartMode,
     Stroke,
     TargetTimeSource,
+    VisualShapeSource,
     WorkoutGoal,
 )
 from contracts.pace_profiles import (
@@ -52,17 +57,17 @@ class PaceCurveKnot(StrictModel):
     """One PCHIP control knot: a target *speed* (m/s) at a distance (m)."""
 
     knotIndex: NonNegInt
-    distanceM: Annotated[float, Field(ge=0)]
-    targetSpeedMps: PosFloat
+    distanceM: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    targetSpeedMps: PosFiniteFloat
 
 
 class ConstantSpeedCurveSegment(StrictModel):
     """One constant-speed span (legacy migration / explicit template only)."""
 
     segmentIndex: NonNegInt
-    fromM: Annotated[float, Field(ge=0)]
-    toM: PosFloat
-    targetSpeedMps: PosFloat
+    fromM: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    toM: PosFiniteFloat
+    targetSpeedMps: PosFiniteFloat
 
 
 class ContinuousPaceCurve(StrictModel):
@@ -126,15 +131,15 @@ class ContinuousPacePhase(StrictModel):
     """An analytical within-length phase span. Not an official wall/split boundary."""
 
     phaseIndex: NonNegInt
-    fromM: Annotated[float, Field(ge=0)]
-    toM: PosFloat
+    fromM: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    toM: PosFiniteFloat
     phaseType: ContinuousPacePhaseType
 
 
 class TargetTimeConstraint(StrictModel):
-    targetTotalTimeSec: PosFloat
+    targetTotalTimeSec: PosFiniteFloat
     source: TargetTimeSource
-    toleranceSec: NonNegFloat = 1e-6
+    toleranceSec: NonNegFiniteFloat = 1e-6
     coachLocked: bool = False
 
 
@@ -142,9 +147,9 @@ class SplitTimeConstraint(StrictModel):
     """A locked/soft time constraint on a distance span. Boundaries follow pool geometry."""
 
     splitIndex: NonNegInt
-    fromM: Annotated[float, Field(ge=0)]
-    toM: PosFloat
-    targetDurationSec: PosFloat
+    fromM: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    toM: PosFiniteFloat
+    targetDurationSec: PosFiniteFloat
     lockedByCoach: bool = False
 
     @model_validator(mode="after")
@@ -159,6 +164,30 @@ class CurveProvenance(StrictModel):
     generationMode: ContinuousCurveGenerationMode
     targetTimeSource: TargetTimeSource
     modelVersion: str | None = None
+    # --- dataset-evidence extension (ADR-039). All optional / default-safe: existing 1.1
+    # profile JSON documents remain valid unchanged. A coarse-split-derived or
+    # bounded-template curve is an *operational target velocity envelope*, never a measured
+    # instantaneous velocity claim.
+    curveOrigin: CurveOrigin | None = None
+    curveEvidenceLevel: CurveEvidenceLevel | None = None
+    visualShapeSource: VisualShapeSource | None = None
+    continuousCurveGroundTruth: bool = False
+    trainingDomainCorrectionApplied: bool = False
+    trainingContextCompleteness: UnitFiniteRatio | None = None
+    domainExtrapolationFlag: bool = False
+    oodFlag: bool = False
+    targetSplitTimesSec: tuple[PosFiniteFloat, ...] | None = None
+    predictedSplitTimesSec: tuple[PosFiniteFloat, ...] | None = None
+    predictedNextSplitTimeSec: PosFiniteFloat | None = None
+    predictedNextRepeatTimeSec: PosFiniteFloat | None = None
+    uncertaintyP10: FiniteFloat | None = None
+    uncertaintyP50: FiniteFloat | None = None
+    uncertaintyP90: FiniteFloat | None = None
+    baselineVersion: str | None = None
+    personalizationVersion: str | None = None
+    sourceDatasetAssetIds: tuple[NonEmptyStr, ...] | None = None
+    sourceDatasetManifestVersions: tuple[NonEmptyStr, ...] | None = None
+    curveConfidence: UnitFiniteRatio | None = None
     generalModelVersion: str | None = None
     personalCalibrationVersion: str | None = None
     coachConstraintVersion: str | None = None
@@ -171,22 +200,57 @@ class CurveProvenance(StrictModel):
     legacyProfileId: str | None = None
     legacyProfileVersion: str | None = None
 
+    @model_validator(mode="after")
+    def _check_evidence_consistency(self) -> CurveProvenance:
+        # A curve whose shape is only derived from coarse official splits, a bounded
+        # template or a learned coarse latent can NEVER be presented as measured
+        # continuous-velocity ground truth (ADR-039).
+        non_ground_truth_levels = (
+            CurveEvidenceLevel.DETERMINISTIC_BASELINE,
+            CurveEvidenceLevel.COARSE_SPLIT_DERIVED,
+        )
+        if self.continuousCurveGroundTruth:
+            if self.curveEvidenceLevel in non_ground_truth_levels:
+                raise ValueError(
+                    "a coarse-split-derived / deterministic-baseline curve cannot claim "
+                    "continuousCurveGroundTruth"
+                )
+            if self.visualShapeSource in (
+                VisualShapeSource.BOUNDED_TEMPLATE,
+                VisualShapeSource.LEARNED_COARSE_LATENT,
+                VisualShapeSource.CONSTANT_SEGMENT,
+            ):
+                raise ValueError(
+                    "a bounded-template / coarse-latent / constant-segment shape cannot "
+                    "claim continuousCurveGroundTruth"
+                )
+        if (
+            self.targetSplitTimesSec is not None
+            and self.predictedSplitTimesSec is not None
+            and self.targetSplitTimesSec == self.predictedSplitTimesSec
+            and len(self.targetSplitTimesSec) > 0
+        ):
+            # identical tuples are legal (a forecast may match the target); nothing to do —
+            # the fields stay separate so a forecast can never silently overwrite a target.
+            pass
+        return self
+
 
 class CurveValidationSummary(StrictModel):
     """Compiler-authoritative summary. The compiler recomputes rather than trusting input."""
 
-    integratedTotalTimeSec: NonNegFloat
-    targetTotalTimeSec: NonNegFloat
-    totalReconciliationErrorSec: NonNegFloat
-    maxSplitReconciliationErrorSec: NonNegFloat
-    minTargetSpeedMps: PosFloat
-    maxTargetSpeedMps: PosFloat
+    integratedTotalTimeSec: NonNegFiniteFloat
+    targetTotalTimeSec: NonNegFiniteFloat
+    totalReconciliationErrorSec: NonNegFiniteFloat
+    maxSplitReconciliationErrorSec: NonNegFiniteFloat
+    minTargetSpeedMps: PosFiniteFloat
+    maxTargetSpeedMps: PosFiniteFloat
     phaseCount: NonNegInt
     knotCount: NonNegInt
     compiledIntervalCount: NonNegInt
     representation: PaceCurveRepresentation
     compilerVersion: NonEmptyStr
-    lookupResolutionM: PosFloat
+    lookupResolutionM: PosFiniteFloat
     physicalBoundsChecked: bool
     validationPassed: bool
 
@@ -211,7 +275,7 @@ class ApprovedContinuousPaceProfile(StrictModel):
     startMode: StartMode
     stroke: Stroke
     workoutGoal: WorkoutGoal
-    totalDistanceM: PosFloat
+    totalDistanceM: PosFiniteFloat
     targetTimeConstraint: TargetTimeConstraint
     splitTimeConstraints: tuple[SplitTimeConstraint, ...] = ()
     curve: ContinuousPaceCurve

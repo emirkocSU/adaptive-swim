@@ -15,3 +15,15 @@ eklenir) ile mekanik olarak dogrulanir ve `make ci`'a `phase1-completeness` hede
 ## Neden Commit 10
 Erken commitlerde PENDING kabul edilebilir (her commit yesil kalir). Commit 10 bu gecici durumu
 kapatir; boylece "yesil CI" Faz 1 sonunda gercekten eksiksiz demektir.
+
+
+## Commit 8 (corrected) completeness
+
+Green `make ci` covers: lint + format, `mypy --strict`, import-linter (8 contracts),
+`swimtools.arch_check`, schema generation check, unit, property, replay, simulator and
+architecture suites. The e2e headless vertical slice remains PENDING for Commit 10.
+
+Out of CI by design: validation of the real multi-hundred-megabyte dataset bundles. That is
+an operator step (`python -m swimtools.validate_dataset_bundle --all --data-root ...`)
+because embedding those files as fixtures would violate the "no raw data in the repository"
+rule.

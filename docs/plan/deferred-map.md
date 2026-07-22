@@ -40,3 +40,15 @@ model card; yerel, registry degil).
 
 ## Faz 10 — OEM
 `src/adapters/partner_*/` · `src/cloud/tenants/`.
+
+
+## Deferred by ADR-039 (Commit 8 correction)
+
+| Item | Deferred to | Trigger |
+|---|---|---|
+| `src/ml/` package | Phase 5 | Phase 1 closed and Phase 5A started |
+| Real model training (race prior, training correction, forecasting) | Phase 5A–5C | validated bundles + verified licenses |
+| Constrained operational target-envelope compiler (learned shapes) | Phase 5D | Phase 5A/5B deliver a usable prior |
+| FORM export / pilot personalisation | Phase 5E | consented wearable export available |
+| Phase-aware conditional transformer (ADR-038 long-term target) | after high-resolution continuous data exists | genuine within-length position-time ground truth |
+| Production training on external data | after per-source license verification | `source_license_status = VERIFIED_ALLOWED` |

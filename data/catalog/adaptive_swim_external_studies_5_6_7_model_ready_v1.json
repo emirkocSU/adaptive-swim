@@ -1,0 +1,363 @@
+{
+  "allowedModelTasks": [
+    "TRAINING_DOMAIN_CORRECTION_TRAINING",
+    "ADVISORY_REPORTING_RESEARCH",
+    "PIPELINE_SMOKE_TEST"
+  ],
+  "assetId": "adaptive_swim_external_studies_5_6_7_model_ready_v1",
+  "bundleFileName": "adaptive_swim_external_studies_5_6_7_model_ready_v1.zip",
+  "bundleSha256": "9979a604df38123e4def11358917551220845942714455d43248cd7e0e7fade5",
+  "continuousCurveGroundTruth": false,
+  "domain": "CONTROLLED_STUDY",
+  "eligibility": "RESEARCH_ELIGIBLE",
+  "evidenceLevel": "CONTROLLED_STUDY",
+  "files": [
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "OPEN_DATA_CC0_REPORTED_BY_SOURCE"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ],
+        "record_granularity": [
+          "SWIM_25M_SEGMENT"
+        ]
+      },
+      "expectedColumnCount": 610,
+      "expectedRowCount": 232,
+      "fileName": "adaptive_swim_controlled_study_segment_features_v1.csv",
+      "granularity": "STUDY_SEGMENT",
+      "granularityColumn": "record_granularity",
+      "granularityRowCounts": {
+        "SWIM_25M_SEGMENT": 232
+      },
+      "groupingKeys": [
+        "source_participant_id",
+        "session_or_trial_id",
+        "study_period"
+      ],
+      "normalizedColumnMapping": {
+        "record_granularity": "record_type",
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "First/second-25 and pre/post controlled-study features; raw IDs are normalized explicitly.",
+      "policy": {
+        "allowedModelTasks": [
+          "TRAINING_DOMAIN_CORRECTION_TRAINING"
+        ],
+        "continuousCurveGroundTruth": false,
+        "eligibility": "RESEARCH_ELIGIBLE",
+        "licenseEligibility": "REPORTED_OPEN_UNVERIFIED",
+        "officialDistanceAuthority": false,
+        "productionTrainingEligible": false,
+        "restrictions": [
+          {
+            "code": "CONTROLLED_RESEARCH_ONLY",
+            "description": "Research support only; processed features are not measured continuous velocity."
+          }
+        ],
+        "roles": [
+          "FATIGUE_SHAPE_PRIOR",
+          "TECHNIQUE_DECLINE_PRIOR",
+          "PERSONAL_CALIBRATION_RESEARCH"
+        ]
+      },
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "record_granularity",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "study_period",
+        "length_index",
+        "license_status",
+        "official_distance_authority"
+      ],
+      "sha256": "ed40942fc7570c182d03578856c6f7a92a2071b8d0a3633d77fb0e2a4a281258"
+    },
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "OPEN_DATA_CC0_REPORTED_BY_SOURCE"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ],
+        "record_granularity": [
+          "SENSOR_STATISTIC"
+        ]
+      },
+      "expectedColumnCount": 35,
+      "expectedRowCount": 18082,
+      "fileName": "adaptive_swim_controlled_study_measurements_long_v1.csv",
+      "granularity": "MEASUREMENT_LONG",
+      "granularityColumn": "record_granularity",
+      "granularityRowCounts": {
+        "SENSOR_STATISTIC": 18082
+      },
+      "groupingKeys": [
+        "source_participant_id",
+        "session_or_trial_id",
+        "study_period"
+      ],
+      "normalizedColumnMapping": {
+        "record_granularity": "record_type",
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "Auditable long-form processed measurements; not continuous position-time truth.",
+      "policy": {
+        "allowedModelTasks": [
+          "TRAINING_DOMAIN_CORRECTION_TRAINING"
+        ],
+        "continuousCurveGroundTruth": false,
+        "eligibility": "RESEARCH_ELIGIBLE",
+        "licenseEligibility": "REPORTED_OPEN_UNVERIFIED",
+        "officialDistanceAuthority": false,
+        "productionTrainingEligible": false,
+        "restrictions": [
+          {
+            "code": "PROCESSED_STATISTICS_ONLY",
+            "description": "Long-form processed statistics are not continuous position-time ground truth."
+          }
+        ],
+        "roles": [
+          "SENSOR_FEATURE_RESEARCH",
+          "AUDITABLE_LONG_FORM_SOURCE",
+          "PERSONAL_CALIBRATION_RESEARCH"
+        ]
+      },
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "record_granularity",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "study_period",
+        "feature_code",
+        "value",
+        "license_status",
+        "official_distance_authority"
+      ],
+      "sha256": "14b2ec178aacf6f15e9f7376993b441c3b3f9c1248c5c2ad0383b49248b70a4f"
+    },
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "OPEN_DATA_CC_BY_4_0_REPORTED_BY_SOURCE"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ],
+        "record_granularity": [
+          "PERCEPTION_TIMEPOINT",
+          "FUNCTIONAL_PERFORMANCE_TEST",
+          "ATHLETE_STUDY_WEEK"
+        ]
+      },
+      "expectedColumnCount": 93,
+      "expectedRowCount": 1767,
+      "fileName": "adaptive_swim_massage_intervention_model_ready_v1.csv",
+      "granularity": "SESSION_ROW",
+      "granularityColumn": "record_granularity",
+      "granularityRowCounts": {
+        "ATHLETE_STUDY_WEEK": 114,
+        "FUNCTIONAL_PERFORMANCE_TEST": 114,
+        "PERCEPTION_TIMEPOINT": 1539
+      },
+      "groupingKeys": [
+        "source_participant_id",
+        "session_or_trial_id",
+        "condition_label"
+      ],
+      "normalizedColumnMapping": {
+        "record_granularity": "record_type",
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "Condition-aware advisory/recovery research only.",
+      "policy": {
+        "allowedModelTasks": [
+          "ADVISORY_REPORTING_RESEARCH"
+        ],
+        "continuousCurveGroundTruth": false,
+        "eligibility": "RESEARCH_ELIGIBLE",
+        "licenseEligibility": "REPORTED_OPEN_UNVERIFIED",
+        "officialDistanceAuthority": false,
+        "productionTrainingEligible": false,
+        "restrictions": [
+          {
+            "code": "CONDITION_AWARE_ONLY",
+            "description": "condition_label must remain in every analysis/view; never treat as generic unconditioned fatigue."
+          }
+        ],
+        "roles": [
+          "ADVISORY_AND_REPORTING_RESEARCH",
+          "RECOVERY_ADVISORY"
+        ]
+      },
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "record_granularity",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "condition_label",
+        "license_status",
+        "official_distance_authority"
+      ],
+      "sha256": "c031301dc2a9bc92ce79b40055ad10fe8401a2121529eb40b6d50b6d07e50a44"
+    },
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "LICENSE_TBD_SOURCE_PAGE_REVIEW_REQUIRED"
+        ],
+        "model_eligibility": [
+          "PIPELINE_SMOKE_TEST_ONLY"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ],
+        "pipeline_smoke_test_eligible": [
+          "True"
+        ],
+        "production_training_eligible": [
+          "False"
+        ],
+        "record_granularity": [
+          "UNVERIFIED_FEATURE_ROW"
+        ],
+        "research_primary_analysis_eligible": [
+          "False"
+        ]
+      },
+      "expectedColumnCount": 89,
+      "expectedRowCount": 2010,
+      "fileName": "adaptive_swim_stroke_dataset_quarantined_v1.csv",
+      "granularity": "WINDOW_ROW",
+      "granularityColumn": "record_granularity",
+      "granularityRowCounts": {
+        "UNVERIFIED_FEATURE_ROW": 2010
+      },
+      "normalizedColumnMapping": {
+        "record_granularity": "record_type",
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "File-level quarantined asset inside this ZIP. Empty identity values are preserved; no identity is fabricated.",
+      "policy": {
+        "allowedModelTasks": [
+          "PIPELINE_SMOKE_TEST"
+        ],
+        "continuousCurveGroundTruth": false,
+        "eligibility": "SMOKE_TEST_ONLY",
+        "licenseEligibility": "BLOCKED",
+        "officialDistanceAuthority": false,
+        "productionTrainingEligible": false,
+        "restrictions": [
+          {
+            "code": "SMOKE_TEST_ONLY",
+            "description": "Parser/multiclass pipeline smoke tests only."
+          },
+          {
+            "code": "NO_PRODUCTION_OR_PRIMARY_RESEARCH",
+            "description": "Never enters production training or primary research."
+          }
+        ],
+        "roles": [
+          "PIPELINE_SMOKE_TEST_ONLY"
+        ]
+      },
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "record_granularity",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "production_training_eligible",
+        "research_primary_analysis_eligible",
+        "pipeline_smoke_test_eligible",
+        "model_eligibility",
+        "license_status",
+        "official_distance_authority"
+      ],
+      "sha256": "e6cb9236496e80eca9860d7ff4be14b17be3a77e477345de095ec55c8e1325db"
+    },
+    {
+      "expectedColumnCount": 10,
+      "expectedRowCount": 4,
+      "fileName": "adaptive_swim_external_studies_manifest_v1.csv",
+      "notes": "Package provenance manifest.",
+      "requiredColumns": [
+        "source_id",
+        "source_file",
+        "recommended_role",
+        "production_model_role",
+        "license_status",
+        "restrictions"
+      ],
+      "sha256": "fd713b04e39b7dadc3583f0db71840f435d1068e0ccbd5a77d9dc6d2a99222a9"
+    },
+    {
+      "fileName": "adaptive_swim_external_studies_qa_v1.json",
+      "notes": "Package QA summary.",
+      "sha256": "7f30b0c6a57295b745aa1c1e1e691568094bc905c29567567b2330f7871a087d"
+    },
+    {
+      "fileName": "README.md",
+      "notes": "Package documentation.",
+      "sha256": "69ce0c226048b10086704bb2dd3a8eb6b346cd33d8a367e54d1f2392fe2393d3"
+    }
+  ],
+  "leakageRules": [
+    "pre/post and first/second-25 rows stay with source participant/trial",
+    "massage crossover unit and condition stay together",
+    "quarantined stroke member is excluded from research/production views"
+  ],
+  "licenseEligibility": "MIXED_BY_SOURCE",
+  "licenseNotes": "Controlled studies report CC0, massage reports CC BY 4.0, and the quarantined stroke member is license/provenance blocked. File-level policy is authoritative.",
+  "manifestVersion": "1.1.0",
+  "officialDistanceAuthority": false,
+  "productionTrainingEligible": false,
+  "qaWarnings": [
+    "Controlled-study features are processed statistics, not continuous position-time ground truth.",
+    "Massage is condition-aware advisory/recovery research only.",
+    "The stroke CSV is file-level SMOKE_TEST_ONLY with productionTrainingEligible=false."
+  ],
+  "restrictions": [
+    {
+      "code": "FILE_LEVEL_POLICY_REQUIRED",
+      "description": "Eligibility is resolved per member; the stroke member is smoke-test-only."
+    },
+    {
+      "code": "PRE_POST_SAME_PARTITION",
+      "description": "Pre/post and first/second-25 observations stay with the athlete/trial."
+    },
+    {
+      "code": "MASSAGE_REQUIRES_CONDITION_LABEL",
+      "description": "Massage analysis is condition-aware only."
+    },
+    {
+      "code": "NO_MEASURED_VELOCITY_CLAIM",
+      "description": "Processed controlled-study statistics are not continuous velocity ground truth."
+    }
+  ],
+  "roles": [
+    "FATIGUE_SHAPE_PRIOR",
+    "TECHNIQUE_DECLINE_PRIOR",
+    "SENSOR_FEATURE_RESEARCH",
+    "AUDITABLE_LONG_FORM_SOURCE",
+    "ADVISORY_AND_REPORTING_RESEARCH",
+    "RECOVERY_ADVISORY",
+    "PIPELINE_SMOKE_TEST_ONLY"
+  ],
+  "sourceDescription": "One external-studies bundle containing controlled-study research assets, condition-aware massage research, and one quarantined smoke-test member.",
+  "validationPrimary": true
+}

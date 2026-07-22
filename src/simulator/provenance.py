@@ -1,14 +1,16 @@
-"""Provenance for simulator-produced journals (Commit 8, ADR-032/ADR-038).
+"""Provenance and run manifests for simulator-produced journals (Commit 8, corrected).
 
-A simulated session journal may later be published as a ``SYNTHETIC_SIMULATION`` (or, once
-consented, ``ADAPTIVE_SWIM_SESSION``) external-data record. This module records the lineage
-needed for that: the deterministic seed, harness + compiler versions, the source profile
-identity/representation, and a flag that the run used no real human data. It is pure and
-carries no license claim (a real publication step performs explicit license verification).
+Every simulation run is stamped with a :class:`SimulationRunManifest` (§2.9):
+``synthetic = True`` always — synthetic data is NEVER production performance evidence and
+never external-dataset training evidence — and a fully deterministic ``runId`` derived
+from the scenario identity + seed + plan identity (no timestamps, no UUIDs). The legacy
+:class:`SimulationProvenance` lineage block is retained for external-data publication
+planning (ADR-032).
 """
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 from contracts.continuous_pace import ApprovedContinuousPaceProfile
@@ -17,12 +19,68 @@ from contracts.pace_profiles import ApprovedPaceProfile
 from swimcore.pacing.continuous_profile_compiler import CONTINUOUS_COMPILER_VERSION
 
 #: Transformation version stamped on simulator provenance (bump on generation changes).
-SIMULATION_TRANSFORMATION_VERSION = "sim-transform-1.0.0"
+SIMULATION_TRANSFORMATION_VERSION = "sim-transform-1.1.0"
+
+#: Simulator model version (virtual swimmer + scenario semantics).
+SIMULATOR_VERSION = "simulator-2.0.0"
+
+
+def deterministic_run_id(
+    *,
+    scenario_id: str,
+    scenario_version: str,
+    seed: int,
+    workout_ref: str,
+    profile_id: str,
+    profile_version: str,
+) -> str:
+    """sha256(scenarioId + scenarioVersion + seed + workoutRef + profileId + profileVersion).
+
+    Fully deterministic — no wall-clock timestamp, no UUID (§2.9).
+    """
+    material = "|".join(
+        (scenario_id, scenario_version, str(seed), workout_ref, profile_id, profile_version)
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class SimulationRunManifest:
+    """Deterministic identity of one simulation run (§2.9)."""
+
+    synthetic: bool
+    scenarioId: str
+    scenarioVersion: str
+    seed: int
+    simulatorVersion: str
+    harnessVersion: str
+    workoutRef: str
+    profileId: str
+    profileVersion: str
+    curveRepresentation: str | None
+    compilerVersion: str
+    runId: str
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "synthetic": self.synthetic,
+            "scenarioId": self.scenarioId,
+            "scenarioVersion": self.scenarioVersion,
+            "seed": self.seed,
+            "simulatorVersion": self.simulatorVersion,
+            "harnessVersion": self.harnessVersion,
+            "workoutRef": self.workoutRef,
+            "profileId": self.profileId,
+            "profileVersion": self.profileVersion,
+            "curveRepresentation": self.curveRepresentation,
+            "compilerVersion": self.compilerVersion,
+            "runId": self.runId,
+        }
 
 
 @dataclass(frozen=True, slots=True)
 class SimulationProvenance:
-    """Deterministic lineage for one simulated journal."""
+    """Deterministic lineage for one simulated journal (external-data planning, ADR-032)."""
 
     scenarioName: str
     seed: int
@@ -69,6 +127,40 @@ def _representation_of(
         rep: PaceCurveRepresentation = profile.curve.representation
         return "1.1", rep.value
     return "1.0", None
+
+
+def build_run_manifest(
+    *,
+    scenario_id: str,
+    scenario_version: str,
+    seed: int,
+    harness_version: str,
+    workout_ref: str,
+    profile: ApprovedPaceProfile | ApprovedContinuousPaceProfile,
+) -> SimulationRunManifest:
+    """Build the deterministic run manifest (§2.9). ``synthetic`` is always True."""
+    _schema, representation = _representation_of(profile)
+    return SimulationRunManifest(
+        synthetic=True,
+        scenarioId=scenario_id,
+        scenarioVersion=scenario_version,
+        seed=seed,
+        simulatorVersion=SIMULATOR_VERSION,
+        harnessVersion=harness_version,
+        workoutRef=workout_ref,
+        profileId=profile.profileId,
+        profileVersion=profile.profileVersion,
+        curveRepresentation=representation,
+        compilerVersion=CONTINUOUS_COMPILER_VERSION,
+        runId=deterministic_run_id(
+            scenario_id=scenario_id,
+            scenario_version=scenario_version,
+            seed=seed,
+            workout_ref=workout_ref,
+            profile_id=profile.profileId,
+            profile_version=profile.profileVersion,
+        ),
+    )
 
 
 def build_provenance(

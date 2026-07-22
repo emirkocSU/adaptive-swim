@@ -1,0 +1,57 @@
+{
+  "allowedColumnValues": {
+    "license_status": [
+      "LICENSE_TBD_SOURCE_PAGE_REVIEW_REQUIRED"
+    ],
+    "model_eligibility": [
+      "PIPELINE_SMOKE_TEST_ONLY"
+    ],
+    "official_distance_authority": [
+      "NOT_OFFICIAL_DISTANCE"
+    ],
+    "pipeline_smoke_test_eligible": [
+      "True"
+    ],
+    "production_training_eligible": [
+      "False"
+    ],
+    "record_granularity": [
+      "UNVERIFIED_FEATURE_ROW"
+    ],
+    "research_primary_analysis_eligible": [
+      "False"
+    ]
+  },
+  "appliesToAssetIds": [
+    "adaptive_swim_stroke_dataset_quarantined_v1"
+  ],
+  "bundleFileName": "adaptive_swim_external_studies_5_6_7_model_ready_v1.zip",
+  "eligibility": "SMOKE_TEST_ONLY",
+  "leakageRules": [
+    "no athlete/session identity; grouping-based leakage control is impossible"
+  ],
+  "memberFileName": "adaptive_swim_stroke_dataset_quarantined_v1.csv",
+  "normalizedColumnMapping": {
+    "record_granularity": "record_type",
+    "session_or_trial_id": "session_uid",
+    "source_participant_id": "subject_uid"
+  },
+  "notes": "File-level alias only; the external-studies ZIP is validated once by its primary bundle manifest.",
+  "productionEligible": false,
+  "requiredRawColumns": [
+    "source_id",
+    "source_record_id",
+    "record_granularity",
+    "athlete_pseudonym",
+    "source_participant_id",
+    "session_or_trial_id",
+    "production_training_eligible",
+    "research_primary_analysis_eligible",
+    "pipeline_smoke_test_eligible",
+    "model_eligibility",
+    "license_status",
+    "official_distance_authority"
+  ],
+  "schemaId": "quarantine",
+  "validationPrimary": false
+}

@@ -213,3 +213,35 @@ unverified or normal pace loss must not reposition the ghost mid-length.
   goldens match, CLI list/run/alias/hash.
 - Architecture: the simulator redefines no core type, PCHIP is defined once, no
   network/sleep/sqlite, swimcore imports neither simulator nor persistence nor external_data.
+
+
+## Commit 8 correction additions (ADR-039)
+
+- **Simulator regression** (`tests/simulator/`): the eight required scenarios exist under
+  their exact slugs and are not aliases; `normal-pace-loss` produces a real, persistent gap;
+  the CLI seed changes the real simulation while the same seed reproduces byte-identical
+  journals and observation traces; the harness validates live state against a re-read
+  journal replay; replacement-profile metadata is asserted in live *and* replay state;
+  simulation provenance and the deterministic `runId` are complete.
+- **Bounds** (`tests/unit/test_post_reconciliation_bounds.py`,
+  `test_curve_evidence_and_bounds.py`): post-reconciliation speed, gradient and acceleration
+  bounds; per-region scales for locked splits; a violation hidden *between* sampling points
+  is caught; `physicalBoundsChecked` only set after the post-check passes.
+- **Finite contracts**: `+inf`, `-inf` and `NaN` rejected on curve knots, targets,
+  tolerances and confidences.
+- **Dataset catalog** (`tests/unit/test_dataset_catalog.py`): manifests parse; hash, row,
+  column and required-column mismatches are rejected; unexpected members, zip-slip paths and
+  missing members are rejected; the license gate and the quarantine gate deny production
+  views; a large CSV is streamed with bounded memory. CI fixtures are tiny representative
+  bundles built in-process — the real multi-hundred-megabyte bundles are validated out of
+  band with `python -m swimtools.validate_dataset_bundle --all --data-root ...`.
+- **Leakage** (`tests/unit/test_data_leakage_guards.py`): race, athlete, trial, pre/post,
+  first/second-25, crossover and time-series grouping violations plus lookahead splits and
+  forecast-label features are all rejected.
+- **Provenance** (`tests/unit/test_curve_evidence_and_bounds.py`): a coarse-split-derived or
+  bounded-template curve cannot claim ground truth; target and forecast fields stay
+  separate; `BOUNDED_AUTO` is forbidden under OOD/extrapolation; synthetic simulator data is
+  never external evidence.
+- **Architecture** (`tests/architecture/test_dataset_boundaries.py`): swimcore reads no
+  dataset, contracts do no I/O, the simulator imports no dataset tooling, `src/ml/` does not
+  exist, no runtime pandas/numpy, and no raw CSV/ZIP is committed under `data/` or `src/`.

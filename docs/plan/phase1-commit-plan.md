@@ -3,17 +3,22 @@
 Ordered, human-approved commits. Each adds one layer; later layers stay PENDING until
 their commit lands.
 
+**This table is the single authoritative status list for Phase 1.** No other table in this
+document repeats or contradicts it.
+
 | Commit | Scope | Status |
 |---|---|---|
 | 1 | Repo scaffold, tooling, layering guard | done |
 | 2 | Contracts + JSON Schema (structural), validation contracts | done |
 | 3 | Pure semantic workout validator (`swimcore/workout/`), 12 rules | done |
-| 4 | **Deterministic pace math engine (`swimcore/pacing/`)** — this commit | done |
-| 5 | **Deterministic clocks (`swimcore/time/`) + ghost primitive (`swimcore/ghost/`)** — this commit | done |
-| 6 | **Session state machine, command handling, StopPause orchestration, SafetyController** — this commit | done |
-| 7 | Event persistence + **historical replay** (rebuilt from events, not the runtime clock) | pending |
-| 8+ | Simulator swimmer, analytics report | pending |
-| later | ML advisory, cloud, UI, device/wearable adapters | pending (own ADRs/triggers) |
+| 4 | Deterministic pace math engine (`swimcore/pacing/`) | done |
+| 5 | Deterministic clocks (`swimcore/time/`) + ghost primitive (`swimcore/ghost/`) | done |
+| 6 | Session state machine, command handling, StopPause orchestration, SafetyController | done |
+| 7 | Append-only event journal + deterministic historical replay (ADR-037) | done |
+| 8 | Continuous pace curves + deterministic headless simulator (ADR-038) **+ dataset evidence plan, catalog, validators and leakage guards (ADR-039)** | done |
+| 9 | Incident-aware analytics / session report | pending |
+| 10 | Full e2e headless vertical-slice verification | pending |
+| later | ML advisory (Phase 5A–5E), cloud, UI, device/wearable adapters | pending (own ADRs/triggers) |
 
 ## Commit 4 boundary (what it is and is not)
 
@@ -147,8 +152,32 @@ Commit 8 is implemented and covered by tests (ADR-038):
 - A **deterministic headless simulator** embedding the real core: 8 failure scenarios,
   splitmix64 virtual swimmer, provenance, `swimtools.run_scenario` CLI, byte-identical
   journals, 3 committed simulator goldens; `make test-simulator` is a real target.
-- Planning ML (Phase-aware Conditional Transformer + Spline Decoder) is contract direction
-  only; nothing is trained or run, and live runtime never calls it.
+- Planning ML is contract direction only; nothing is trained or run, and the live runtime
+  never calls it.
+
+### Commit 8 acceptance correction (ADR-039)
+
+The acceptance review of the first Commit 8 delivery found blocking gaps; they are closed:
+
+- The **eight required failure scenarios** now exist under their exact slugs
+  (`normal-pace-loss`, `long-stop-mid-length`, `manual-stop-at-verified-wall`,
+  `duplicate-stop-mark`, `stop-during-planned-rest`, `unreliable-position-time`,
+  `complete-while-stop-paused`, `coach-continuous-curve-reset`) and are no longer aliases of
+  demo scenarios.
+- `--seed` reaches the real virtual-swimmer RNG; the swimmer is a **tick-based** simulation
+  producing per-tick observations with interpolated wall crossings.
+- The harness re-reads its own journal, replays it, and fails the run on any live/replay
+  mismatch; `SimulationResult` carries commands, outcomes, events, batches, observations,
+  ghost snapshots, journal SHA-256, live state, replay result and a deterministic run
+  manifest.
+- The safe-wall coach reset now swaps **all** profile metadata (id, version, source, type,
+  coach lock, applied pace, target total time, curve representation, compiler version) in
+  the live aggregate *and* in historical replay.
+- All physical bounds are re-verified after reconciliation at the reconciled scale, using
+  **analytic** PCHIP critical points rather than a sampling grid.
+- `+inf` / `-inf` / `NaN` are rejected at the contract boundary.
+- The dataset catalog, streaming validator, license/quarantine gates, leakage guards,
+  feature helpers, curve-evidence provenance and the Phase 5A–5E roadmap landed (ADR-039).
 
 Commit 9 (incident-aware analytics / session report) is not started.
 

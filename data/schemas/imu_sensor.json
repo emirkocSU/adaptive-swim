@@ -1,0 +1,41 @@
+{
+  "allowedColumnValues": {
+    "license_status": [
+      "OPEN_DATA_CC0_REPORTED_BY_SOURCE"
+    ],
+    "official_distance_authority": [
+      "NOT_OFFICIAL_DISTANCE"
+    ]
+  },
+  "appliesToAssetIds": [
+    "adaptive_swim_sensor_imu_frontcrawl_model_ready_v1"
+  ],
+  "granularity": "SENSOR_SAMPLE",
+  "groupingKeys": [
+    "source_participant_id",
+    "session_or_trial_id"
+  ],
+  "leakageRules": [
+    "source_participant_id stays in one partition",
+    "session_or_trial_id time series is never split",
+    "technical targets remain separated from raw sensor features"
+  ],
+  "normalizedColumnMapping": {
+    "session_or_trial_id": "session_uid",
+    "source_participant_id": "subject_uid"
+  },
+  "requiredRawColumns": [
+    "source_id",
+    "source_record_id",
+    "athlete_pseudonym",
+    "source_participant_id",
+    "session_or_trial_id",
+    "sample_index",
+    "time_s",
+    "stroke",
+    "official_distance_authority",
+    "sensor_quality_flag",
+    "license_status"
+  ],
+  "schemaId": "imu_sensor"
+}

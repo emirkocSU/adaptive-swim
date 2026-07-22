@@ -1,0 +1,105 @@
+{
+  "allowedModelTasks": [
+    "RACE_PACING_PRIOR_TRAINING"
+  ],
+  "assetId": "adaptive_swim_unified_official_pacing_all_sources_v3",
+  "bundleFileName": "adaptive_swim_unified_official_pacing_all_sources_v3.zip",
+  "bundleSha256": "1146f0553c16969ce50d634fd1f832309a0187be3cbf8d3913967cabc4cd8792",
+  "continuousCurveGroundTruth": false,
+  "domain": "OFFICIAL_RACE",
+  "eligibility": "LICENSE_BLOCKED",
+  "evidenceLevel": "OFFICIAL_RACE_RESULT",
+  "files": [
+    {
+      "allowedColumnValues": {
+        "continuous_curve_ground_truth": [
+          "False"
+        ],
+        "official_distance_authority": [
+          "True"
+        ],
+        "source_license_status": [
+          "TBD_VERIFICATION_REQUIRED"
+        ]
+      },
+      "expectedColumnCount": 151,
+      "expectedRowCount": 128475,
+      "fileName": "adaptive_swim_unified_official_pacing_all_sources_v3.csv",
+      "forbiddenFeatureColumns": [
+        "segment_time_sec",
+        "segment_time_share",
+        "cumulative_time_share",
+        "segment_speed_mps",
+        "segment_speed_ratio_to_race_avg"
+      ],
+      "granularity": "RACE_SEGMENT",
+      "groupingKeys": [
+        "race_uid",
+        "subject_uid"
+      ],
+      "normalizedColumnMapping": {
+        "race_uid": "session_uid",
+        "session_type": "record_type"
+      },
+      "notes": "Real raw header contains subject_uid already. race_uid is exposed as canonical session_uid and session_type as record_type only in the normalized view.",
+      "requiredColumns": [
+        "race_uid",
+        "session_type",
+        "segment_index",
+        "segment_start_m",
+        "segment_end_m",
+        "segment_distance_m",
+        "segment_time_sec",
+        "segment_time_share",
+        "cumulative_time_share",
+        "segment_speed_mps",
+        "segment_speed_ratio_to_race_avg",
+        "pool_length_m",
+        "event_total_distance_m",
+        "event_stroke",
+        "segment_stroke",
+        "is_relay",
+        "relay_leg_number",
+        "subject_uid",
+        "segment_athlete_uid",
+        "start_mode",
+        "source_license_status",
+        "continuous_curve_ground_truth",
+        "official_distance_authority"
+      ],
+      "sha256": "0782f374cddd75148c6f55a3bcd06ea7e855d30f6b8aba1429c9cd47676f890b"
+    }
+  ],
+  "leakageRules": [
+    "race_uid must stay in exactly one partition",
+    "subject_uid athlete-held-out evaluation must be supported",
+    "random row-level splits are forbidden",
+    "medley event stroke and segment stroke stay distinguished",
+    "relay legs are not collapsed into individual results"
+  ],
+  "licenseEligibility": "TBD_VERIFICATION_REQUIRED",
+  "licenseNotes": "All 128,475 rows report source_license_status=TBD_VERIFICATION_REQUIRED; production training remains blocked until per-source verification.",
+  "manifestVersion": "1.1.0",
+  "officialDistanceAuthority": false,
+  "productionTrainingEligible": false,
+  "qaWarnings": [],
+  "restrictions": [
+    {
+      "code": "NO_PRODUCTION_UNTIL_LICENSE_VERIFIED",
+      "description": "Not production training eligible until source_license_status is VERIFIED_ALLOWED per source."
+    },
+    {
+      "code": "NOT_MEASURED_VELOCITY",
+      "description": "Official split segments are coarse pacing evidence, not measured continuous velocity ground truth."
+    },
+    {
+      "code": "NOT_RUNTIME_DISTANCE_AUTHORITY",
+      "description": "Raw official_distance_authority=True describes the source timing; runtime official distance still comes from pool geometry and verified walls."
+    }
+  ],
+  "roles": [
+    "RACE_PACING_PRIOR"
+  ],
+  "sourceDescription": "Unified official race pacing segments merged from 12 LENEX-derived sources.",
+  "validationPrimary": true
+}

@@ -36,6 +36,25 @@ NonNegFloat = Annotated[float, Field(ge=0)]
 #: Strictly positive float.
 PosFloat = Annotated[float, Field(gt=0)]
 
+# --------------------------------------------------------------------------- finite types
+# Pydantic's plain float comparisons treat +inf as "> 0", so a bare ``gt=0`` constraint
+# accepts positive infinity. The finite variants below set ``allow_inf_nan=False`` so NaN,
+# +inf and -inf are rejected at the contract boundary (Commit 8 correction §2.8). Python
+# runtime validation is authoritative; the generated JSON Schema reflects the numeric range
+# where the dialect can express it (JSON itself cannot encode inf/NaN).
+
+#: Finite float (rejects NaN / +inf / -inf).
+FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
+
+#: Strictly positive finite float.
+PosFiniteFloat = Annotated[float, Field(gt=0, allow_inf_nan=False)]
+
+#: Non-negative finite float.
+NonNegFiniteFloat = Annotated[float, Field(ge=0, allow_inf_nan=False)]
+
+#: Finite ratio / probability in the closed unit interval.
+UnitFiniteRatio = Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)]
+
 #: Ratio / probability in the closed unit interval.
 UnitRatio = Annotated[float, Field(ge=0, le=1)]
 

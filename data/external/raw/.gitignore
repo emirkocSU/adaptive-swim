@@ -1,0 +1,5 @@
+# Raw external dataset bundles are provided locally by the user and are NEVER committed,
+# packaged, or embedded in the source distribution (plan §4). Only the small checked-in
+# manifests under data/catalog/ and expectations under data/schemas/ live in git.
+*
+!.gitignore

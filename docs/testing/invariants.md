@@ -92,3 +92,30 @@ their commits (3–10).
            `usedRealHumanData=False` and `SYNTHETIC_SIMULATION`.
 - I-C8-15  Live runtime never runs planning ML or a PCHIP solve; it consumes a precompiled
            timeline.
+
+
+## Commit 8 correction invariants (ADR-039)
+
+1. The eight required scenario slugs exist and none aliases a demo scenario.
+2. Same scenario + same seed → identical observation trace, event stream and journal
+   SHA-256; a different seed changes the trace while every domain invariant still holds.
+3. Each virtual-swimmer tick is exactly `tickMs` apart; wall crossings are interpolated
+   inside the crossing tick and are never snapped to the tick grid.
+4. `normal-pace-loss` produces a gap that grows and persists while the ghost is still
+   running, with no StopPause and zero stopped duration.
+5. A duplicate `MarkStopPause` (same clientCommandId, same content) produces zero new events
+   and zero new journal batches; exactly one open interval results.
+6. A rejected `CompleteSession` during an open StopPause changes neither the aggregate, the
+   event sequence nor the journal.
+7. Planned rest never creates a StopPause and never increases stopped duration.
+8. Low position confidence never changes official distance or the completed length count.
+9. A safe-wall coach reset adopts the full replacement metadata in live state and in replay,
+   is not a StopPause, and preserves past split history.
+10. `physicalBoundsChecked = true` implies the reconciled timeline passed every supplied
+    bound at its reconciled scale, verified analytically.
+11. `+inf`, `-inf` and `NaN` never enter a continuous contract field.
+12. A dataset manifest with a non-`VERIFIED_ALLOWED` license can never be production
+    eligible, and a quarantined asset can only serve `PIPELINE_SMOKE_TEST`.
+13. No catalogued dataset may be used as a measured continuous-velocity target.
+14. A grouping key (race, athlete, trial, pre/post, crossover unit, time series) never spans
+    two partitions, and a forecast label never enters the feature allowlist.

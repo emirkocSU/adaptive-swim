@@ -1,0 +1,91 @@
+{
+  "allowedColumnValues": {
+    "continuous_curve_ground_truth": [
+      "False"
+    ],
+    "official_distance_authority": [
+      "True"
+    ],
+    "source_license_status": [
+      "TBD_VERIFICATION_REQUIRED"
+    ]
+  },
+  "appliesToAssetIds": [
+    "adaptive_swim_unified_official_pacing_all_sources_v3"
+  ],
+  "coverageCheck": {
+    "fromColumn": "segment_start_m",
+    "group": "race_uid",
+    "toColumn": "segment_end_m",
+    "toleranceM": 0.001,
+    "totalColumn": "event_total_distance_m"
+  },
+  "forbiddenFeatureColumns": [
+    "segment_time_sec",
+    "segment_time_share",
+    "cumulative_time_share",
+    "segment_speed_mps",
+    "segment_speed_ratio_to_race_avg"
+  ],
+  "granularity": "RACE_SEGMENT",
+  "groupingKeys": [
+    "race_uid",
+    "subject_uid"
+  ],
+  "leakageRules": [
+    "race_uid must stay in exactly one partition",
+    "subject_uid athlete-held-out evaluation must be supported",
+    "random row-level splits are forbidden",
+    "medley event stroke and segment stroke stay distinguished",
+    "relay legs are not collapsed into individual results"
+  ],
+  "normalizedColumnMapping": {
+    "race_uid": "session_uid",
+    "session_type": "record_type"
+  },
+  "orderedWithinGroup": {
+    "group": "race_uid",
+    "orderBy": "segment_index"
+  },
+  "productionGate": {
+    "column": "source_license_status",
+    "otherwise": "LICENSE_BLOCKED",
+    "requiredValue": "VERIFIED_ALLOWED"
+  },
+  "requiredRawColumns": [
+    "race_uid",
+    "session_type",
+    "segment_index",
+    "segment_start_m",
+    "segment_end_m",
+    "segment_distance_m",
+    "segment_time_sec",
+    "segment_time_share",
+    "cumulative_time_share",
+    "segment_speed_mps",
+    "segment_speed_ratio_to_race_avg",
+    "pool_length_m",
+    "event_total_distance_m",
+    "event_stroke",
+    "segment_stroke",
+    "is_relay",
+    "relay_leg_number",
+    "subject_uid",
+    "segment_athlete_uid",
+    "start_mode",
+    "source_license_status",
+    "continuous_curve_ground_truth",
+    "official_distance_authority"
+  ],
+  "schemaId": "race_pacing_segments",
+  "shareSumCheck": {
+    "column": "segment_time_share",
+    "expected": 1.0,
+    "group": "race_uid",
+    "tolerance": 0.02
+  },
+  "uniqueKey": [
+    "race_uid",
+    "segment_index"
+  ]
+}

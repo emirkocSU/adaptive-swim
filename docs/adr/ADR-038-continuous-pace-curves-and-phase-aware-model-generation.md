@@ -1,12 +1,27 @@
 # ADR-038 — Continuous Pace Curves and Phase-Aware Model Generation
 
-- **Status:** ACTIVE (Faz 1, Commit 8)
+- **Status:** ACTIVE (Faz 1, Commit 8) — model-architecture scope clarified by ADR-039
 - **Date:** 2026-07-20
 - **Related / extends:** ADR-034 (distance-specific approved pace profiles — authority,
   approval, source priority and coach-lock kept; its constant-leg *execution* is extended
   and partially superseded here), ADR-031 (StopPause), ADR-036 (official-distance
   authority), ADR-037 (event journal & replay — unchanged), ADR-032 (external-data
   provenance)
+
+## Scope clarification (ADR-039, 2026-07-22)
+
+Everything below about the **runtime** stands unchanged: the continuous curve, the PCHIP
+representation, exact total/locked-split reconciliation, the safe-wall coach curve reset
+and the deterministic ghost are all still in force.
+
+What ADR-039 scopes is the **model architecture** wording. The phase-aware conditional
+transformer with a spline decoder named here is a *long-term architectural target*, to be
+reconsidered once genuinely high-resolution continuous position-time data exists. It is
+**not** the architecture of the first data-driven model. With the datasets actually
+available, the first active model is a **sequence-level coarse conditional split prior**
+plus a bounded training-domain residual correction; no phase labels may be synthesised for
+data that does not carry them, and the generated within-length shape is an *operational
+target velocity envelope*, never a measured instantaneous velocity claim.
 
 ## Context / Problem
 

@@ -1,0 +1,89 @@
+{
+  "allowedModelTasks": [
+    "SENSOR_ENCODER_PRETRAINING"
+  ],
+  "assetId": "adaptive_swim_sensor_imu_frontcrawl_model_ready_v1",
+  "bundleFileName": "adaptive_swim_sensor_imu_frontcrawl_model_ready_v1.zip",
+  "bundleSha256": "4a854e21bb33bed367adb8b5497115a790888465de25fdf1e2e1e729aa75c2ee",
+  "continuousCurveGroundTruth": false,
+  "domain": "SENSOR_RESEARCH",
+  "eligibility": "RESEARCH_ELIGIBLE",
+  "evidenceLevel": "RAW_SENSOR_SAMPLE",
+  "files": [
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "OPEN_DATA_CC0_REPORTED_BY_SOURCE"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ]
+      },
+      "expectedColumnCount": 94,
+      "expectedRowCount": 40957,
+      "fileName": "adaptive_swim_sensor_imu_frontcrawl_model_ready_v1.csv",
+      "forbiddenFeatureColumns": [
+        "target_swim_velocity_mps",
+        "target_stroke_rate_cycles_per_min",
+        "target_stroke_length_m_per_cycle",
+        "target_stroke_index_m2_per_s"
+      ],
+      "granularity": "SENSOR_SAMPLE",
+      "groupingKeys": [
+        "source_participant_id",
+        "session_or_trial_id"
+      ],
+      "normalizedColumnMapping": {
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "Raw IMU rows use source_participant_id and session_or_trial_id. Canonical subject_uid/session_uid are normalized-view fields only.",
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "sample_index",
+        "time_s",
+        "stroke",
+        "official_distance_authority",
+        "sensor_quality_flag",
+        "license_status"
+      ],
+      "sha256": "c13fb7bde077471549dbdcac80bdb186855201628983c8ed0398db5551955595"
+    }
+  ],
+  "leakageRules": [
+    "source_participant_id stays in one partition",
+    "session_or_trial_id time series is never split",
+    "technical targets remain separated from raw sensor features"
+  ],
+  "licenseEligibility": "REPORTED_OPEN_UNVERIFIED",
+  "licenseNotes": "CC0 is reported by the source but not independently verified; production eligibility stays closed.",
+  "manifestVersion": "1.1.0",
+  "officialDistanceAuthority": false,
+  "productionTrainingEligible": false,
+  "qaWarnings": [],
+  "restrictions": [
+    {
+      "code": "NOT_PACING_TARGET",
+      "description": "Sensor encoder / technique research only; not the primary pacing target."
+    },
+    {
+      "code": "NOT_OFFICIAL_DISTANCE_AUTHORITY",
+      "description": "IMU rows cannot define official distance."
+    },
+    {
+      "code": "ATHLETE_SESSION_GROUPED_SPLIT_REQUIRED",
+      "description": "Athlete/session grouped split is mandatory; one time series cannot cross partitions."
+    }
+  ],
+  "roles": [
+    "SENSOR_ENCODER_RESEARCH",
+    "TECHNIQUE_FEATURE_RESEARCH",
+    "FUTURE_WEARABLE_CALIBRATION"
+  ],
+  "sourceDescription": "Front-crawl IMU dataset prepared for sensor-encoder and technique research.",
+  "validationPrimary": true
+}

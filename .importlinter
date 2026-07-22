@@ -57,3 +57,36 @@ source_modules =
     swimcore.control
 forbidden_modules =
     swimcore.session
+
+[importlinter:contract:6]
+name = swimcore must not import dataset-asset or forecasting plan contracts
+type = forbidden
+source_modules =
+    swimcore
+forbidden_modules =
+    contracts.data_assets
+    contracts.forecasting
+
+[importlinter:contract:7]
+name = runtime layers must not depend on pandas/NumPy
+type = forbidden
+source_modules =
+    contracts
+    swimcore
+    persistence
+    simulator
+forbidden_modules =
+    pandas
+    numpy
+    scipy
+
+[importlinter:contract:8]
+name = simulator must not read dataset catalogs or raw datasets
+type = forbidden
+source_modules =
+    simulator
+forbidden_modules =
+    contracts.data_assets
+    swimtools.data_catalog
+    swimtools.validate_dataset_bundle
+    swimtools.data_splitting

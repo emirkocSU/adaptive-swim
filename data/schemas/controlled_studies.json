@@ -1,0 +1,144 @@
+{
+  "appliesToAssetIds": [
+    "adaptive_swim_external_studies_5_6_7_model_ready_v1"
+  ],
+  "fileEligibility": {
+    "adaptive_swim_controlled_study_measurements_long_v1.csv": {
+      "eligibility": "RESEARCH_ELIGIBLE",
+      "productionTrainingEligible": false,
+      "roles": [
+        "SENSOR_FEATURE_RESEARCH",
+        "AUDITABLE_LONG_FORM_SOURCE",
+        "PERSONAL_CALIBRATION_RESEARCH"
+      ]
+    },
+    "adaptive_swim_controlled_study_segment_features_v1.csv": {
+      "eligibility": "RESEARCH_ELIGIBLE",
+      "productionTrainingEligible": false,
+      "roles": [
+        "FATIGUE_SHAPE_PRIOR",
+        "TECHNIQUE_DECLINE_PRIOR",
+        "PERSONAL_CALIBRATION_RESEARCH"
+      ]
+    },
+    "adaptive_swim_massage_intervention_model_ready_v1.csv": {
+      "eligibility": "RESEARCH_ELIGIBLE",
+      "productionTrainingEligible": false,
+      "roles": [
+        "ADVISORY_AND_REPORTING_RESEARCH",
+        "RECOVERY_ADVISORY"
+      ]
+    },
+    "adaptive_swim_stroke_dataset_quarantined_v1.csv": {
+      "eligibility": "SMOKE_TEST_ONLY",
+      "productionTrainingEligible": false,
+      "roles": [
+        "PIPELINE_SMOKE_TEST_ONLY"
+      ]
+    }
+  },
+  "granularityRowCountsByFile": {
+    "adaptive_swim_controlled_study_measurements_long_v1.csv": {
+      "SENSOR_STATISTIC": 18082
+    },
+    "adaptive_swim_controlled_study_segment_features_v1.csv": {
+      "SWIM_25M_SEGMENT": 232
+    },
+    "adaptive_swim_massage_intervention_model_ready_v1.csv": {
+      "ATHLETE_STUDY_WEEK": 114,
+      "FUNCTIONAL_PERFORMANCE_TEST": 114,
+      "PERCEPTION_TIMEPOINT": 1539
+    },
+    "adaptive_swim_stroke_dataset_quarantined_v1.csv": {
+      "UNVERIFIED_FEATURE_ROW": 2010
+    }
+  },
+  "leakageRules": [
+    "pre/post and first/second-25 rows stay with source participant/trial",
+    "massage crossover unit and condition stay together",
+    "quarantined stroke member is excluded from research/production views"
+  ],
+  "normalizedColumnMappingByFile": {
+    "adaptive_swim_controlled_study_measurements_long_v1.csv": {
+      "record_granularity": "record_type",
+      "session_or_trial_id": "session_uid",
+      "source_participant_id": "subject_uid"
+    },
+    "adaptive_swim_controlled_study_segment_features_v1.csv": {
+      "record_granularity": "record_type",
+      "session_or_trial_id": "session_uid",
+      "source_participant_id": "subject_uid"
+    },
+    "adaptive_swim_massage_intervention_model_ready_v1.csv": {
+      "record_granularity": "record_type",
+      "session_or_trial_id": "session_uid",
+      "source_participant_id": "subject_uid"
+    },
+    "adaptive_swim_stroke_dataset_quarantined_v1.csv": {
+      "record_granularity": "record_type",
+      "session_or_trial_id": "session_uid",
+      "source_participant_id": "subject_uid"
+    }
+  },
+  "requiredRawColumnsByFile": {
+    "adaptive_swim_controlled_study_measurements_long_v1.csv": [
+      "source_id",
+      "source_record_id",
+      "record_granularity",
+      "athlete_pseudonym",
+      "source_participant_id",
+      "session_or_trial_id",
+      "study_period",
+      "feature_code",
+      "value",
+      "license_status",
+      "official_distance_authority"
+    ],
+    "adaptive_swim_controlled_study_segment_features_v1.csv": [
+      "source_id",
+      "source_record_id",
+      "record_granularity",
+      "athlete_pseudonym",
+      "source_participant_id",
+      "session_or_trial_id",
+      "study_period",
+      "length_index",
+      "license_status",
+      "official_distance_authority"
+    ],
+    "adaptive_swim_external_studies_manifest_v1.csv": [
+      "source_id",
+      "source_file",
+      "recommended_role",
+      "production_model_role",
+      "license_status",
+      "restrictions"
+    ],
+    "adaptive_swim_massage_intervention_model_ready_v1.csv": [
+      "source_id",
+      "source_record_id",
+      "record_granularity",
+      "athlete_pseudonym",
+      "source_participant_id",
+      "session_or_trial_id",
+      "condition_label",
+      "license_status",
+      "official_distance_authority"
+    ],
+    "adaptive_swim_stroke_dataset_quarantined_v1.csv": [
+      "source_id",
+      "source_record_id",
+      "record_granularity",
+      "athlete_pseudonym",
+      "source_participant_id",
+      "session_or_trial_id",
+      "production_training_eligible",
+      "research_primary_analysis_eligible",
+      "pipeline_smoke_test_eligible",
+      "model_eligibility",
+      "license_status",
+      "official_distance_authority"
+    ]
+  },
+  "schemaId": "controlled_studies"
+}

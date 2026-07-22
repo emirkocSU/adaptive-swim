@@ -36,6 +36,7 @@ from swimcore.pacing.continuous_curve import (
     EvaluableCurve,
     build_evaluable_curve,
 )
+from swimcore.pacing.curve_bounds import ScaledRegion, check_curve_physical_bounds
 from swimcore.pacing.errors import InvalidPaceCurveError
 from swimcore.pacing.profile_compiler import ProfileCompilationError
 from swimcore.pacing.types import PaceInterval, PaceTimeline
@@ -206,12 +207,14 @@ def _reconcile(
     profile: ApprovedContinuousPaceProfile,
     intervals: list[PaceInterval],
     total: float,
-) -> tuple[list[PaceInterval], float]:
+) -> tuple[list[PaceInterval], float, tuple[ScaledRegion, ...]]:
     """Scale locked-split regions to their targets, then the remainder to the total.
 
-    Returns the reconciled intervals and the worst per-split reconciliation error (sec).
-    Locked-split targets are never modified; the total is never silently changed. Negative
-    remaining time, non-finite or non-positive speeds are rejected (no clamping).
+    Returns the reconciled intervals, the worst per-split reconciliation error (sec) and
+    the per-distance-span pace scale factors (for the post-reconciliation analytic bound
+    re-check, §2.6). Locked-split targets are never modified; the total is never silently
+    changed. Negative remaining time, non-finite or non-positive speeds are rejected (no
+    clamping).
     """
     target_total = profile.targetTimeConstraint.targetTotalTimeSec
     locked = [s for s in profile.splitTimeConstraints if s.lockedByCoach]
@@ -223,6 +226,7 @@ def _reconcile(
     remaining_target = target_total
     reconciled: list[PaceInterval | None] = list(intervals)
     max_split_err = 0.0
+    interval_factor: list[float] = [1.0] * len(intervals)
 
     for split in sorted(locked, key=lambda s: s.fromM):
         region_idx = [i for i, iv in enumerate(intervals) if in_region(iv, split.fromM, split.toM)]
@@ -238,6 +242,7 @@ def _reconcile(
         scaled = _scale_intervals(region, factor)
         for local_i, global_i in enumerate(region_idx):
             reconciled[global_i] = scaled[local_i]
+            interval_factor[global_i] = factor
         achieved = _region_duration(scaled)
         max_split_err = max(max_split_err, abs(achieved - split.targetDurationSec))
         remaining_target -= split.targetDurationSec
@@ -270,13 +275,26 @@ def _reconcile(
             scaled_remainder = _scale_intervals([r for r in remainder if r is not None], factor)
             for local_i, global_i in enumerate(remainder_idx):
                 reconciled[global_i] = scaled_remainder[local_i]
+                interval_factor[global_i] = factor
     elif abs(remaining_target) > CURVE_TIME_TOLERANCE_SEC:
         raise ProfileCompilationError(
             "all distance is locked but locked totals do not equal the target"
         )
 
     final = [iv for iv in reconciled if iv is not None]
-    return final, max_split_err
+    # merge consecutive intervals sharing a factor into ScaledRegion spans
+    regions: list[ScaledRegion] = []
+    pairs = [
+        (iv, factor)
+        for iv, factor in zip(reconciled, interval_factor, strict=True)
+        if iv is not None
+    ]
+    for iv, factor in pairs:
+        if regions and abs(regions[-1].paceScaleFactor - factor) <= 1e-15:
+            regions[-1] = ScaledRegion(regions[-1].fromM, iv.toM, factor)
+        else:
+            regions.append(ScaledRegion(iv.fromM, iv.toM, factor))
+    return final, max_split_err, tuple(regions)
 
 
 def _check_physical_bounds(
@@ -352,23 +370,37 @@ def compile_continuous_pace_profile(
     evaluable = build_evaluable_curve(profile.curve)
     breakpoints = _deterministic_breakpoints(profile, evaluable, total)
 
-    # physical bounds (before reconciliation scales speeds)
-    physical_checked = False
-    if validation_context is not None and validation_context.has_any_bound:
+    # physical bounds BEFORE reconciliation: the analytic critical-point verifier is
+    # authoritative (§2.7); the breakpoint-grid pass is additional validation only.
+    has_bounds = validation_context is not None and validation_context.has_any_bound
+    if has_bounds:
+        assert validation_context is not None
+        check_curve_physical_bounds(evaluable, validation_context, stage="pre-reconciliation")
         _check_physical_bounds(evaluable, breakpoints, validation_context)
-        physical_checked = True
 
     raw = _raw_intervals(profile, evaluable, breakpoints, resolved_start_mode)
-    reconciled, max_split_err = _reconcile(profile, raw, total)
+    reconciled, max_split_err, scaled_regions = _reconcile(profile, raw, total)
 
     integrated_total = _region_duration(reconciled)
     target_total = profile.targetTimeConstraint.targetTotalTimeSec
     total_err = abs(integrated_total - target_total)
 
     tol = max(profile.targetTimeConstraint.toleranceSec, CURVE_TIME_TOLERANCE_SEC)
-    # post-reconciliation physical bound re-check (scaling changed the speeds) — reject, not clamp
-    if validation_context is not None and validation_context.has_any_bound:
+    # Post-reconciliation physical bound re-check (§2.6): scaling changed speed, gradient
+    # AND acceleration, so ALL supplied bounds are re-verified analytically on the scaled
+    # curve — reject, never clamp. `physicalBoundsChecked=True` is written only when the
+    # reconciled final timeline really passed every supplied bound (a violation raises).
+    physical_checked = False
+    if has_bounds:
+        assert validation_context is not None
+        check_curve_physical_bounds(
+            evaluable,
+            validation_context,
+            regions=scaled_regions,
+            stage="post-reconciliation",
+        )
         _recheck_reconciled_bounds(reconciled, validation_context)
+        physical_checked = True
 
     speeds = []
     for iv in reconciled:

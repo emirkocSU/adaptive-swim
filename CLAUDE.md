@@ -61,6 +61,41 @@ repository. It is authoritative. Read it before writing code.
 34. Synthetic simulator data is never production performance evidence.
 35. ADR-037 remains event persistence; continuous curves use ADR-038.
 
+36. **Measured instantaneous velocity ≠ operational target velocity envelope** (ADR-039).
+    A generated curve is a *target velocity envelope* / *operational ghost velocity curve*;
+    it is never named or described as a predicted measured velocity.
+37. A coarse-split-derived, deterministic-baseline, bounded-template or coarse-latent curve
+    can never carry `continuousCurveGroundTruth = true` (contract-enforced).
+38. Phase labels are never synthesised for data that does not carry them. The continuous
+    phase contract serves coach-authored profiles, templates and genuinely labelled data.
+39. The first data-driven model is a **sequence-level coarse conditional split prior**, not
+    a phase-aware micro model. ADR-038's transformer is a long-term target, not the active
+    architecture.
+40. Coach target and model forecast are separate fields in separate models. A forecast never
+    mutates a coach target; under OOD / domain extrapolation `BOUNDED_AUTO` is forbidden.
+41. `swimcore` never reads a dataset, a catalog manifest, a CSV or a ZIP, and never imports
+    `contracts.data_assets` or `contracts.forecasting` (import-linter enforced).
+42. Raw dataset CSV/ZIP files are never committed, never placed under `src/`, never shipped
+    as package data and never used as ordinary CI fixtures. Only `data/catalog/` manifests
+    and `data/schemas/` expectations are checked in.
+43. A license that is not `VERIFIED_ALLOWED` can never yield production eligibility;
+    `productionTrainingEligible = false` cannot be overridden; a quarantined asset serves
+    only pipeline smoke tests and never a primary research analysis.
+44. Missing dataset metadata is recorded as missing, never fabricated (an unrecorded hash is
+    a warning with the measured value, not an invented expectation).
+45. No runtime `pandas` / `numpy` / `scipy` dependency; `src/ml/` does not exist before
+    Phase 5.
+46. Physical-bound validation is **analytic**: PCHIP critical points (speed extrema,
+    gradient extrema, acceleration branch-and-bound) are authoritative; sampling is only
+    additional evidence. All bounds are re-verified after reconciliation at the reconciled
+    scale, and `physicalBoundsChecked = true` is written only when that post-check passed.
+47. `+inf`, `-inf` and `NaN` are rejected at the contract boundary; positive infinity does
+    not satisfy a "positive number" constraint.
+48. The simulator's eight required acceptance scenarios exist under their exact slugs and
+    are never aliases of demo scenarios; `--seed` drives the real virtual-swimmer RNG
+    (instance-local, never `random.seed()`); the harness itself validates live state
+    against a re-read journal replay.
+
 ## Ghost alignment rule (StopPause model — CORRECTED)
 
 Repositioning the ghost mid-length while unverified, or during normal / large pace loss,
@@ -101,6 +136,12 @@ Layer order (upper may import lower; never the reverse):
 - `contracts` MUST NOT import any inner package.
 - `swimcore` and `contracts` MUST NOT import IO frameworks (FastAPI, SQLAlchemy,
   sqlite3, socket, requests, httpx).
+- `swimcore` MUST NOT import `contracts.data_assets` or `contracts.forecasting` (dataset
+  and forecast plans never reach the runtime).
+- `contracts`, `swimcore`, `persistence` and `simulator` MUST NOT import `pandas`, `numpy`
+  or `scipy`.
+- `simulator` MUST NOT import the dataset catalog/validator/splitting tools — it reads no
+  dataset and performs no model inference.
 
 ## Pace field vocabulary (locked)
 
@@ -217,11 +258,41 @@ Transformer + Spline Decoder) is contract direction only — nothing is trained 
 
 Simulator (`src/simulator/`): a deterministic headless harness that drives the **real**
 `SessionAggregate` + real `JsonlSessionEventLog` + real replay — it duplicates no core logic.
-Deterministic splitmix64 virtual swimmer, 8 failure scenarios, provenance
-(`SYNTHETIC_SIMULATION`, `usedRealHumanData=False`), CLI at `swimtools.run_scenario`. Every
-scenario yields byte-identical journals. Do NOT: run planning ML live, add a second PCHIP or
-ghost/clock, clamp reconciliation, treat a coach curve reset as a StopPause, let a wearable
-estimate become official distance, or treat synthetic data as performance evidence.
+The virtual swimmer is a **tick-based** deterministic simulation (default 100 ms ticks)
+producing an immutable observation per tick (wall/active time, actual + target distance and
+speed, gap, phase, position quality, planned-rest flag); official wall crossings are found
+by deterministic interpolation inside the crossing tick. It queries the real timeline for
+targets and never re-implements PCHIP or the compiler. Randomness comes from an
+instance-local splitmix64 PRNG seeded explicitly — `--seed` reaches that RNG, and
+`random.seed()` is forbidden.
+
+The eight required acceptance scenarios (exact slugs, no aliases): `normal-pace-loss`,
+`long-stop-mid-length`, `manual-stop-at-verified-wall`, `duplicate-stop-mark`,
+`stop-during-planned-rest`, `unreliable-position-time`, `complete-while-stop-paused`,
+`coach-continuous-curve-reset`. Older demo scenarios remain as helper examples only.
+
+Each run carries a `SimulationRunManifest` (`synthetic=true`, scenario id/version, seed,
+simulator/harness versions, workout/profile identity, curve representation, compiler
+version, and a deterministic `runId = sha256(scenarioId+scenarioVersion+seed+workoutRef+
+profileId+profileVersion)` — no timestamp, no UUID). The harness re-reads its own journal,
+replays it and fails the run on any live/replay mismatch. Do NOT: run planning ML live, add
+a second PCHIP or ghost/clock, clamp reconciliation, treat a coach curve reset as a
+StopPause, let a wearable estimate become official distance, alias a required scenario to a
+demo, or treat synthetic data as performance evidence.
+
+## Dataset catalog & model planning (Commit 8 correction — ADR-039)
+
+`data/catalog/*.json` holds typed `DatasetAssetManifest` records (hashes, row/column counts,
+required columns, roles, license, eligibility, restrictions, grouping keys, leakage rules);
+`data/schemas/*.json` holds the per-dataset expectations. Raw bundles live in the gitignored
+`data/external/raw/` and are validated on demand by
+`python -m swimtools.validate_dataset_bundle` — stdlib-only streaming (`zipfile`, `csv`,
+`hashlib`), bounded memory, rejecting zip-slip, duplicate and unexpected members.
+`swimtools.data_catalog` enforces the license/quarantine gates with typed errors and
+`swimtools.data_splitting` provides pure leakage validators. `contracts/forecasting.py`
+keeps coach target and model forecast strictly separate. Commit 8 adds contracts, catalog,
+validators, leakage guards, feature utilities and planning docs **only** — no `src/ml/`, no
+training run.
 
 ## Commands / test expectations
 
@@ -237,6 +308,10 @@ Schema files are produced by `python -m swimtools.gen_schemas` and verified by
 - Modelling StopPause exclusion as `Split.qualityFlag = INVALID` (they are separate axes).
 - Repositioning the ghost mid-length while unverified or during normal/large pace loss.
 - Opening a `cloud/`, `ml/`, `ui/`, or partner-adapter package in Phase 1.
+- Committing a raw dataset CSV/ZIP, or loading one as an ordinary CI fixture.
+- Aliasing a required simulator scenario to a demo scenario.
+- Treating a grid sample as proof that a curve respects its physical bounds.
+- Calling a generated curve a predicted measured velocity.
 
 ## Phase 1 boundary
 

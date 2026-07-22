@@ -1,0 +1,117 @@
+{
+  "allowedModelTasks": [
+    "PIPELINE_SMOKE_TEST"
+  ],
+  "assetId": "adaptive_swim_stroke_dataset_quarantined_v1",
+  "bundleFileName": "adaptive_swim_external_studies_5_6_7_model_ready_v1.zip",
+  "bundleSha256": "9979a604df38123e4def11358917551220845942714455d43248cd7e0e7fade5",
+  "continuousCurveGroundTruth": false,
+  "domain": "UNPROVENANCED",
+  "eligibility": "SMOKE_TEST_ONLY",
+  "evidenceLevel": "UNPROVENANCED",
+  "files": [
+    {
+      "allowedColumnValues": {
+        "license_status": [
+          "LICENSE_TBD_SOURCE_PAGE_REVIEW_REQUIRED"
+        ],
+        "model_eligibility": [
+          "PIPELINE_SMOKE_TEST_ONLY"
+        ],
+        "official_distance_authority": [
+          "NOT_OFFICIAL_DISTANCE"
+        ],
+        "pipeline_smoke_test_eligible": [
+          "True"
+        ],
+        "production_training_eligible": [
+          "False"
+        ],
+        "record_granularity": [
+          "UNVERIFIED_FEATURE_ROW"
+        ],
+        "research_primary_analysis_eligible": [
+          "False"
+        ]
+      },
+      "expectedColumnCount": 89,
+      "expectedRowCount": 2010,
+      "fileName": "adaptive_swim_stroke_dataset_quarantined_v1.csv",
+      "granularity": "WINDOW_ROW",
+      "granularityColumn": "record_granularity",
+      "granularityRowCounts": {
+        "UNVERIFIED_FEATURE_ROW": 2010
+      },
+      "normalizedColumnMapping": {
+        "record_granularity": "record_type",
+        "session_or_trial_id": "session_uid",
+        "source_participant_id": "subject_uid"
+      },
+      "notes": "File-level quarantined asset inside this ZIP. Empty identity values are preserved; no identity is fabricated.",
+      "policy": {
+        "allowedModelTasks": [
+          "PIPELINE_SMOKE_TEST"
+        ],
+        "continuousCurveGroundTruth": false,
+        "eligibility": "SMOKE_TEST_ONLY",
+        "licenseEligibility": "BLOCKED",
+        "officialDistanceAuthority": false,
+        "productionTrainingEligible": false,
+        "restrictions": [
+          {
+            "code": "SMOKE_TEST_ONLY",
+            "description": "Parser/multiclass pipeline smoke tests only."
+          },
+          {
+            "code": "NO_PRODUCTION_OR_PRIMARY_RESEARCH",
+            "description": "Never enters production training or primary research."
+          }
+        ],
+        "roles": [
+          "PIPELINE_SMOKE_TEST_ONLY"
+        ]
+      },
+      "requiredColumns": [
+        "source_id",
+        "source_record_id",
+        "record_granularity",
+        "athlete_pseudonym",
+        "source_participant_id",
+        "session_or_trial_id",
+        "production_training_eligible",
+        "research_primary_analysis_eligible",
+        "pipeline_smoke_test_eligible",
+        "model_eligibility",
+        "license_status",
+        "official_distance_authority"
+      ],
+      "sha256": "e6cb9236496e80eca9860d7ff4be14b17be3a77e477345de095ec55c8e1325db"
+    }
+  ],
+  "leakageRules": [
+    "no athlete/session identity; grouping-based leakage control is impossible"
+  ],
+  "licenseEligibility": "BLOCKED",
+  "licenseNotes": "No usable provenance/license verification; file-level alias only.",
+  "manifestVersion": "1.1.0",
+  "officialDistanceAuthority": false,
+  "productionTrainingEligible": false,
+  "qaWarnings": [
+    "source participant and session fields are present as raw headers but empty in every row; no canonical identity is fabricated"
+  ],
+  "restrictions": [
+    {
+      "code": "FILE_LEVEL_ALIAS_ONLY",
+      "description": "This is a catalog alias for the member inside the external-studies bundle; CLI validation uses the primary bundle manifest once."
+    },
+    {
+      "code": "SMOKE_TEST_ONLY",
+      "description": "Parser and multiclass pipeline smoke tests only."
+    }
+  ],
+  "roles": [
+    "PIPELINE_SMOKE_TEST_ONLY"
+  ],
+  "sourceDescription": "File-level catalog alias for the quarantined stroke member shipped inside the external-studies ZIP.",
+  "validationPrimary": false
+}

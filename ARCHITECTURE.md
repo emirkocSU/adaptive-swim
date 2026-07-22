@@ -238,3 +238,41 @@ Runtime boundary: the deterministic core only *executes* an already-approved pro
 never generates one and never calls model inference in the live loop. The pre-session
 planning model (DRAFT profiles, gated by P1–P7) and the live adaptation model (gated by
 G1–G7, behind the SafetyController) are separate and both optional (ADR-035).
+
+
+## Dataset evidence layer (Commit 8 correction, ADR-039)
+
+External research datasets sit **outside** the runtime and outside the repository:
+
+```
+data/external/raw/   gitignored local mount (operator-provided ZIP bundles)
+data/catalog/*.json  checked-in DatasetAssetManifest records (hashes, counts, roles,
+                     license, eligibility, restrictions, grouping keys, leakage rules)
+data/schemas/*.json  checked-in per-dataset expectations
+```
+
+`swimtools.data_catalog` loads and gates the catalog (typed `DatasetEligibilityError` on a
+production or primary-research request that the license/quarantine state forbids);
+`swimtools.validate_dataset_bundle` validates a raw bundle with stdlib-only streaming
+(`zipfile`, `csv`, `hashlib`) in bounded memory, rejecting zip-slip, duplicate and
+unexpected members; `swimtools.data_splitting` provides pure leakage validators.
+
+Boundaries (import-linter enforced): `swimcore` reads no dataset and never imports
+`contracts.data_assets` or `contracts.forecasting`; `contracts` performs no I/O; the
+simulator reads no dataset and performs no inference; no runtime `pandas`/`numpy`/`scipy`
+dependency exists; `src/ml/` does not exist before Phase 5.
+
+Scientific boundary: **measured instantaneous velocity ≠ operational target velocity
+envelope**. A generated within-length shape is a bounded template or coarse latent shape,
+stamped through `CurveProvenance` (`curveOrigin`, `curveEvidenceLevel`, `visualShapeSource`,
+`continuousCurveGroundTruth = false`), and the coach target is never mutated by a forecast.
+
+## Physical-bound verification (Commit 8 correction)
+
+`swimcore/pacing/curve_bounds.py` verifies speed, gradient and acceleration bounds
+analytically per PCHIP interval: speed extrema from the closed-form roots of `v'(t) = 0`,
+gradient extrema from `v''(t) = 0`, and acceleration through a branch-and-bound whose
+per-subinterval bound `|a| ≤ max|v| · max|dv/dd|` comes from those closed-form extrema. The
+same verification runs after reconciliation with each region's pace scale factor applied;
+`physicalBoundsChecked = true` is only written when that post-check passed. Sampling remains
+corroboration, never proof.

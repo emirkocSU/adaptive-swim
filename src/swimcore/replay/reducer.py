@@ -116,6 +116,9 @@ class _Fold:
         self.profile_source: str | None = None
         self.profile_type: str | None = None
         self.profile_coach_locked = False
+        self.profile_target_total_time_sec: float | None = None
+        self.curve_representation: str | None = None
+        self.curve_compiler_version: str | None = None
         self.workout_goal: str | None = None
         self.started_at_ms: int | None = None
         self.ended_at_ms: int | None = None
@@ -164,6 +167,9 @@ def _apply_created(fold: _Fold, payload: SessionCreatedPayload, seq: int) -> Non
     fold.profile_source = payload.selectedPaceProfileSource
     fold.profile_type = payload.selectedPaceProfileType
     fold.profile_coach_locked = payload.profileCoachLocked
+    fold.profile_target_total_time_sec = payload.selectedProfileTargetTotalTimeSec
+    fold.curve_representation = payload.selectedCurveRepresentation
+    fold.curve_compiler_version = payload.selectedCurveCompilerVersion
     fold.workout_goal = payload.workoutGoal
 
 
@@ -413,6 +419,18 @@ def _apply_event(fold: _Fold, event: EventEnvelope) -> None:
         if payload.replacementPaceProfileId is not None:
             fold.profile_id = payload.replacementPaceProfileId
             fold.profile_version = payload.replacementPaceProfileVersion
+            # §2.5: the swap adopts the full replacement metadata — an old COACH_AUTHORED
+            # source must not survive a COACH_APPROVED_MODEL replacement, and a coach-locked
+            # replacement must read as locked in the historical state too.
+            fold.profile_source = payload.replacementPaceProfileSource
+            fold.profile_type = payload.replacementPaceProfileType
+            if payload.replacementProfileCoachLocked is not None:
+                fold.profile_coach_locked = payload.replacementProfileCoachLocked
+            fold.profile_target_total_time_sec = payload.replacementTargetTotalTimeSec
+            fold.curve_representation = payload.replacementCurveRepresentation
+            fold.curve_compiler_version = payload.replacementCurveCompilerVersion
+            if payload.replacementAppliedPaceSecPer100M is not None:
+                fold.applied_pace = payload.replacementAppliedPaceSecPer100M
         fold.pending_reset = None
     elif etype is EventType.ControlDecisionMade:
         assert isinstance(payload, ControlDecisionMadePayload)
@@ -505,6 +523,9 @@ def replay_session(
         selectedPaceProfileSource=fold.profile_source,
         selectedPaceProfileType=fold.profile_type,
         profileCoachLocked=fold.profile_coach_locked,
+        selectedProfileTargetTotalTimeSec=fold.profile_target_total_time_sec,
+        selectedCurveRepresentation=fold.curve_representation,
+        selectedCurveCompilerVersion=fold.curve_compiler_version,
         workoutGoal=fold.workout_goal,
         startedAtMs=fold.started_at_ms,
         endedAtMs=fold.ended_at_ms,

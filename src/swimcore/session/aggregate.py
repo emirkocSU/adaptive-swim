@@ -88,7 +88,14 @@ from swimcore.control import (
     SafetyReasonCode,
 )
 from swimcore.ghost import GhostClock
-from swimcore.pacing import PaceInterval, PaceTimeline, compile_pace_timeline, is_wall_boundary
+from swimcore.pacing import (
+    PaceInterval,
+    PaceTimeline,
+    compile_pace_timeline,
+    is_wall_boundary,
+    target_pace_at_distance,
+)
+from swimcore.pacing.continuous_profile_compiler import CONTINUOUS_COMPILER_VERSION
 from swimcore.pacing.profile_compiler import (
     compile_live_profile,
 )
@@ -137,6 +144,9 @@ _MUTABLE_STATE_FIELDS: tuple[str, ...] = (
     "selectedPaceProfileSource",
     "selectedPaceProfileType",
     "profileCoachLocked",
+    "selectedProfileTargetTotalTimeSec",
+    "selectedCurveRepresentation",
+    "selectedCurveCompilerVersion",
     "resolvedStartModes",
     "poolLengthM",
     "workoutGoal",
@@ -193,6 +203,10 @@ class SessionAggregate:
         self.selectedPaceProfileSource: str | None = None
         self.selectedPaceProfileType: str | None = None
         self.profileCoachLocked: bool = False
+        # --- selected-profile timeline metadata (§2.5) ---
+        self.selectedProfileTargetTotalTimeSec: float | None = None
+        self.selectedCurveRepresentation: str | None = None
+        self.selectedCurveCompilerVersion: str | None = None
         self.resolvedStartModes: dict[int, str] = {}
         self.poolLengthM: int | None = None
         self.workoutGoal: str | None = None
@@ -494,6 +508,9 @@ class SessionAggregate:
                         selectedPaceProfileType=selected.profileType.value,
                         profileCoachLocked=selected.coachLocked,
                         workoutGoal=wk11.workoutGoal.value,
+                        selectedProfileTargetTotalTimeSec=self._profile_timeline_meta(selected)[0],
+                        selectedCurveRepresentation=self._profile_timeline_meta(selected)[1],
+                        selectedCurveCompilerVersion=self._profile_timeline_meta(selected)[2],
                     ),
                     now,
                 ),
@@ -515,6 +532,11 @@ class SessionAggregate:
         self.selectedPaceProfileSource = selected.source.value
         self.selectedPaceProfileType = selected.profileType.value
         self.profileCoachLocked = selected.coachLocked
+        (
+            self.selectedProfileTargetTotalTimeSec,
+            self.selectedCurveRepresentation,
+            self.selectedCurveCompilerVersion,
+        ) = self._profile_timeline_meta(selected)
         self._sessionStroke = wk11.stroke
         self._sessionTotalDistanceM = workout_distance_m
         self.appliedPaceTarget = timeline.intervals[0].startPaceSecPer100M
@@ -1058,6 +1080,20 @@ class SessionAggregate:
             raise SessionError(f"unmapped SafetyReasonCode(s): {sorted(m.value for m in missing)}")
         return mapping[primary]
 
+    # ------------------------------------------------------------------ profile metadata
+    @staticmethod
+    def _profile_timeline_meta(
+        profile: ApprovedPaceProfileVersion,
+    ) -> tuple[float, str | None, str | None]:
+        """(targetTotalTimeSec, curveRepresentation, curveCompilerVersion) for a profile."""
+        if isinstance(profile, ApprovedContinuousPaceProfile):
+            return (
+                profile.targetTimeConstraint.targetTotalTimeSec,
+                profile.curve.representation.value,
+                CONTINUOUS_COMPILER_VERSION,
+            )
+        return (profile.targetTotalTimeSec, None, None)
+
     # ------------------------------------------------------------------ coach pacing reset
     def _coach_pacing_reset(self, command: CoachPacingReset) -> list[EventEnvelope]:
         self._require_running("CoachPacingReset")
@@ -1078,6 +1114,11 @@ class SessionAggregate:
         replacement_id: str | None = None
         replacement_version: str | None = None
         replacement_target: float | None = None
+        replacement_source: str | None = None
+        replacement_type: str | None = None
+        replacement_lock: bool | None = None
+        replacement_repr: str | None = None
+        replacement_compiler: str | None = None
         if command.replacementPaceProfileRef is not None:
             replacement = self._profiles.get(command.replacementPaceProfileRef)
             if replacement is None:
@@ -1117,6 +1158,10 @@ class SessionAggregate:
             replacement_id = selected.profileId
             replacement_version = selected.profileVersion
             replacement_target = replacement_timeline.totalActiveDurationSec
+            replacement_source = selected.source.value
+            replacement_type = selected.profileType.value
+            replacement_lock = selected.coachLocked
+            _target, replacement_repr, replacement_compiler = self._profile_timeline_meta(selected)
 
         self.pendingCoachPacingReset = PendingCoachReset(
             clientCommandId=command.clientCommandId,
@@ -1130,6 +1175,11 @@ class SessionAggregate:
             replacementTargetTotalTimeSec=replacement_target,
             previousProfileId=self.selectedPaceProfileId,
             previousProfileVersion=self.selectedPaceProfileVersion,
+            replacementProfileSource=replacement_source,
+            replacementProfileType=replacement_type,
+            replacementProfileCoachLocked=replacement_lock,
+            replacementCurveRepresentation=replacement_repr,
+            replacementCurveCompilerVersion=replacement_compiler,
         )
         now = self._clock.now_ms()
         return [
@@ -1141,6 +1191,11 @@ class SessionAggregate:
                     replacementPaceProfileId=replacement_id,
                     replacementPaceProfileVersion=replacement_version,
                     replacementTargetTotalTimeSec=replacement_target,
+                    replacementPaceProfileSource=replacement_source,
+                    replacementPaceProfileType=replacement_type,
+                    replacementProfileCoachLocked=replacement_lock,
+                    replacementCurveRepresentation=replacement_repr,
+                    replacementCurveCompilerVersion=replacement_compiler,
                 ),
                 now,
                 command.clientCommandId,
@@ -1167,8 +1222,19 @@ class SessionAggregate:
                 new_timeline, split.distanceM, self._eff(split.wallTimestampMs)
             )
             self.paceTimeline = new_timeline
+            # §2.5: the swap adopts ALL selected-profile state fields from the replacement.
             self.selectedPaceProfileId = pending.replacementProfileId
             self.selectedPaceProfileVersion = pending.replacementProfileVersion
+            self.selectedPaceProfileSource = pending.replacementProfileSource
+            self.selectedPaceProfileType = pending.replacementProfileType
+            if pending.replacementProfileCoachLocked is not None:
+                self.profileCoachLocked = pending.replacementProfileCoachLocked
+            self.selectedProfileTargetTotalTimeSec = pending.replacementTargetTotalTimeSec
+            self.selectedCurveRepresentation = pending.replacementCurveRepresentation
+            self.selectedCurveCompilerVersion = pending.replacementCurveCompilerVersion
+            # Applied target = replacement timeline's current target just after this wall.
+            applied_after_wall = target_pace_at_distance(new_timeline, split.distanceM)
+            self.appliedPaceTarget = applied_after_wall
         else:
             # plain pace realignment: move the ghost display anchor to this wall
             self.ghostClock.apply_coach_pacing_reset_at_wall(
@@ -1182,6 +1248,14 @@ class SessionAggregate:
             replacementPaceProfileId=pending.replacementProfileId,
             replacementPaceProfileVersion=pending.replacementProfileVersion,
             replacementTargetTotalTimeSec=pending.replacementTargetTotalTimeSec,
+            replacementPaceProfileSource=pending.replacementProfileSource,
+            replacementPaceProfileType=pending.replacementProfileType,
+            replacementProfileCoachLocked=pending.replacementProfileCoachLocked,
+            replacementAppliedPaceSecPer100M=(
+                self.appliedPaceTarget if pending.replacementTimeline is not None else None
+            ),
+            replacementCurveRepresentation=pending.replacementCurveRepresentation,
+            replacementCurveCompilerVersion=pending.replacementCurveCompilerVersion,
         )
         self.pendingCoachPacingReset = None
         return [
