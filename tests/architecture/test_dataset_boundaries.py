@@ -80,14 +80,30 @@ def test_runtime_has_no_pandas_or_numpy_dependency() -> None:
 
 def test_raw_datasets_are_not_packaged() -> None:
     data_dir = _REPO / "data"
+    raw_cache_dir = data_dir / "external" / "raw"
+
     assert (data_dir / "catalog").is_dir()
     assert (data_dir / "schemas").is_dir()
-    for path in data_dir.rglob("*"):
-        if path.is_file():
-            assert path.suffix.lower() not in {".csv", ".zip"}, f"raw data committed: {path}"
-    for path in _SRC.rglob("*"):
-        if path.is_file():
-            assert path.suffix.lower() not in {".csv", ".zip"}, f"data inside src/: {path}"
+    assert (raw_cache_dir / ".gitignore").is_file()
+
+    for candidate in data_dir.rglob("*"):
+        if not candidate.is_file():
+            continue
+
+        # data/external/raw is an intentionally ignored local cache.
+        # Its contents are not part of the repository or release package.
+        if raw_cache_dir in candidate.parents:
+            continue
+
+        assert candidate.suffix.lower() not in {".csv", ".zip"}, (
+            f"raw data outside the ignored local cache: {candidate}"
+        )
+
+    for candidate in _SRC.rglob("*"):
+        if candidate.is_file():
+            assert candidate.suffix.lower() not in {".csv", ".zip"}, (
+                f"data inside src/: {candidate}"
+            )
 
 
 def test_catalog_manifests_stay_small() -> None:

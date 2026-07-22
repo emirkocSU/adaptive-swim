@@ -271,11 +271,12 @@ The eight required acceptance scenarios (exact slugs, no aliases): `normal-pace-
 `stop-during-planned-rest`, `unreliable-position-time`, `complete-while-stop-paused`,
 `coach-continuous-curve-reset`. Older demo scenarios remain as helper examples only.
 
-Each run carries a `SimulationRunManifest` (`synthetic=true`, scenario id/version, seed,
-simulator/harness versions, workout/profile identity, curve representation, compiler
-version, and a deterministic `runId = sha256(scenarioId+scenarioVersion+seed+workoutRef+
-profileId+profileVersion)` — no timestamp, no UUID). The harness re-reads its own journal,
-replays it and fails the run on any live/replay mismatch. Do NOT: run planning ML live, add
+Each run carries a `SimulationRunManifest` (`synthetic=true`, scenario id/version and
+digest, seed, simulator/harness versions, workout ref/digest, all selected/replacement
+profile digests and identities, analytics-policy digest, curve representation and compiler
+version). `runId` hashes that complete deterministic input set — no timestamp, UUID or path.
+The harness re-reads its own journal, replays it and fails the run on any live/replay
+mismatch. Do NOT: run planning ML live, add
 a second PCHIP or ghost/clock, clamp reconciliation, treat a coach curve reset as a
 StopPause, let a wearable estimate become official distance, alias a required scenario to a
 demo, or treat synthetic data as performance evidence.
@@ -340,3 +341,60 @@ must pass the Planning Model Gate **P1–P7** before it can be a live plan sourc
 templates/manual/legacy segments keep the product complete. The live adaptation model keeps
 the existing G1–G7 gate and always runs behind the SafetyController. Neither ever controls
 the ghost/clock/StopPause directly.
+
+## Commit 9 analytics non-negotiables (ADR-040)
+
+- Session reports are derived artifacts, not domain events.
+- Historical replay is the authoritative starting point for reports.
+- Analytics never mutates session state and never emits commands/events.
+- Missing data is never replaced with fabricated zero values.
+- Official distance uses only official wall/geometry authority already carried by replay.
+- Target and forecast fields remain separate; target is never overwritten by prediction.
+- Continuous curve metrics require trusted, finite, monotonic observations.
+- Raw instantaneous stroke-cycle velocity is not the operational target envelope.
+- StopPause, lifecycle pause, planned rest and coach reset are separate concepts.
+- Coach reset never rewrites historical split/profile provenance.
+- HR and stroke analytics remain advisory and optional.
+- Dataset evidence is copied only from approved profile provenance; analytics reads no raw data.
+- Synthetic simulator reports are not real performance evidence.
+- Report identifiers are content-addressed and include effective workout/profile/timeline,
+  replacement registry, observation, sensor and analytics-policy inputs through provenance digests.
+- Report schema version is contract-owned and fixed to SessionReport 1.1 for the Commit 9 builder.
+- Coach-reset reports require the referenced replacement profile/timeline registry; no fallback to
+  the initial profile is allowed.
+- Workout, profile, timeline and replay-selected identities/geometry must agree before reporting.
+- Trusted observations must be inside the session horizon; position-time and smoothed-velocity
+  observations are supported, but neither creates official distance.
+- Pending StopPause wall reconciliation is never reported as completed.
+- Planned rest never dilutes non-rest observation quality ratios.
+- Report persistence rejects non-canonical JSON bytes.
+- Directional split extrema are `None` when that error direction does not exist.
+- Report identifiers, canonical JSON bytes and hashes are deterministic.
+- `analytics` is pure: no filesystem, network, random, wall clock, ML framework, persistence,
+  simulator or swimtools import.
+
+
+## Commit 10 / Phase 1 closure non-negotiables (ADR-041)
+
+- Phase 1 e2e tests use real public components, never mock core implementations.
+- Live state, historical replay and reports must agree.
+- E2E artifacts are canonical and deterministic.
+- Output paths never affect artifact bytes.
+- Official distance remains geometry and verified-wall authoritative.
+- StopPause, lifecycle pause, planned rest and coach reset remain separate.
+- Failed commands never produce persisted events.
+- Report generation never mutates session state.
+- Dataset evidence is not session performance evidence.
+- Raw external datasets are not part of the runtime package.
+- Commit 10 closes Phase 1 and does not start ML development.
+- `e2e` owns no domain logic: no PCHIP, no replay reducer, no report metric computation.
+- `contracts`, `swimcore`, `persistence`, `analytics` and `simulator` never import `e2e`.
+- The e2e layer uses no wall clock, no randomness, no UUID and no network.
+- Run and manifest identities are content addressed; a single changed byte changes them.
+- A verification check that cannot apply is explicitly `NOT_APPLICABLE`, never silently skipped.
+- Golden e2e bundles are a release regression contract: byte drift must be explained, not
+  re-baselined by reflex.
+- Migration equivalence is asserted on the compiled target function (totals and endpoints
+  exact, sampled targets within `MIGRATION_TARGET_TOLERANCE_SEC`), not on the interval
+  partition, because the legacy leg representation and the continuous-curve grid legitimately
+  differ in granularity.

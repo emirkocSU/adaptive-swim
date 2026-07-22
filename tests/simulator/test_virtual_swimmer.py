@@ -179,14 +179,33 @@ def test_run_id_is_a_pure_function_of_identity() -> None:
     args = {
         "scenario_id": "normal-pace-loss",
         "scenario_version": "2.0.0",
+        "scenario_digest": "a" * 64,
         "seed": 42,
         "workout_ref": "w1",
-        "profile_id": "normal100",
-        "profile_version": "1",
+        "workout_digest": "b" * 64,
+        "profile_digests": {"normal100:1": "c" * 64},
+        "selected_profile_id": "normal100",
+        "selected_profile_version": "1",
+        "replacement_profile_id": None,
+        "replacement_profile_version": None,
+        "analytics_policy_digest": "d" * 64,
+        "harness_version": "sim-harness-2.1.0",
     }
     assert deterministic_run_id(**args) == deterministic_run_id(**args)
     assert len(deterministic_run_id(**args)) == 64
     assert deterministic_run_id(**{**args, "seed": 43}) != deterministic_run_id(**args)
+    changed_policy = {**args, "analytics_policy_digest": "e" * 64}
+    changed_replacement = {
+        **args,
+        "profile_digests": {
+            "normal100:1": "c" * 64,
+            "replacement100:1": "e" * 64,
+        },
+        "replacement_profile_id": "replacement100",
+        "replacement_profile_version": "1",
+    }
+    assert deterministic_run_id(**changed_policy) != deterministic_run_id(**args)
+    assert deterministic_run_id(**changed_replacement) != deterministic_run_id(**args)
 
 
 def test_manifest_marks_every_run_synthetic() -> None:

@@ -109,7 +109,15 @@ def test_simulation_provenance_is_complete(name: str, tmp_path: Path) -> None:
     assert manifest.seed == result.seed
     assert manifest.simulatorVersion and manifest.harnessVersion
     assert manifest.workoutRef == "w1"
+    assert len(manifest.workoutDigest) == 64
+    assert len(manifest.scenarioDigest) == 64
+    assert len(manifest.analyticsPolicyDigest) == 64
+    assert manifest.profileDigests
     assert manifest.profileId and manifest.profileVersion
+    assert f"{manifest.profileId}:{manifest.profileVersion}" in manifest.profileDigests
+    if manifest.replacementProfileId is not None:
+        key = f"{manifest.replacementProfileId}:{manifest.replacementProfileVersion}"
+        assert key in manifest.profileDigests
     assert manifest.compilerVersion
     assert len(manifest.runId) == 64
     prov = result.provenance

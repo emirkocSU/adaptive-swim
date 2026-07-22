@@ -355,3 +355,43 @@ def test_failed_create_leaves_aggregate_empty() -> None:
     assert agg.paceTimeline is None
     assert agg.appliedPaceTarget is None
     assert agg.poolLengthM is None
+
+
+def test_failed_command_preserves_runtime_reference_graph() -> None:
+    """Rollback preserves both values and the authoritative object identities."""
+    agg, _ = started()
+    active_before = agg.activeClock
+    ghost_before = agg.ghostClock
+    timeline_before = agg.paceTimeline
+    assert active_before is not None
+    assert ghost_before is not None
+    assert timeline_before is not None
+    assert ghost_before.is_bound_to(
+        active_clock=active_before,
+        timeline=timeline_before,
+    )
+    active_state_before = copy.deepcopy(active_before.__dict__)
+    ghost_state_before = _ghost_state(agg)
+
+    with pytest.raises(InvalidSplitBoundaryError):
+        agg.handle(
+            RecordSplit(
+                clientCommandId="bad-reference-graph",
+                sessionId=agg.sessionId,
+                splitId="split-reference-graph",
+                lengthIndex=0,
+                wallTimestampMs=1000,
+                source="TOUCHPAD",
+                distanceM=13.0,
+            )
+        )
+
+    assert agg.activeClock is active_before
+    assert agg.ghostClock is ghost_before
+    assert agg.paceTimeline is timeline_before
+    assert ghost_before.is_bound_to(
+        active_clock=active_before,
+        timeline=timeline_before,
+    )
+    assert active_before.__dict__ == active_state_before
+    assert _ghost_state(agg) == ghost_state_before

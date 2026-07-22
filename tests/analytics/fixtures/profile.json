@@ -1,0 +1,100 @@
+{
+  "approvalStatus": "COACH_APPROVED",
+  "approvedAtMs": null,
+  "approvedBy": null,
+  "coachLocked": false,
+  "coachMetadata": null,
+  "createdAtMs": null,
+  "curve": {
+    "knots": [
+      {
+        "distanceM": 0.0,
+        "knotIndex": 0,
+        "targetSpeedMps": 1.28
+      },
+      {
+        "distanceM": 50.0,
+        "knotIndex": 1,
+        "targetSpeedMps": 1.25
+      },
+      {
+        "distanceM": 100.0,
+        "knotIndex": 2,
+        "targetSpeedMps": 1.22
+      }
+    ],
+    "representation": "PCHIP",
+    "segments": []
+  },
+  "curveProvenance": {
+    "baselineVersion": "baseline-even-split-1.0.0",
+    "coachConstraintVersion": null,
+    "continuousCurveGroundTruth": false,
+    "curveConfidence": null,
+    "curveEvidenceLevel": "COARSE_SPLIT_DERIVED",
+    "curveExtractionVersion": null,
+    "curveOrigin": "RACE_PRIOR_TRAINING_CORRECTED",
+    "domainExtrapolationFlag": false,
+    "generalModelVersion": null,
+    "generationMode": "MANUAL_CONTINUOUS_PROFILE",
+    "legacyProfileId": null,
+    "legacyProfileVersion": null,
+    "migratedFromSchemaVersion": null,
+    "migrationVersion": null,
+    "modelVersion": null,
+    "oodFlag": false,
+    "personalCalibrationVersion": null,
+    "personalizationVersion": null,
+    "predictedNextRepeatTimeSec": null,
+    "predictedNextSplitTimeSec": null,
+    "predictedSplitTimesSec": null,
+    "profileGenerationId": null,
+    "smoothingMethod": null,
+    "sourceDataQuality": null,
+    "sourceDatasetAssetIds": [
+      "adaptive_swim_unified_official_pacing_all_sources_v3",
+      "adaptive_swim_training_fatigue_weekly_and_repeat_model_ready_v1"
+    ],
+    "sourceDatasetManifestVersions": [
+      "1.0.0",
+      "1.0.0"
+    ],
+    "targetSplitTimesSec": null,
+    "targetTimeSource": "COACH",
+    "trainingContextCompleteness": 0.4,
+    "trainingDomainCorrectionApplied": true,
+    "uncertaintyP10": null,
+    "uncertaintyP50": null,
+    "uncertaintyP90": null,
+    "visualShapeSource": "BOUNDED_TEMPLATE"
+  },
+  "curveValidationSummary": null,
+  "modelMetadata": null,
+  "phases": [
+    {
+      "fromM": 0.0,
+      "phaseIndex": 0,
+      "phaseType": "SURFACE_SWIM",
+      "toM": 100.0
+    }
+  ],
+  "physiologyTarget": null,
+  "poolLengthM": 25,
+  "profileId": "normal100",
+  "profileType": "EVEN_PACE",
+  "profileVersion": "1",
+  "reportingSplitGranularityM": 25,
+  "schemaVersion": "1.1",
+  "source": "COACH_AUTHORED",
+  "splitTimeConstraints": [],
+  "startMode": "DIVE_START",
+  "stroke": "freestyle",
+  "targetTimeConstraint": {
+    "coachLocked": false,
+    "source": "COACH",
+    "targetTotalTimeSec": 80.0,
+    "toleranceSec": 1e-06
+  },
+  "totalDistanceM": 100.0,
+  "workoutGoal": "RACE_PACE"
+}

@@ -53,3 +53,19 @@ QA and README members. The quarantined stroke CSV is not a separate ZIP and cann
 other expected members to be reported as unexpected. File-level policy keeps it
 `SMOKE_TEST_ONLY`, while controlled studies remain research eligible and massage remains
 condition-aware advisory/recovery research.
+
+## Session evidence versus model evidence (Commit 9)
+
+Dataset catalog/model evidence is not session performance evidence. Analytics reads no raw
+ZIP/CSV and calls no dataset validator. It may copy dataset asset IDs and evidence level
+only when those fields already exist in the approved profile's provenance. Session
+performance metrics are derived solely from the session journal and explicitly trusted
+observations. Synthetic reports remain synthetic performance simulations.
+
+
+## Phase 1 closure (Commit 10)
+
+Raw dataset ZIP/CSV files remain outside the runtime and outside the delivered package. The
+e2e layer reads no dataset, the dataset validator is never wired into the live loop,
+quarantined data is never used, and license state is never changed by a run. Architecture and
+property tests assert that no raw dataset path can appear in any emitted artifact.

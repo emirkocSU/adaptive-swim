@@ -1,0 +1,172 @@
+{
+  "commitRange": "1-10",
+  "componentVersions": {
+    "analytics": "analytics-1.0.0",
+    "continuousCurveCompiler": "continuous-1.1.0",
+    "e2eRunner": "e2e-runner-1.1.0",
+    "replay": "replay-1.0.0",
+    "reportBuilder": "report-builder-1.0.0",
+    "scenarioSet": "2.0.0",
+    "simulationTransformation": "sim-transform-1.1.0",
+    "simulator": "simulator-2.0.0",
+    "simulatorHarness": "sim-harness-2.1.0",
+    "verificationManifest": "phase1-verification-1.1.0"
+  },
+  "correctionScope": [
+    "atomic rollback reference topology",
+    "complete simulator and e2e run identity",
+    "payload-bound release manifest and verifier-side runId reconstruction",
+    "dual-session migration equivalence",
+    "mechanical Phase 1 completeness gate",
+    "real Workout 1.0 legacy e2e source",
+    "pytest marker and status-document cleanup"
+  ],
+  "excludedScopes": [
+    "coach UI",
+    "curve editor UI",
+    "PWA",
+    "WebSocket",
+    "FastAPI",
+    "cloud deployment",
+    "real device adapter",
+    "LED hardware control",
+    "live wearable integration",
+    "FORM parser production integration",
+    "real ML training",
+    "gradient boosting training",
+    "transformer training",
+    "training correction model",
+    "forecasting model",
+    "online learning",
+    "personalization",
+    "pilot performance claims",
+    "raw dataset ingestion in the runtime",
+    "src/ml"
+  ],
+  "goldenCases": {
+    "analyticsReports": [
+      "normal-pace-loss-report",
+      "long-stop-report",
+      "coach-curve-reset-report"
+    ],
+    "e2eBundles": [
+      "normal-continuous",
+      "legacy-profile",
+      "long-stop",
+      "coach-reset",
+      "dataset-evidence"
+    ],
+    "replayJournals": [
+      "normal-session",
+      "stop-pause-session",
+      "coach-reset-session"
+    ],
+    "simulatorJournals": [
+      "normal-pace-loss",
+      "long-stop-mid-length",
+      "coach-continuous-curve-reset"
+    ]
+  },
+  "nextPhases": [
+    "Phase 2 — Coach tooling",
+    "Phase 3 — Pilot integration and validation",
+    "Phase 4 — Data acquisition expansion",
+    "Phase 5 — Real pacing ML and forecasting",
+    "Phase 6 — Personalization"
+  ],
+  "notes": [
+    "Datasets prepared early do not mean Phase 4 is complete.",
+    "Dataset evidence metadata is not session performance evidence.",
+    "Raw external datasets are not part of the runtime package.",
+    "Atomic failed-command rollback preserves the authoritative ActiveClock/GhostClock/PaceTimeline reference graph.",
+    "Run identity covers replacement/equivalence profiles and analytics policy; the verifier recomputes runId.",
+    "Manifest 1.1 binds journal, report, command outcomes, optional observations and artifact-sha256.txt.",
+    "The final correction candidate was packaged without running test suites at the user's request; operator CI is required before promotion."
+  ],
+  "phase": 1,
+  "releaseName": "Adaptive Swim Pacing Platform — Phase 1",
+  "releaseVersion": "1.0.1-correction-candidate",
+  "requiredFailureScenarios": [
+    "coach-continuous-curve-reset",
+    "complete-while-stop-paused",
+    "duplicate-stop-mark",
+    "long-stop-mid-length",
+    "manual-stop-at-verified-wall",
+    "normal-pace-loss",
+    "stop-during-planned-rest",
+    "unreliable-position-time"
+  ],
+  "requiredVerticalSliceCases": [
+    "normal-continuous-completion",
+    "legacy-profile-compatibility",
+    "migrated-profile-equivalence",
+    "long-stop-and-reconciliation",
+    "coach-profile-reset",
+    "complete-while-stop-paused",
+    "duplicate-command-durability",
+    "unreliable-observation-report",
+    "dataset-evidence-provenance",
+    "fifty-metre-pool-official-distance"
+  ],
+  "schemaVersions": {
+    "approvedPaceProfile": [
+      "1.0",
+      "1.1"
+    ],
+    "eventBatchRecord": [
+      "1.0"
+    ],
+    "eventEnvelope": [
+      "1.0"
+    ],
+    "phase1VerificationManifest": [
+      "1.0",
+      "1.1"
+    ],
+    "sessionReport": [
+      "1.0",
+      "1.1"
+    ],
+    "workout": [
+      "1.0",
+      "1.1"
+    ]
+  },
+  "status": "READY_FOR_OPERATOR_VALIDATION",
+  "supportedProfileVersions": [
+    "1.0",
+    "1.1"
+  ],
+  "supportedReportVersions": [
+    "1.0",
+    "1.1"
+  ],
+  "supportedWorkoutVersions": [
+    "1.0",
+    "1.1"
+  ],
+  "testSuites": [
+    "tests/unit",
+    "tests/property",
+    "tests/replay",
+    "tests/simulator",
+    "tests/analytics",
+    "tests/e2e",
+    "tests/architecture"
+  ],
+  "verticalSliceCases": [
+    "normal-continuous-completion",
+    "legacy-profile-compatibility",
+    "migrated-profile-equivalence",
+    "long-stop-and-reconciliation",
+    "coach-profile-reset",
+    "complete-while-stop-paused",
+    "duplicate-command-durability",
+    "unreliable-observation-report",
+    "dataset-evidence-provenance",
+    "fifty-metre-pool-official-distance",
+    "normal-pace-loss",
+    "manual-stop-at-verified-wall",
+    "stop-during-planned-rest"
+  ]
+}

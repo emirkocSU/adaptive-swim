@@ -22,6 +22,7 @@ from contracts.continuous_pace import ApprovedContinuousPaceProfile
 from contracts.event_log import EventBatchRecord
 from contracts.events import EventEnvelope
 from contracts.pace_profiles import ApprovedPaceProfile
+from contracts.session_report import SessionReportV1_1
 from contracts.workout import WorkoutTemplateV1_1, WorkoutTemplateVersion
 
 _SCHEMA_DIR = Path(__file__).resolve().parents[1] / "contracts" / "schemas"
@@ -34,6 +35,7 @@ _MODELS: dict[str, type[BaseModel]] = {
     "event-envelope-1.0.json": EventEnvelope,
     "event-batch-record-1.0.json": EventBatchRecord,
     "session-report-1.0.json": SessionReport,
+    "session-report-1.1.json": SessionReportV1_1,
 }
 
 # Keys pydantic may emit that are OpenAPI-flavoured rather than pure JSON-Schema 2020-12.

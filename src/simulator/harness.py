@@ -21,9 +21,17 @@ Determinism: SimClock + an instance-locally seeded virtual swimmer; the same
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+from analytics import (
+    ProfileRuntimeContext,
+    ReportBuildContext,
+    SessionObservation,
+    build_session_report,
+    encode_session_report,
+)
+from analytics.identity import canonical_digest_sha256, report_policy_digest_sha256
 from contracts.commands import (
     ArmSession,
     CoachPacingReset,
@@ -48,6 +56,7 @@ from contracts.enums import (
 )
 from contracts.events import EventEnvelope
 from contracts.pace_profiles import ApprovedPaceProfile
+from contracts.session_report import SessionReportV1_1
 from contracts.workout import WorkoutTemplateV1_1
 from persistence import JsonlSessionEventLog
 from simulator.provenance import (
@@ -78,7 +87,7 @@ from swimcore.session.state import SessionState
 from swimcore.time import SimClock
 from swimcore.workout.start_mode import resolve_repeat_start_mode
 
-_SIM_HARNESS_VERSION = "sim-harness-2.0.0"
+_SIM_HARNESS_VERSION = "sim-harness-2.1.0"
 
 
 class SimulationError(Exception):
@@ -194,6 +203,11 @@ class LiveFinalState:
     appliedPaceSecPer100M: float | None
     openStopPause: bool
     pendingCoachPacingReset: bool
+    #: Live ActiveClock totals at the report horizon, so an external verifier can compare
+    #: them against the independently replayed timing axes.
+    activeDurationMs: int | None = None
+    stoppedDurationMs: int | None = None
+    wallElapsedMs: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,6 +236,13 @@ class SimulationResult:
     stopInjected: bool
     replacementInjected: bool
     completeRejectedWhileStopPaused: bool
+    sessionReport: SessionReportV1_1
+    #: Observations handed to analytics, exposed so an external verifier can rebuild the
+    #: identical report from the journal without duplicating the mapping.
+    analyticsObservations: tuple[SessionObservation, ...]
+    sessionReportBytes: bytes
+    sessionReportSha256: str
+    sessionReportPath: Path
 
 
 # --------------------------------------------------------------------------- helpers
@@ -288,6 +309,7 @@ def run_scenario(
     profile_ref: str = "p1",
     replacement_ref: str = "pRepl",
     workout_ref: str = "w1",
+    report_context: ReportBuildContext | None = None,
 ) -> SimulationResult:
     """Run one scenario deterministically and persist + self-verify its journal.
 
@@ -599,6 +621,10 @@ def run_scenario(
         raise SimulationError("journal re-read produced a different event sequence")
     replay = replay_session(flattened)
 
+    # The aggregate exposes the authoritative live ActiveClock. Atomic rollback preserves
+    # the shared reference between this object and GhostClock; reading through a workaround
+    # would hide a detached aggregate graph instead of detecting it.
+    clock_snapshot = agg.activeClock.snapshot(last_ts) if agg.activeClock is not None else None
     live = LiveFinalState(
         sessionId=sid,
         lifecycleState=(agg.state or SessionState.CREATED).value,
@@ -615,6 +641,9 @@ def run_scenario(
         appliedPaceSecPer100M=agg.appliedPaceTarget,
         openStopPause=agg.openStopPause is not None,
         pendingCoachPacingReset=agg.pendingCoachPacingReset is not None,
+        activeDurationMs=(clock_snapshot.activeElapsedMs if clock_snapshot else None),
+        stoppedDurationMs=(clock_snapshot.stoppedElapsedMs if clock_snapshot else None),
+        wallElapsedMs=(clock_snapshot.wallElapsedMs if clock_snapshot else None),
     )
     st = replay.state
     mismatches: list[str] = []
@@ -665,14 +694,100 @@ def run_scenario(
         raise SimulationError("live/replay state mismatch: " + "; ".join(mismatches))
 
     journal_sha = hashlib.sha256(journal_path.read_bytes()).hexdigest()
+    scenario_digest = canonical_digest_sha256(scenario)
+    workout_digest = canonical_digest_sha256(workout)
+    profile_digests = {
+        f"{scenario.profile.profileId}:{scenario.profile.profileVersion}": (
+            canonical_digest_sha256(scenario.profile)
+        )
+    }
+    if scenario.replacementProfile is not None:
+        replacement_key = (
+            f"{scenario.replacementProfile.profileId}:{scenario.replacementProfile.profileVersion}"
+        )
+        profile_digests[replacement_key] = canonical_digest_sha256(scenario.replacementProfile)
+    base_report_context = report_context or ReportBuildContext()
+    policy_context = replace(
+        base_report_context,
+        simulatorSynthetic=True,
+        simulationRunId=None,
+        profileRegistry={},
+    )
+    analytics_policy_digest = report_policy_digest_sha256(policy_context)
     manifest = build_run_manifest(
         scenario_id=scenario.scenarioId,
         scenario_version=scenario.scenarioVersion,
+        scenario_digest=scenario_digest,
         seed=effective_seed,
         harness_version=_SIM_HARNESS_VERSION,
         workout_ref=workout_ref,
         profile=scenario.profile,
+        replacement_profile=scenario.replacementProfile,
+        workout_digest=workout_digest,
+        profile_digests=profile_digests,
+        analytics_policy_digest=analytics_policy_digest,
     )
+    profile_registry: dict[tuple[str, str], ProfileRuntimeContext] = {
+        (scenario.profile.profileId, scenario.profile.profileVersion): ProfileRuntimeContext(
+            profile=scenario.profile,
+            timeline=timeline,
+        )
+    }
+    if scenario.replacementProfile is not None:
+        replacement_timeline = compile_ghost_timeline(scenario.replacementProfile, workout)
+        profile_registry[
+            (
+                scenario.replacementProfile.profileId,
+                scenario.replacementProfile.profileVersion,
+            )
+        ] = ProfileRuntimeContext(
+            profile=scenario.replacementProfile,
+            timeline=replacement_timeline,
+        )
+    analytics_observations = tuple(
+        SessionObservation(
+            timestampMs=item.wallTimeMs,
+            estimatedDistanceM=item.actualDistanceM,
+            smoothedVelocityMps=item.actualSpeedMps,
+            phaseType=item.phaseType,
+            quality=item.positionQuality,
+            trusted=item.positionQuality in {"HIGH", "MEDIUM"},
+            plannedRest=item.plannedRest,
+            source="SIMULATOR",
+        )
+        for item in swim.observations
+    )
+    effective_report_context = replace(
+        base_report_context,
+        simulatorSynthetic=True,
+        simulationRunId=(base_report_context.simulationRunId or manifest.runId),
+        profileRegistry=profile_registry,
+    )
+    session_report = build_session_report(
+        replay_state=replay.state,
+        events=tuple(flattened),
+        workout=workout,
+        pace_profile=scenario.profile,
+        compiled_timeline=timeline,
+        observations=analytics_observations,
+        report_context=effective_report_context,
+    )
+    session_report_bytes = encode_session_report(session_report)
+    second_report = build_session_report(
+        replay_state=replay.state,
+        events=tuple(flattened),
+        workout=workout,
+        pace_profile=scenario.profile,
+        compiled_timeline=timeline,
+        observations=analytics_observations,
+        report_context=effective_report_context,
+    )
+    if encode_session_report(second_report) != session_report_bytes:
+        raise SimulationError("same journal produced non-deterministic report bytes")
+    session_report_path = output_dir / f"{scenario.scenarioId}-report.json"
+    session_report_path.write_bytes(session_report_bytes)
+    session_report_sha = hashlib.sha256(session_report_bytes).hexdigest()
+
     provenance = build_provenance(
         scenario_name=scenario.scenarioId,
         seed=effective_seed,
@@ -705,4 +820,9 @@ def run_scenario(
         stopInjected=stop_injected,
         replacementInjected=replacement_injected,
         completeRejectedWhileStopPaused=complete_rejected,
+        sessionReport=session_report,
+        analyticsObservations=analytics_observations,
+        sessionReportBytes=session_report_bytes,
+        sessionReportSha256=session_report_sha,
+        sessionReportPath=session_report_path,
     )

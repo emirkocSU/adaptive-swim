@@ -129,6 +129,14 @@ class GhostClock:
         if not math.isfinite(value):
             raise InvalidAlignmentDistanceError(f"{label} must be finite, got {value}")
 
+    def is_bound_to(self, *, active_clock: ActiveClock, timeline: PaceTimeline) -> bool:
+        """Return whether this ghost uses the aggregate's authoritative runtime objects.
+
+        Identity, not value equality, is required: both clocks are mutable and must remain
+        one shared object graph across successful commands and atomic rollback.
+        """
+        return self._clock is active_clock and self._timeline is timeline
+
     # ---------------------------------------------------------------- API
     def snapshot(self, now_ms: int) -> GhostSnapshot:
         # ActiveClock enforces monotonic (non-historical) time; do not swallow that error.

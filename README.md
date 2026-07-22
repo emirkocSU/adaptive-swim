@@ -1,72 +1,94 @@
 # Adaptive Swim Pacing Platform
 
 Offline-first, hardware-independent adaptive swim pacing. A coach defines a structured
-workout; the system drives a personal **ghost pacer** and, session-end, produces an
-explainable target-vs-actual report — with no LLM in the critical path and the live
-pacing loop running fully offline.
+workout; the system drives a personal **ghost pacer** and produces an explainable
+session-end target-vs-actual report. No LLM participates in the critical pacing path, and
+the live core remains deterministic and offline.
 
-## Phase 1 scope (this repository)
+## Phase 1 scope
 
-Headless core vertical slice, in pure Python. **No** cloud, ML runtime, UI, database, or
-device driver. Five source packages under `src/`:
+This repository contains the headless Phase 1 vertical slice in Python. It deliberately
+contains no cloud runtime, production ML package, UI, database projection or device driver.
+Seven source packages live under `src/`:
 
-- `contracts` — data contracts, enums, event envelope, commands; single source of the
-  JSON Schemas. No I/O.
-- `swimcore` — pure domain logic (validation, pace math, ghost + StopPause, session
-  state, safety controller, analytics). No I/O, no framework.
-- `persistence` — append-only JSONL log + deterministic replay. Local file I/O only.
-- `simulator` — virtual swimmer + scenarios; runs the real `swimcore` embedded.
-- `swimtools` — developer/CI CLIs (schema generation, scenario runner, arch checks, dataset
-  catalog + streaming bundle validator, leakage guards, pure feature helpers).
+- `contracts` — strict data contracts, enums, commands/events and generated JSON Schemas;
+  no I/O.
+- `swimcore` — pure domain logic: workout validation, pace math, ActiveClock/GhostClock,
+  StopPause, session aggregate and safety control; no I/O or framework.
+- `persistence` — append-only canonical JSONL journal, durability handling, replay inputs and
+  the optional derived-report store; local file I/O only.
+- `analytics` — pure replay-based SessionReport 1.1 calculations, provenance, identities and
+  canonical serialization; no filesystem, wall clock, randomness, network or ML runtime.
+- `simulator` — deterministic virtual swimmer and required failure scenarios; embeds the real
+  `swimcore` rather than implementing a second pacing engine.
+- `e2e` — full Phase 1 orchestration, migration-equivalence execution and canonical release
+  bundles; owns no domain rules.
+- `swimtools` — developer/CI CLIs for schemas, architecture, datasets, reports, E2E execution,
+  bundle verification and mechanical Phase 1 completeness.
 
-## 60-second headless session (target, wired up by Commit 10)
+## Setup and verification
 
 ```bash
-make setup
-make ci            # lint, typecheck, arch, schema-check, unit (+ later: property/replay/sim/e2e)
+python -m pip install -e ".[dev]"
+make phase1-completeness
+make ci
 ```
 
-## Current status
+Windows PowerShell users may run the individual Python/Ruff/Mypy/import-linter commands when
+GNU Make is not installed.
 
-**Commit 8 corrected v2: real dataset integration complete.** The simulator, continuous
-curve, safe-wall reset, deterministic seed/replay and core architecture remain unchanged.
-This correction is limited to raw dataset contracts, catalog/schema metadata, validator
-behavior, tests and documentation.
+Useful E2E commands:
 
-All four supplied bundles pass the streaming validator:
+```bash
+python -m swimtools.run_e2e --list
+python -m swimtools.run_e2e --case normal-continuous-completion --seed 42 --output ./out
+python -m swimtools.run_e2e --all --output ./e2e-all
+python -m swimtools.verify_e2e_bundle --bundle ./e2e-all --recursive
+```
 
-| Bundle | Structural result | Policy result |
+## Phase 1 correction release status
+
+Commits 1–10 and their contracts are implemented. This correction release additionally
+closes the following release blockers:
+
+- failed commands restore both aggregate values and the original
+  `ActiveClock -> GhostClock -> PaceTimeline` reference graph;
+- simulator live-state reads use the aggregate's authoritative `activeClock`, not a harness
+  workaround;
+- run identity covers scenario version/content, source/runtime workout, every initial,
+  replacement and equivalence profile, and analytics policy;
+- the bundle verifier independently recomputes `runId`, `reportId` and `manifestId`;
+- `manifestId` is transitively bound to journal, report, command outcomes, optional
+  observations and the canonical digest file;
+- legacy/migrated profile equivalence executes two real aggregate → journal → replay → report
+  chains and compares timeline, command outcomes, journal semantics/batches, live state,
+  replay state and report targets;
+- the legacy E2E case starts from a real Workout 1.0 document and explicitly migrates it;
+- `make phase1-completeness` mechanically rejects missing suites, unresolved invariant
+  bindings, duplicate markers and temporary-success Makefile paths.
+
+The package is marked **READY_FOR_OPERATOR_VALIDATION** because, at the user's request, the
+final correction was prepared without running pytest, `make ci`, Ruff, Mypy or import-linter.
+Run the commands above before committing or promoting the release.
+
+## Phase status
+
+| Commit | Scope | Implementation |
 |---|---|---|
-| official race | VALID — 128,475 rows × 151 columns | `RACE_PACING_PRIOR`, license TBD → production blocked, curve ground truth false |
-| IMU | VALID — 40,957 × 94 | sensor/technique research; not primary pacing target; not official distance |
-| training/fatigue | VALID — 396 × 111 | real `record_granularity`: 228 `ATHLETE_WEEK`, 168 `SPRINT_REPEAT`; mixed license |
-| external studies | VALID — seven exact members | controlled research; massage condition-aware; stroke file `SMOKE_TEST_ONLY` |
+| 1 | Repository scaffold and architecture guards | present |
+| 2 | Contracts and generated schemas | present |
+| 3 | Semantic workout validation | present |
+| 4 | Deterministic pace math | present |
+| 5 | Active/ghost clocks | present |
+| 6 | Session aggregate, StopPause and safety | present |
+| 7 | Append-only journal and historical replay | present |
+| 8 | Continuous pace profiles and deterministic simulator | present |
+| 9 | Deterministic analytics and SessionReport 1.1 | present |
+| 10 | Full vertical-slice verification and release bundles | present |
 
-Raw headers are validated as supplied. Canonical `subject_uid`, `session_uid` and
-`record_type` are created only by explicit normalized mappings; they are not invented raw
-requirements. The external-studies ZIP is validated once, while the stroke member keeps its
-file-level quarantine gate. Raw dataset files are not included in this repository.
+`PHASE1_RELEASE_MANIFEST.json` records the supported versions, canonical cases, excluded
+scopes and the operator-validation status. Phase 2 remains coach tooling; later phases cover
+pilot integration, data acquisition, production pacing ML and personalization.
 
-The dataset correction does not modify `swimcore`, simulator, persistence, replay fixtures or
-simulator fixtures. Those trees are byte-identical to the supplied corrected baseline; the
-direct replay and simulator regression suites pass (131 and 109 tests respectively). See
-`IMPLEMENTATION_REPORT.md` for the exact command matrix and sandbox tool-availability notes.
-
-The product claim remains: race/research/training distributions and corrections produce a
-smooth, feasible operational target velocity envelope that exactly matches target time and
-splits — not measured instantaneous velocity ground truth.
-
-**Final decision: `READY_FOR_COMMIT_9`.**
-
-Plan: Commit 7 — done · Commit 8 — done/corrected · Commit 9 (analytics/model training) —
-pending. No Commit 9 analytics or real ML training is included.
-
-## Validating a dataset bundle (operator step, outside CI)
-
-```bash
-python -m swimtools.validate_dataset_bundle --all --data-root data/external/raw
-python -m swimtools.validate_dataset_bundle --bundle /path/to/bundle.zip --format json
-```
-
-See `CLAUDE.md` for the non-negotiables and dependency rules, `ARCHITECTURE.md` for the
-living architecture summary, and `docs/adr/` for decisions.
+See `CLAUDE.md` for non-negotiables, `ARCHITECTURE.md` for the living architecture and
+`docs/adr/` for binding decisions.

@@ -73,3 +73,20 @@ Rule: when a continuous-curve replacement is applied, **every** selected-profile
 adopted from the replacement — an earlier `COACH_AUTHORED` source must not survive a
 `COACH_APPROVED_MODEL` replacement, and a coach-locked replacement must read as locked in
 both live and replay state.
+
+## Derived reports are not events (ADR-040)
+
+Commit 9 adds no report event type. `SessionReport` is rebuilt from the canonical journal
+and historical replay. Writing/verifying a report does not append to the event journal,
+change `seq`, change state, create official distance, apply a pace target or close/open a
+StopPause. Report provenance stores the first/last sequence and event-stream SHA-256.
+
+
+## Phase 1 closure (Commit 10)
+
+Commit 10 adds **no event type and no payload field**. It only asserts, for every case, that
+the persisted batches satisfy their contract: one command produces exactly one
+`EventBatchRecord`, `firstSeq`/`lastSeq`/`eventCount` match the contained events, sequences
+are contiguous across the journal with no duplicates, event ids are unique, timestamps never
+decrease, and the journal line count equals the persisted batch count. A rejected command
+appends nothing; an idempotent retry appends nothing.

@@ -37,3 +37,22 @@ not committed.
 The generated product object remains an **operational target velocity envelope** learned
 from race/research/training distributions and corrections, reconciled exactly to target time
 and splits.
+
+## Reporting boundary
+
+Dataset roles describe how a target profile may have been produced. They do not authorize a
+session metric. Commit 9 copies approved profile evidence metadata into report provenance but
+never infers a dataset role, changes license eligibility, reads quarantined files or treats a
+coarse target envelope as measured continuous velocity.
+
+
+## Phase 1 closure boundary (ADR-041)
+
+The Phase 1 vertical slice carries dataset evidence **only** as approved-profile provenance
+(`curveOrigin`, `curveEvidenceLevel`, `visualShapeSource`, `continuousCurveGroundTruth`,
+`sourceDatasetAssetIds`). The `dataset-evidence-provenance` e2e case proves that such a
+profile runs in the deterministic runtime, that the report carries the asset ids, that it is
+never presented as measured velocity ground truth, that no raw dataset is read and that
+runtime never alters license eligibility.
+
+**Data catalog / model evidence ≠ session performance evidence.**

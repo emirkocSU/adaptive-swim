@@ -20,7 +20,7 @@ _SRC = Path(__file__).resolve().parents[1]
 _FORBIDDEN_DIRS = ("cloud", "ml", "ui", "ui_minimal", "edge", "adapters", "wearable_import")
 
 # Packages whose purity is enforced by the AST scan.
-_PURE_PACKAGES = ("swimcore", "contracts")
+_PURE_PACKAGES = ("swimcore", "contracts", "analytics")
 
 # Builtins that imply I/O / dynamic execution — banned inside pure packages.
 _FORBIDDEN_CALLS = frozenset({"open", "input", "eval", "exec", "__import__"})

@@ -3,16 +3,20 @@ root_packages =
     contracts
     swimcore
     persistence
+    analytics
+    e2e
     simulator
     swimtools
 include_external_packages = True
 
 [importlinter:contract:1]
-name = Layered architecture (swimtools > simulator > persistence > swimcore > contracts)
+name = Layered architecture (swimtools > e2e > simulator > analytics > persistence > swimcore > contracts)
 type = layers
 layers =
     swimtools
+    e2e
     simulator
+    analytics
     persistence
     swimcore
     contracts
@@ -33,6 +37,7 @@ source_modules =
 forbidden_modules =
     swimcore
     persistence
+    analytics
     simulator
     swimtools
 
@@ -74,6 +79,7 @@ source_modules =
     contracts
     swimcore
     persistence
+    analytics
     simulator
 forbidden_modules =
     pandas
@@ -90,3 +96,50 @@ forbidden_modules =
     swimtools.data_catalog
     swimtools.validate_dataset_bundle
     swimtools.data_splitting
+
+[importlinter:contract:9]
+name = analytics must not depend on simulator persistence or swimtools
+type = forbidden
+source_modules =
+    analytics
+forbidden_modules =
+    simulator
+    persistence
+    swimtools
+
+[importlinter:contract:10]
+name = swimcore and contracts must not import analytics
+type = forbidden
+source_modules =
+    swimcore
+    contracts
+forbidden_modules =
+    analytics
+
+[importlinter:contract:11]
+name = inner layers must not import the e2e verification layer
+type = forbidden
+source_modules =
+    contracts
+    swimcore
+    persistence
+    analytics
+    simulator
+forbidden_modules =
+    e2e
+
+[importlinter:contract:12]
+name = e2e must not depend on swimtools or introduce nondeterminism
+type = forbidden
+source_modules =
+    e2e
+forbidden_modules =
+    swimtools
+    random
+    secrets
+    uuid
+    socket
+    requests
+    httpx
+    pandas
+    numpy

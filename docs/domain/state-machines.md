@@ -55,3 +55,28 @@ The eight required simulator scenarios are the executable statement of these sta
 | `unreliable-position-time` | low position confidence is a display axis only; official distance and completed lengths follow pool geometry and verified walls |
 | `complete-while-stop-paused` | `CompleteSession` is rejected while a StopPause is open and mutates nothing; it succeeds after the resolve and the final official wall |
 | `coach-continuous-curve-reset` | a mid-length reset request applies only at the next official wall, swaps the full profile metadata, is not a StopPause and preserves split history |
+
+## Analytics boundary
+
+Report construction has no state-machine transition. It observes the replayed lifecycle,
+StopPause and coach-reset states at a fixed event horizon. Planned rest, lifecycle pause,
+StopPause and safe-wall coach reset remain separate axes in all report calculations.
+
+
+## Phase 1 closure — state rules proven end to end (ADR-041)
+
+The vertical-slice cases are the executable statement of the Phase 1 state rules:
+
+| Case | Rule proven through the whole chain |
+|---|---|
+| `normal-continuous-completion` | a clean session completes; official distance equals the plan; no StopPause |
+| `legacy-profile-compatibility` | the legacy constant-leg path still runs without migration |
+| `migrated-profile-equivalence` | a 1.0 → 1.1 migration preserves the compiled target function |
+| `long-stop-and-reconciliation` | retroactive freeze, mid-pool estimate is not official distance, exactly one wall reconciliation |
+| `coach-profile-reset` | mid-length request, next-wall application, full metadata swap, past split provenance preserved, no stopped time |
+| `complete-while-stop-paused` | a rejected completion mutates neither aggregate, sequence nor journal; it succeeds after resolve |
+| `duplicate-command-durability` | an identical retry yields no second event, no duplicate line, no sequence gap |
+| `unreliable-observation-report` | low confidence never changes official distance and never fabricates a curve |
+| `dataset-evidence-provenance` | dataset evidence travels as provenance only, never as measured velocity |
+| `fifty-metre-pool-official-distance` | a 50 m course starts at 0 m and its first length is exactly 50 m |
+| `normal-pace-loss`, `manual-stop-at-verified-wall`, `stop-during-planned-rest` | the remaining required failure scenarios, now also producing reports |

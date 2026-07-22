@@ -148,6 +148,8 @@ _MUTABLE_STATE_FIELDS: tuple[str, ...] = (
     "selectedCurveRepresentation",
     "selectedCurveCompilerVersion",
     "resolvedStartModes",
+    "_sessionStroke",
+    "_sessionTotalDistanceM",
     "poolLengthM",
     "workoutGoal",
     "defaultStartMode",
@@ -237,34 +239,93 @@ class SessionAggregate:
             stored_fp, stored_events = prior
             if stored_fp != fp:
                 raise CommandIdConflictError(f"clientCommandId {cid} reused with different content")
+            self._assert_runtime_reference_integrity()
             return list(stored_events)  # idempotent: no mutation, same result
 
         checkpoint = self._checkpoint_mutable_state()
         try:
             events = self._dispatch(command)
+            self._assert_runtime_reference_integrity()
         except Exception:
             self._restore_mutable_state(checkpoint)
             raise
         self.processedClientCommandIds[cid] = (fp, list(events))
         return events
 
-    def _checkpoint_mutable_state(self) -> tuple[dict[str, Any], tuple[int, int]]:
+    def _checkpoint_mutable_state(
+        self,
+    ) -> tuple[dict[str, Any], dict[str, Any], tuple[int, int]]:
         """Snapshot mutable aggregate state before processing a command.
 
         Session command handling is atomic: if validation, clock/ghost orchestration, or
         event creation fails, the aggregate is restored to this checkpoint. The injected
         clock and external event-id source are not rolled back.
         """
-        return (
-            {name: copy.deepcopy(getattr(self, name)) for name in _MUTABLE_STATE_FIELDS},
-            self._events.checkpoint(),
-        )
+        # Capture both the original references and one deep-copied object graph.  The graph
+        # copy preserves aliases inside the checkpoint, while the original references let
+        # rollback restore mutable objects *in place*.  Consequently a rejected command
+        # changes neither values nor the identity/topology exposed by the aggregate.
+        originals = {name: getattr(self, name) for name in _MUTABLE_STATE_FIELDS}
+        snapshots = copy.deepcopy(originals)
+        return originals, snapshots, self._events.checkpoint()
 
-    def _restore_mutable_state(self, checkpoint: tuple[dict[str, Any], tuple[int, int]]) -> None:
-        values, event_checkpoint = checkpoint
-        for name, value in values.items():
-            setattr(self, name, value)
+    def _restore_mutable_state(
+        self,
+        checkpoint: tuple[dict[str, Any], dict[str, Any], tuple[int, int]],
+    ) -> None:
+        originals, snapshots, event_checkpoint = checkpoint
+
+        # Restore ordinary fields first. Dicts are restored in place so callers holding a
+        # reference to an aggregate collection do not observe a rollback-induced swap.
+        for name in _MUTABLE_STATE_FIELDS:
+            if name in {"activeClock", "ghostClock"}:
+                continue
+            original = originals[name]
+            snapshot = snapshots[name]
+            if isinstance(original, dict) and isinstance(snapshot, dict):
+                original.clear()
+                original.update(copy.deepcopy(snapshot))
+                setattr(self, name, original)
+            else:
+                setattr(self, name, original)
+
+        # ActiveClock and GhostClock are mutable runtime objects shared by identity. Restore
+        # their state in place, then explicitly re-establish the authoritative bindings.
+        original_active = originals["activeClock"]
+        snapshot_active = snapshots["activeClock"]
+        if original_active is not None and snapshot_active is not None:
+            original_active.__dict__.clear()
+            original_active.__dict__.update(copy.deepcopy(snapshot_active.__dict__))
+        self.activeClock = original_active
+
+        original_ghost = originals["ghostClock"]
+        snapshot_ghost = snapshots["ghostClock"]
+        if original_ghost is not None and snapshot_ghost is not None:
+            ghost_state = copy.deepcopy(snapshot_ghost.__dict__)
+            ghost_state["_clock"] = self.activeClock
+            ghost_state["_timeline"] = self.paceTimeline
+            original_ghost.__dict__.clear()
+            original_ghost.__dict__.update(ghost_state)
+        self.ghostClock = original_ghost
+
         self._events.restore(event_checkpoint)
+        self._assert_runtime_reference_integrity()
+
+    def _assert_runtime_reference_integrity(self) -> None:
+        """Reject any detached live runtime graph immediately.
+
+        A started aggregate has one authoritative ActiveClock and one authoritative
+        PaceTimeline.  GhostClock must reference those exact objects; equivalent copies are
+        not sufficient because later commands mutate the shared runtime instances.
+        """
+        if self.ghostClock is None:
+            return
+        if self.activeClock is None or self.paceTimeline is None:
+            raise AssertionError("GhostClock exists without aggregate clock/timeline")
+        if not self.ghostClock.is_bound_to(
+            active_clock=self.activeClock, timeline=self.paceTimeline
+        ):
+            raise AssertionError("GhostClock detached from aggregate runtime references")
 
     # ------------------------------------------------------------------ dispatch
     def _dispatch(self, command: Command) -> list[EventEnvelope]:

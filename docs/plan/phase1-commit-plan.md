@@ -1,7 +1,7 @@
 # Phase 1 — Commit Plan (living)
 
-Ordered, human-approved commits. Each adds one layer; later layers stay PENDING until
-their commit lands.
+Ordered, human-approved commits. Commits 1–10 are implemented; historical planning text
+inside commit-specific sections is retained only as development context.
 
 **This table is the single authoritative status list for Phase 1.** No other table in this
 document repeats or contradicts it.
@@ -16,8 +16,8 @@ document repeats or contradicts it.
 | 6 | Session state machine, command handling, StopPause orchestration, SafetyController | done |
 | 7 | Append-only event journal + deterministic historical replay (ADR-037) | done |
 | 8 | Continuous pace curves + deterministic headless simulator (ADR-038) **+ dataset evidence plan, catalog, validators and leakage guards (ADR-039)** | done |
-| 9 | Incident-aware analytics / session report | pending |
-| 10 | Full e2e headless vertical-slice verification | pending |
+| 9 | Incident-aware analytics / session report (ADR-040) | done |
+| 10 | Full vertical-slice verification and release closure (ADR-041) | done |
 | later | ML advisory (Phase 5A–5E), cloud, UI, device/wearable adapters | pending (own ADRs/triggers) |
 
 ## Commit 4 boundary (what it is and is not)
@@ -179,7 +179,7 @@ The acceptance review of the first Commit 8 delivery found blocking gaps; they a
 - The dataset catalog, streaming validator, license/quarantine gates, leakage guards,
   feature helpers, curve-evidence provenance and the Phase 5A–5E roadmap landed (ADR-039).
 
-Commit 9 (incident-aware analytics / session report) is not started.
+Historical Commit 9 note: deterministic analytics/report implementation and ten critical correctness fixes landed under ADR-040, but that delivery did not claim full clean-CI acceptance. Commit 10 and the final correction supersede that status.
 
 ## Roadmap phases (updated for the mainline)
 
@@ -197,3 +197,34 @@ Commit 9 (incident-aware analytics / session report) is not started.
 - **Phase 6:** live adaptation ML only if the existing G1–G7 gate passes; planning and
   adaptation models evaluated separately.
 - **Phase 7+:** comparative pilots, cloud, OEM per the existing roadmap.
+
+## Commit 9 completion scope
+
+Commit 9 adds the pure analytics package, SessionReport 1.1, canonical identity/serialization,
+official split/distance and pacing analysis, trusted curve and optional sensor summaries,
+StopPause/reset provenance, report CLIs/store, simulator reports and golden/property tests.
+It adds no live adaptation, model training, cloud, UI or device integration. Commit 10 subsequently closed the vertical slice; this paragraph is retained as historical Commit 9 scope.
+
+
+## Commit 10 (Phase 1 vertical-slice verification and release closure) — completed
+
+Commit 10 adds verification, not behaviour (ADR-041):
+
+- `src/e2e/` orchestrates the whole authoritative chain with the **real** components and
+  re-reads its own journal to rebuild the report through the public analytics API; the two
+  independently produced reports must be byte-identical.
+- Thirteen vertical-slice cases: the ten required closure cases plus the three remaining
+  required failure scenarios, so all eight Commit 8 scenarios now also produce reports end to
+  end. Each case proves 85–91 cross-component invariants.
+- One authoritative invariant matrix (`e2e.verification`) covering event, state, clock,
+  distance, profile, report and case-expectation groups, with explicit `NOT_APPLICABLE`
+  results where a check cannot apply.
+- Content-addressed `runId` and `manifestId`; canonical bundles (`manifest.json`,
+  `journal.jsonl`, `session-report.json`, `command-outcomes.json`, `artifact-sha256.txt`,
+  optional `observations.jsonl`) with no path, timestamp, UUID or dataset content.
+- `swimtools.run_e2e` and `swimtools.verify_e2e_bundle` (typed exit codes 0/2/3/4); real
+  `make test-e2e` and `make e2e-headless`, both inside `make ci`.
+- Five committed golden bundles as the release regression contract, plus
+  `PHASE1_RELEASE_MANIFEST.json`.
+
+**Phase 1 implementation is complete and requires operator validation for this packaged correction.** Phase 2 (coach tooling) is the next product phase; Phase 5 remains the first phase in which a real model is trained.

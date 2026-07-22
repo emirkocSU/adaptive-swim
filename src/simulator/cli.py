@@ -56,7 +56,7 @@ def _run(scenario_name: str | None, out_dir: Path, seed: int | None) -> int:
         print(
             f"{result.scenarioId}: seed={result.seed} {result.wallCount} walls, "
             f"{len(result.events)} events, {len(result.observations)} ticks -> "
-            f"{result.journalPath.name}, {manifest_path.name}, {prov_path.name}"
+            f"{result.journalPath.name}, {result.sessionReportPath.name}, {manifest_path.name}, {prov_path.name}"
         )
     return 0
 

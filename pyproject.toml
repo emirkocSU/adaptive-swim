@@ -1,7 +1,7 @@
 [project]
 name = "adaptive-swim"
 version = "0.1.0"
-description = "Adaptive Swim Pacing Platform — Phase 1 headless core (contracts + schema)"
+description = "Adaptive Swim Pacing Platform — complete Phase 1 deterministic headless vertical slice"
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.6",
@@ -29,11 +29,12 @@ where = ["src"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 markers = [
-    "e2e: end-to-end headless vertical slice (later commits)",
-    "property: property-based invariants (later commits)",
-    "replay: golden replay determinism (later commits)",
-    "architecture: architecture/purity guardrails",
-    "simulator: deterministic headless simulator scenarios",
+    "e2e: Phase 1 full headless vertical-slice and release-bundle verification",
+    "property: property-based domain and determinism invariants",
+    "replay: append-only journal and historical replay determinism",
+    "architecture: package boundaries and purity guardrails",
+    "simulator: deterministic embedded-core simulator scenarios",
+    "analytics: deterministic derived session reports",
 ]
 
 [tool.mypy]

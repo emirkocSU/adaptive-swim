@@ -1,0 +1,39 @@
+{
+  "blocks": [
+    {
+      "adaptation": null,
+      "distanceM": 100,
+      "feedback": null,
+      "ghostSource": null,
+      "label": "main",
+      "repetitions": 1,
+      "rest": {
+        "type": "none"
+      },
+      "segments": [
+        {
+          "endPaceSecPer100M": null,
+          "fromM": 0.0,
+          "mode": "even_pace",
+          "startPaceSecPer100M": null,
+          "targetPaceSecPer100M": 70.0,
+          "toM": 100.0
+        }
+      ],
+      "startMode": null,
+      "type": "repeat"
+    }
+  ],
+  "name": "sim-wk",
+  "poolLengthM": 25,
+  "repeatOverrides": [],
+  "schemaVersion": "1.1",
+  "startPolicy": {
+    "allowBlockOverride": true,
+    "allowRepeatOverride": true,
+    "defaultMode": "DIVE_START"
+  },
+  "stroke": "freestyle",
+  "targetTotalTimeSec": null,
+  "workoutGoal": "RACE_PACE"
+}

@@ -43,6 +43,11 @@ Statuses: **ACTIVE**, **REVISED**, **DEFERRED** (design ready, build gated by a 
 | **038** | **Continuous pace curves + phase-aware model generation** (leg/split duration = time constraint; PCHIP curve; exact total/locked-split reconciliation; safe-wall coach curve reset; planning ML contract only; phase-aware transformer = long-term target, scoped by ADR-039) | **ACTIVE (Faz 1)** |
 | **039** | **Dataset-realistic pacing prior, training correction, forecasting and operational target envelopes** (first active model = coarse conditional split prior; no fake phase labels; forecast ≠ target; bounded envelope ≠ measured velocity; dataset catalog, license/quarantine gates, leakage rules) | **ACTIVE (Faz 1: contracts/catalog/validators/docs only)** |
 
+| **040** | **Deterministic Session Analytics and Derived Reports** (historical replay authority; official split/distance; trusted observation gate; canonical deterministic report) | **ACTIVE (Faz 1 / Commit 9)** |
+
+| **040** | **Deterministic session analytics and derived reports** (pure analytics layer; SessionReport 1.1; content-addressed report identity; canonical serialization; input coherence; observation horizon gates) | **ACTIVE (Faz 1)** |
+| **041** | **Phase 1 vertical-slice verification and release closure** (real-component e2e; one authoritative cross-component invariant matrix; deterministic run/manifest identity; canonical bundles; golden release regression contract) | **ACTIVE (Faz 1 closure)** |
+
 Full ADR text lives in this directory. ADR-031, ADR-032, ADR-034, ADR-035, ADR-036, ADR-037,
-ADR-038 and ADR-039 are in Phase 1 scope (034/035/036/039 as contracts, deterministic core,
+ADR-038, ADR-039 and ADR-040 are in Phase 1 scope (034/035/036/039 as contracts, deterministic core,
 and docs — no real ML/UI, no `src/ml/`).

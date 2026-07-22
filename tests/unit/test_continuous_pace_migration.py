@@ -94,28 +94,16 @@ def test_migration_preserves_total_and_leg_durations() -> None:
 
 
 def test_migration_bit_identical_no_smoothing() -> None:
-    """Demonstration B: migrated timeline matches legacy at every wall; no smoothing.
-
-    Legacy leg boundaries (50 m, 100 m) reproduce bit-identically. Mid-leg walls (25 m,
-    75 m) are within the central float tolerance, since the continuous compiler resamples a
-    constant-speed segment on the deterministic breakpoint grid (no PCHIP smoothing).
-    """
+    """Migrated constant-speed execution matches legacy at every official wall."""
     legacy = _legacy()
     migrated = migrate_approved_pace_profile_1_0_to_1_1(legacy)
     old_tl = _compile_1_0(legacy)
     new_tl = _compile_1_1(migrated).timeline
-    # leg boundaries: exact
-    for wall in (50.0, 100.0):
+    for wall in (25.0, 50.0, 75.0, 100.0):
         a = target_active_time_at_distance(old_tl, wall).elapsedActiveSec
         b = target_active_time_at_distance(new_tl, wall).elapsedActiveSec
-        assert abs(a - b) < 1e-6
-    # mid-leg walls: within central tolerance (grid resample of a constant-speed segment)
-    for wall in (25.0, 75.0):
-        a = target_active_time_at_distance(old_tl, wall).elapsedActiveSec
-        b = target_active_time_at_distance(new_tl, wall).elapsedActiveSec
-        assert abs(a - b) < 5e-3
-    # total is bit-identical and the representation is constant-speed (not PCHIP-smoothed)
-    assert abs(old_tl.totalActiveDurationSec - new_tl.totalActiveDurationSec) < 1e-6
+        assert abs(a - b) < 1e-9
+    assert abs(old_tl.totalActiveDurationSec - new_tl.totalActiveDurationSec) < 1e-9
     assert migrated.curve.representation.value == "CONSTANT_SPEED"
 
 

@@ -1,29 +1,58 @@
-# Faz 1 Eksiksizlik Kontrolu (phase1-completeness-check)
+# Phase 1 completeness check
 
-`make ci` icinde eksik test suite'leri Commit 1-9 boyunca PENDING olarak raporlanabilir. Ancak
-**Commit 10'da hicbir PENDING kalmamalidir.** Bu, `swimtools/completeness_check.py` (Commit 10'da
-eklenir) ile mekanik olarak dogrulanir ve `make ci`'a `phase1-completeness` hedefi olarak baglanir.
+Phase 1 may not claim a green CI result by conditionally skipping a missing suite. The
+mechanical gate is implemented at:
 
-## Kontrol kurallari (Commit 10)
-1. Su dizinlerin tumu var ve en az bir test icerir: `tests/unit`, `tests/property`, `tests/replay`,
-   `tests/simulator`, `tests/architecture`, `tests/e2e`.
-2. `swimtools/gen_schemas.py` var ve `make schema-check` PENDING donmez (gercek dogrulama yapar).
-3. `docs/testing/invariants.md`'deki 20 degismezin her birinin test kimligi gercek bir teste cozulur
-   (kimlik -> dosya::fonksiyon eslemesi bos donmez).
-4. Makefile'daki hicbir hedef "PENDING:" satiri basmaz.
+```text
+src/swimtools/completeness_check.py
+```
 
-## Neden Commit 10
-Erken commitlerde PENDING kabul edilebilir (her commit yesil kalir). Commit 10 bu gecici durumu
-kapatir; boylece "yesil CI" Faz 1 sonunda gercekten eksiksiz demektir.
+and is exposed as:
 
+```bash
+make phase1-completeness
+```
 
-## Commit 8 (corrected) completeness
+The command checks repository completeness only; it does **not** execute the test suite.
+`make ci` depends on this gate and then runs the real validation commands.
 
-Green `make ci` covers: lint + format, `mypy --strict`, import-linter (8 contracts),
-`swimtools.arch_check`, schema generation check, unit, property, replay, simulator and
-architecture suites. The e2e headless vertical slice remains PENDING for Commit 10.
+## Mechanical rules
 
-Out of CI by design: validation of the real multi-hundred-megabyte dataset bundles. That is
-an operator step (`python -m swimtools.validate_dataset_bundle --all --data-root ...`)
-because embedding those files as fixtures would violate the "no raw data in the repository"
-rule.
+1. `tests/unit`, `tests/property`, `tests/replay`, `tests/simulator`, `tests/analytics`,
+   `tests/architecture` and `tests/e2e` all exist and contain a `test_*.py` file.
+2. `src/swimtools/gen_schemas.py` and `src/swimtools/completeness_check.py` exist.
+3. Makefile contains no `PENDING` fallback or message.
+4. `phase1-completeness` exists and `ci` depends on it.
+5. `test-property` runs pytest directly rather than conditionally returning success.
+6. pytest marker names are unique.
+7. `docs/testing/invariants.md` contains exactly I-P1-01 through I-P1-20 closure bindings.
+8. Every binding resolves to an existing Python file and an actual top-level test function.
+
+## Current Phase 1 closure
+
+The former Commit 8/9 passages that described E2E or Commit 10 as pending were historical
+status reports and are not the state of this repository. The implemented closure includes:
+
+- atomic aggregate rollback including runtime reference identity;
+- append-only journal and historical replay;
+- deterministic simulator and analytics;
+- canonical E2E bundles with recomputed run/report/manifest identities;
+- full payload binding for command outcomes and optional observations;
+- real Workout 1.0 migration inside the legacy case;
+- dual-session legacy/migrated profile equivalence;
+- the twenty mechanically resolvable invariant bindings.
+
+The package status is `READY_FOR_OPERATOR_VALIDATION`, not a claim that tests were run by the
+packager. The operator must execute:
+
+```bash
+python -m pip install -e ".[dev]"
+make phase1-completeness
+make ci
+```
+
+## Deliberate scope boundary
+
+Real multi-hundred-megabyte dataset bundles remain an operator validation step and are not
+embedded as fixtures, because raw data is excluded from the repository. Coach UI, cloud,
+device drivers, live wearable integration and production ML also remain outside Phase 1.

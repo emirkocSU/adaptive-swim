@@ -1,0 +1,2611 @@
+{
+  "$defs": {
+    "AheadBehindStatus": {
+      "enum": [
+        "AHEAD",
+        "ON_TARGET",
+        "BEHIND",
+        "NOT_AVAILABLE"
+      ],
+      "title": "AheadBehindStatus",
+      "type": "string"
+    },
+    "CoachResetAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "coachResetAppliedCount": {
+          "minimum": 0,
+          "title": "Coachresetappliedcount",
+          "type": "integer"
+        },
+        "coachResetRequestedCount": {
+          "minimum": 0,
+          "title": "Coachresetrequestedcount",
+          "type": "integer"
+        },
+        "pendingCoachResetCount": {
+          "minimum": 0,
+          "title": "Pendingcoachresetcount",
+          "type": "integer"
+        },
+        "resets": {
+          "items": {
+            "$ref": "#/$defs/CoachResetSummary"
+          },
+          "title": "Resets",
+          "type": "array"
+        },
+        "safeWallApplicationCount": {
+          "minimum": 0,
+          "title": "Safewallapplicationcount",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        }
+      },
+      "required": [
+        "status",
+        "coachResetRequestedCount",
+        "coachResetAppliedCount",
+        "pendingCoachResetCount",
+        "safeWallApplicationCount",
+        "resets"
+      ],
+      "title": "CoachResetAnalysis",
+      "type": "object"
+    },
+    "CoachResetSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "appliedAtMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Appliedatms"
+        },
+        "appliedWallDistanceM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Appliedwalldistancem"
+        },
+        "previousCoachLocked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previouscoachlocked"
+        },
+        "previousProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previousprofileid"
+        },
+        "previousProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previousprofilesource"
+        },
+        "previousProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previousprofiletype"
+        },
+        "previousProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previousprofileversion"
+        },
+        "replacementCoachLocked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementcoachlocked"
+        },
+        "replacementProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementprofileid"
+        },
+        "replacementProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementprofilesource"
+        },
+        "replacementProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementprofiletype"
+        },
+        "replacementProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replacementprofileversion"
+        },
+        "requestedAtMs": {
+          "minimum": 0,
+          "title": "Requestedatms",
+          "type": "integer"
+        },
+        "resetIndex": {
+          "minimum": 0,
+          "title": "Resetindex",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "resetIndex",
+        "requestedAtMs"
+      ],
+      "title": "CoachResetSummary",
+      "type": "object"
+    },
+    "ContinuousCurveAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "actualSmoothedCurveRef": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualsmoothedcurveref"
+        },
+        "available": {
+          "title": "Available",
+          "type": "boolean"
+        },
+        "curveCompilerVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvecompilerversion"
+        },
+        "curveCoverageRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Curvecoverageratio",
+          "type": "number"
+        },
+        "curveDeviationByPhase": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PhaseCurveDeviation"
+          },
+          "title": "Curvedeviationbyphase",
+          "type": "array"
+        },
+        "curveDeviationMean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvedeviationmean"
+        },
+        "curveDeviationMeanAbsolute": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvedeviationmeanabsolute"
+        },
+        "curveDeviationRms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvedeviationrms"
+        },
+        "curveReconciliationErrorSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvereconciliationerrorsec"
+        },
+        "curveRepresentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curverepresentation"
+        },
+        "finishCurveAdherence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finishcurveadherence"
+        },
+        "observationCount": {
+          "minimum": 0,
+          "title": "Observationcount",
+          "type": "integer"
+        },
+        "peakNegativeDeviation": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peaknegativedeviation"
+        },
+        "peakPositiveDeviation": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Peakpositivedeviation"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "startCurveAdherence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startcurveadherence"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "surfaceCurveAdherence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surfacecurveadherence"
+        },
+        "targetContinuousCurveRef": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetcontinuouscurveref"
+        },
+        "turnCurveAdherence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turncurveadherence"
+        }
+      },
+      "required": [
+        "available",
+        "status",
+        "curveCoverageRatio",
+        "observationCount"
+      ],
+      "title": "ContinuousCurveAnalysis",
+      "type": "object"
+    },
+    "DistanceSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "completedLengthCount": {
+          "minimum": 0,
+          "title": "Completedlengthcount",
+          "type": "integer"
+        },
+        "completionRatio": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completionratio"
+        },
+        "lastVerifiedWallM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lastverifiedwallm"
+        },
+        "officialCompletedDistanceM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Officialcompleteddistancem"
+        },
+        "officialSplitCount": {
+          "minimum": 0,
+          "title": "Officialsplitcount",
+          "type": "integer"
+        },
+        "partial": {
+          "title": "Partial",
+          "type": "boolean"
+        },
+        "plannedDistanceM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Planneddistancem"
+        },
+        "poolLengthM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Poollengthm"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        }
+      },
+      "required": [
+        "status",
+        "completedLengthCount",
+        "officialSplitCount",
+        "partial"
+      ],
+      "title": "DistanceSummary",
+      "type": "object"
+    },
+    "HeartRateAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "available": {
+          "title": "Available",
+          "type": "boolean"
+        },
+        "averageHeartRateBpm": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Averageheartratebpm"
+        },
+        "coverageRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Coverageratio",
+          "type": "number"
+        },
+        "heartRatePaceRelationship": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heartratepacerelationship"
+        },
+        "heartRateTrendBpmPerMinute": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heartratetrendbpmperminute"
+        },
+        "maximumHeartRateBpm": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximumheartratebpm"
+        },
+        "minimumHeartRateBpm": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimumheartratebpm"
+        },
+        "qualityFlags": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Qualityflags",
+          "type": "array"
+        },
+        "sampleCount": {
+          "minimum": 0,
+          "title": "Samplecount",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        }
+      },
+      "required": [
+        "available",
+        "status",
+        "sampleCount",
+        "coverageRatio"
+      ],
+      "title": "HeartRateAnalysis",
+      "type": "object"
+    },
+    "MetricAvailability": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "minLength": 1,
+          "title": "Metric",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        }
+      },
+      "required": [
+        "metric",
+        "status"
+      ],
+      "title": "MetricAvailability",
+      "type": "object"
+    },
+    "MetricStatus": {
+      "enum": [
+        "AVAILABLE",
+        "NOT_APPLICABLE",
+        "INSUFFICIENT_DATA",
+        "LOW_QUALITY",
+        "MISSING_TARGET",
+        "UNSUPPORTED_CONTEXT",
+        "EXCLUDED_BY_POLICY"
+      ],
+      "title": "MetricStatus",
+      "type": "string"
+    },
+    "PaceFadeAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "actualPaceFadePct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualpacefadepct"
+        },
+        "expectedPaceFadePct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expectedpacefadepct"
+        },
+        "paceDeclineSlope": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacedeclineslope"
+        },
+        "paceDeclineStartSplit": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacedeclinestartsplit"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "unexpectedCollapse": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unexpectedcollapse"
+        },
+        "unexpectedCollapseDeltaPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unexpectedcollapsedeltapct"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "PaceFadeAnalysis",
+      "type": "object"
+    },
+    "PaceProfileContextV1_1": {
+      "additionalProperties": false,
+      "properties": {
+        "coachLocked": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coachlocked"
+        },
+        "paceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileid"
+        },
+        "paceProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofilesource"
+        },
+        "paceProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofiletype"
+        },
+        "paceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileversion"
+        },
+        "predictedNextRepeatTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Predictednextrepeattimesec"
+        },
+        "predictedNextSplitTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Predictednextsplittimesec"
+        },
+        "predictedSplitTimesSec": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Predictedsplittimessec"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "targetSplitTimesSec": {
+          "anyOf": [
+            {
+              "items": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetsplittimessec"
+        },
+        "targetTotalTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targettotaltimesec"
+        },
+        "uncertaintyP10": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertaintyp10"
+        },
+        "uncertaintyP50": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertaintyp50"
+        },
+        "uncertaintyP90": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertaintyp90"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "PaceProfileContextV1_1",
+      "type": "object"
+    },
+    "PacingAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "actualPacingShape": {
+          "$ref": "#/$defs/PacingShapeClass"
+        },
+        "eligibleSpeedSeriesMps": {
+          "default": [],
+          "items": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": "Eligiblespeedseriesmps",
+          "type": "array"
+        },
+        "fade": {
+          "$ref": "#/$defs/PaceFadeAnalysis"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "targetPacingShape": {
+          "$ref": "#/$defs/PacingShapeClass"
+        },
+        "warningCodes": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Warningcodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "targetPacingShape",
+        "actualPacingShape",
+        "fade"
+      ],
+      "title": "PacingAnalysis",
+      "type": "object"
+    },
+    "PacingShapeClass": {
+      "enum": [
+        "EVEN",
+        "NEGATIVE",
+        "POSITIVE_FADE",
+        "PROGRESSIVE",
+        "IRREGULAR",
+        "INSUFFICIENT_DATA"
+      ],
+      "title": "PacingShapeClass",
+      "type": "string"
+    },
+    "PhaseCurveDeviation": {
+      "additionalProperties": false,
+      "properties": {
+        "coverageRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Coverageratio",
+          "type": "number"
+        },
+        "meanAbsoluteDistanceDeviationM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Meanabsolutedistancedeviationm"
+        },
+        "meanDistanceDeviationM": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Meandistancedeviationm"
+        },
+        "observationCount": {
+          "minimum": 0,
+          "title": "Observationcount",
+          "type": "integer"
+        },
+        "phaseType": {
+          "minLength": 1,
+          "title": "Phasetype",
+          "type": "string"
+        },
+        "rmsDistanceDeviationM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rmsdistancedeviationm"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        }
+      },
+      "required": [
+        "phaseType",
+        "status",
+        "observationCount",
+        "coverageRatio"
+      ],
+      "title": "PhaseCurveDeviation",
+      "type": "object"
+    },
+    "ReportCompletionStatus": {
+      "enum": [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "ABORTED"
+      ],
+      "title": "ReportCompletionStatus",
+      "type": "string"
+    },
+    "ReportDataQuality": {
+      "additionalProperties": false,
+      "properties": {
+        "continuousObservationCoverage": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Continuousobservationcoverage",
+          "type": "number"
+        },
+        "eventStreamComplete": {
+          "title": "Eventstreamcomplete",
+          "type": "boolean"
+        },
+        "excludedSplitCount": {
+          "minimum": 0,
+          "title": "Excludedsplitcount",
+          "type": "integer"
+        },
+        "metricAvailability": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/MetricAvailability"
+          },
+          "title": "Metricavailability",
+          "type": "array"
+        },
+        "officialDistanceComplete": {
+          "title": "Officialdistancecomplete",
+          "type": "boolean"
+        },
+        "replayValid": {
+          "title": "Replayvalid",
+          "type": "boolean"
+        },
+        "sensorCoverage": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Sensorcoverage",
+          "type": "number"
+        },
+        "targetProfileAvailable": {
+          "title": "Targetprofileavailable",
+          "type": "boolean"
+        },
+        "warningCodes": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Warningcodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "eventStreamComplete",
+        "replayValid",
+        "officialDistanceComplete",
+        "targetProfileAvailable",
+        "continuousObservationCoverage",
+        "sensorCoverage",
+        "excludedSplitCount"
+      ],
+      "title": "ReportDataQuality",
+      "type": "object"
+    },
+    "ReportProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "adherenceToleranceSec": {
+          "minimum": 0,
+          "title": "Adherencetolerancesec",
+          "type": "number"
+        },
+        "analyticsPolicyDigestSha256": {
+          "minLength": 1,
+          "title": "Analyticspolicydigestsha256",
+          "type": "string"
+        },
+        "analyticsVersion": {
+          "minLength": 1,
+          "title": "Analyticsversion",
+          "type": "string"
+        },
+        "compiledTimelineDigestSha256": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compiledtimelinedigestsha256"
+        },
+        "continuousCurveGroundTruth": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Continuouscurvegroundtruth"
+        },
+        "curveCompilerVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curvecompilerversion"
+        },
+        "curveEvidenceLevel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curveevidencelevel"
+        },
+        "curveOrigin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curveorigin"
+        },
+        "curveRepresentation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Curverepresentation"
+        },
+        "datasetEvidenceAssetIds": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Datasetevidenceassetids",
+          "type": "array"
+        },
+        "declineMinimumConsecutiveSplits": {
+          "minimum": 0,
+          "title": "Declineminimumconsecutivesplits",
+          "type": "integer"
+        },
+        "declineMinimumPct": {
+          "minimum": 0,
+          "title": "Declineminimumpct",
+          "type": "number"
+        },
+        "eventCount": {
+          "minimum": 0,
+          "title": "Eventcount",
+          "type": "integer"
+        },
+        "eventDigestSha256": {
+          "minLength": 1,
+          "title": "Eventdigestsha256",
+          "type": "string"
+        },
+        "eventFirstSeq": {
+          "minimum": 0,
+          "title": "Eventfirstseq",
+          "type": "integer"
+        },
+        "eventLastSeq": {
+          "minimum": 0,
+          "title": "Eventlastseq",
+          "type": "integer"
+        },
+        "initialPaceProfileDigestSha256": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Initialpaceprofiledigestsha256"
+        },
+        "observationDigestSha256": {
+          "minLength": 1,
+          "title": "Observationdigestsha256",
+          "type": "string"
+        },
+        "onTargetTolerancePct": {
+          "minimum": 0,
+          "title": "Ontargettolerancepct",
+          "type": "number"
+        },
+        "paceProfileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileid"
+        },
+        "paceProfileSchemaVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileschemaversion"
+        },
+        "paceProfileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofilesource"
+        },
+        "paceProfileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofiletype"
+        },
+        "paceProfileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paceprofileversion"
+        },
+        "profileRegistryDigestSha256": {
+          "minLength": 1,
+          "title": "Profileregistrydigestsha256",
+          "type": "string"
+        },
+        "reportBuilderVersion": {
+          "minLength": 1,
+          "title": "Reportbuilderversion",
+          "type": "string"
+        },
+        "reportInputDigestSha256": {
+          "minLength": 1,
+          "title": "Reportinputdigestsha256",
+          "type": "string"
+        },
+        "reportSchemaVersion": {
+          "const": "1.1",
+          "title": "Reportschemaversion",
+          "type": "string"
+        },
+        "sensorObservationDigestSha256": {
+          "minLength": 1,
+          "title": "Sensorobservationdigestsha256",
+          "type": "string"
+        },
+        "simulationRunId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simulationrunid"
+        },
+        "simulatorSynthetic": {
+          "title": "Simulatorsynthetic",
+          "type": "boolean"
+        },
+        "visualShapeSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Visualshapesource"
+        },
+        "workoutDigestSha256": {
+          "minLength": 1,
+          "title": "Workoutdigestsha256",
+          "type": "string"
+        },
+        "workoutSchemaVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workoutschemaversion"
+        }
+      },
+      "required": [
+        "analyticsVersion",
+        "reportBuilderVersion",
+        "reportSchemaVersion",
+        "eventFirstSeq",
+        "eventLastSeq",
+        "eventCount",
+        "eventDigestSha256",
+        "workoutDigestSha256",
+        "profileRegistryDigestSha256",
+        "observationDigestSha256",
+        "sensorObservationDigestSha256",
+        "analyticsPolicyDigestSha256",
+        "reportInputDigestSha256",
+        "simulatorSynthetic",
+        "adherenceToleranceSec",
+        "onTargetTolerancePct",
+        "declineMinimumConsecutiveSplits",
+        "declineMinimumPct"
+      ],
+      "title": "ReportProvenance",
+      "type": "object"
+    },
+    "SensorAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "heartRate": {
+          "$ref": "#/$defs/HeartRateAnalysis"
+        },
+        "stroke": {
+          "$ref": "#/$defs/StrokeAnalysis"
+        }
+      },
+      "required": [
+        "heartRate",
+        "stroke"
+      ],
+      "title": "SensorAnalysis",
+      "type": "object"
+    },
+    "SessionSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "completionStatus": {
+          "$ref": "#/$defs/ReportCompletionStatus"
+        },
+        "lifecycleState": {
+          "minLength": 1,
+          "title": "Lifecyclestate",
+          "type": "string"
+        },
+        "pendingCoachReset": {
+          "title": "Pendingcoachreset",
+          "type": "boolean"
+        },
+        "recordedSplitCount": {
+          "minimum": 0,
+          "title": "Recordedsplitcount",
+          "type": "integer"
+        },
+        "stopPauseOpen": {
+          "title": "Stoppauseopen",
+          "type": "boolean"
+        },
+        "terminal": {
+          "title": "Terminal",
+          "type": "boolean"
+        },
+        "verifiedSplitCount": {
+          "minimum": 0,
+          "title": "Verifiedsplitcount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "lifecycleState",
+        "completionStatus",
+        "terminal",
+        "recordedSplitCount",
+        "verifiedSplitCount",
+        "stopPauseOpen",
+        "pendingCoachReset"
+      ],
+      "title": "SessionSummary",
+      "type": "object"
+    },
+    "SplitAggregateMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "eligibleSplitCount": {
+          "minimum": 0,
+          "title": "Eligiblesplitcount",
+          "type": "integer"
+        },
+        "excludedSplitCount": {
+          "minimum": 0,
+          "title": "Excludedsplitcount",
+          "type": "integer"
+        },
+        "firstHalfSecondHalfDeltaPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firsthalfsecondhalfdeltapct"
+        },
+        "firstHalfSecondHalfDeltaSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firsthalfsecondhalfdeltasec"
+        },
+        "firstHalfTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firsthalftimesec"
+        },
+        "maximumNegativeSplitErrorSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximumnegativespliterrorsec"
+        },
+        "maximumPositiveSplitErrorSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximumpositivespliterrorsec"
+        },
+        "meanAbsoluteSplitErrorSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Meanabsolutespliterrorsec"
+        },
+        "meanAbsoluteSplitPercentageError": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Meanabsolutesplitpercentageerror"
+        },
+        "onTargetSplitRatio": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ontargetsplitratio"
+        },
+        "rootMeanSquaredSplitErrorSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rootmeansquaredspliterrorsec"
+        },
+        "secondHalfTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondhalftimesec"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "targetPaceAdherenceRatio": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetpaceadherenceratio"
+        }
+      },
+      "required": [
+        "status",
+        "eligibleSplitCount",
+        "excludedSplitCount"
+      ],
+      "title": "SplitAggregateMetrics",
+      "type": "object"
+    },
+    "SplitAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregate": {
+          "$ref": "#/$defs/SplitAggregateMetrics"
+        },
+        "splits": {
+          "items": {
+            "$ref": "#/$defs/SplitPerformance"
+          },
+          "title": "Splits",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        }
+      },
+      "required": [
+        "status",
+        "splits",
+        "aggregate"
+      ],
+      "title": "SplitAnalysis",
+      "type": "object"
+    },
+    "SplitPerformance": {
+      "additionalProperties": false,
+      "properties": {
+        "actualCumulativeTimeSec": {
+          "minimum": 0,
+          "title": "Actualcumulativetimesec",
+          "type": "number"
+        },
+        "actualDurationSec": {
+          "minimum": 0,
+          "title": "Actualdurationsec",
+          "type": "number"
+        },
+        "actualEndTimeMs": {
+          "minimum": 0,
+          "title": "Actualendtimems",
+          "type": "integer"
+        },
+        "actualSpeedMps": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actualspeedmps"
+        },
+        "actualStartTimeMs": {
+          "minimum": 0,
+          "title": "Actualstarttimems",
+          "type": "integer"
+        },
+        "aheadBehindStatus": {
+          "$ref": "#/$defs/AheadBehindStatus"
+        },
+        "cumulativeDeltaSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cumulativedeltasec"
+        },
+        "curvePhaseTypes": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Curvephasetypes",
+          "type": "array"
+        },
+        "distanceM": {
+          "minimum": 0,
+          "title": "Distancem",
+          "type": "number"
+        },
+        "durationDeltaPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Durationdeltapct"
+        },
+        "durationDeltaSec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Durationdeltasec"
+        },
+        "elapsedDurationSec": {
+          "minimum": 0,
+          "title": "Elapseddurationsec",
+          "type": "number"
+        },
+        "excludedFromAggregateMetrics": {
+          "title": "Excludedfromaggregatemetrics",
+          "type": "boolean"
+        },
+        "exclusionReasons": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Exclusionreasons",
+          "type": "array"
+        },
+        "fromM": {
+          "minimum": 0,
+          "title": "Fromm",
+          "type": "number"
+        },
+        "lifecyclePausedDurationSec": {
+          "minimum": 0,
+          "title": "Lifecyclepauseddurationsec",
+          "type": "number"
+        },
+        "profileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profileid"
+        },
+        "profileSource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profilesource"
+        },
+        "profileType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profiletype"
+        },
+        "profileVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profileversion"
+        },
+        "qualityFlags": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Qualityflags",
+          "type": "array"
+        },
+        "speedDeltaMps": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speeddeltamps"
+        },
+        "splitIndex": {
+          "minimum": 0,
+          "title": "Splitindex",
+          "type": "integer"
+        },
+        "splitSource": {
+          "minLength": 1,
+          "title": "Splitsource",
+          "type": "string"
+        },
+        "stoppedDurationSec": {
+          "minimum": 0,
+          "title": "Stoppeddurationsec",
+          "type": "number"
+        },
+        "targetCumulativeTimeSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetcumulativetimesec"
+        },
+        "targetDurationSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetdurationsec"
+        },
+        "targetSpeedMps": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Targetspeedmps"
+        },
+        "targetStatus": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "toM": {
+          "minimum": 0,
+          "title": "Tom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "splitIndex",
+        "fromM",
+        "toM",
+        "distanceM",
+        "actualStartTimeMs",
+        "actualEndTimeMs",
+        "elapsedDurationSec",
+        "stoppedDurationSec",
+        "lifecyclePausedDurationSec",
+        "actualDurationSec",
+        "actualCumulativeTimeSec",
+        "aheadBehindStatus",
+        "splitSource",
+        "qualityFlags",
+        "excludedFromAggregateMetrics",
+        "targetStatus"
+      ],
+      "title": "SplitPerformance",
+      "type": "object"
+    },
+    "StopPauseAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "automaticStopCount": {
+          "minimum": 0,
+          "title": "Automaticstopcount",
+          "type": "integer"
+        },
+        "intervals": {
+          "items": {
+            "$ref": "#/$defs/StopPauseIntervalSummary"
+          },
+          "title": "Intervals",
+          "type": "array"
+        },
+        "longestStopDurationMs": {
+          "minimum": 0,
+          "title": "Longeststopdurationms",
+          "type": "integer"
+        },
+        "manualStopCount": {
+          "minimum": 0,
+          "title": "Manualstopcount",
+          "type": "integer"
+        },
+        "meanStopDurationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Meanstopdurationms"
+        },
+        "pendingWallReconciliationCount": {
+          "minimum": 0,
+          "title": "Pendingwallreconciliationcount",
+          "type": "integer"
+        },
+        "resolvedStopCount": {
+          "minimum": 0,
+          "title": "Resolvedstopcount",
+          "type": "integer"
+        },
+        "retroactiveStopCount": {
+          "minimum": 0,
+          "title": "Retroactivestopcount",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "stopPauseCount": {
+          "minimum": 0,
+          "title": "Stoppausecount",
+          "type": "integer"
+        },
+        "temporaryAlignmentCount": {
+          "minimum": 0,
+          "title": "Temporaryalignmentcount",
+          "type": "integer"
+        },
+        "totalStoppedDurationMs": {
+          "minimum": 0,
+          "title": "Totalstoppeddurationms",
+          "type": "integer"
+        },
+        "unresolvedStopCount": {
+          "minimum": 0,
+          "title": "Unresolvedstopcount",
+          "type": "integer"
+        },
+        "wallReconciliationCount": {
+          "minimum": 0,
+          "title": "Wallreconciliationcount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "stopPauseCount",
+        "totalStoppedDurationMs",
+        "longestStopDurationMs",
+        "resolvedStopCount",
+        "unresolvedStopCount",
+        "retroactiveStopCount",
+        "manualStopCount",
+        "automaticStopCount",
+        "temporaryAlignmentCount",
+        "wallReconciliationCount",
+        "pendingWallReconciliationCount",
+        "intervals"
+      ],
+      "title": "StopPauseAnalysis",
+      "type": "object"
+    },
+    "StopPauseIntervalSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "alignmentQuality": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alignmentquality"
+        },
+        "alignmentSource": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alignmentsource"
+        },
+        "confirmedAtMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confirmedatms"
+        },
+        "detectionSource": {
+          "minLength": 1,
+          "title": "Detectionsource",
+          "type": "string"
+        },
+        "durationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Durationms"
+        },
+        "estimatedAlignmentDistanceM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimatedalignmentdistancem"
+        },
+        "intervalId": {
+          "minLength": 1,
+          "title": "Intervalid",
+          "type": "string"
+        },
+        "officialDistanceAfterM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Officialdistanceafterm"
+        },
+        "officialDistanceBeforeM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Officialdistancebeforem"
+        },
+        "reconciledAtWallM": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reconciledatwallm"
+        },
+        "resolved": {
+          "title": "Resolved",
+          "type": "boolean"
+        },
+        "resolvedAtMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resolvedatms"
+        },
+        "retroactiveFreezeMs": {
+          "minimum": 0,
+          "title": "Retroactivefreezems",
+          "type": "integer"
+        },
+        "startedAtMs": {
+          "minimum": 0,
+          "title": "Startedatms",
+          "type": "integer"
+        },
+        "stopIndex": {
+          "minimum": 0,
+          "title": "Stopindex",
+          "type": "integer"
+        },
+        "stopStartTimeQuality": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stopstarttimequality"
+        },
+        "trigger": {
+          "minLength": 1,
+          "title": "Trigger",
+          "type": "string"
+        },
+        "wallReconciliationCompleted": {
+          "title": "Wallreconciliationcompleted",
+          "type": "boolean"
+        },
+        "wallReconciliationPendingAtReport": {
+          "title": "Wallreconciliationpendingatreport",
+          "type": "boolean"
+        },
+        "wallReconciliationPendingAtResolve": {
+          "title": "Wallreconciliationpendingatresolve",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "stopIndex",
+        "intervalId",
+        "trigger",
+        "startedAtMs",
+        "retroactiveFreezeMs",
+        "detectionSource",
+        "resolved",
+        "wallReconciliationPendingAtResolve",
+        "wallReconciliationCompleted",
+        "wallReconciliationPendingAtReport"
+      ],
+      "title": "StopPauseIntervalSummary",
+      "type": "object"
+    },
+    "StrokeAnalysis": {
+      "additionalProperties": false,
+      "properties": {
+        "available": {
+          "title": "Available",
+          "type": "boolean"
+        },
+        "averageStrokeIndex": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Averagestrokeindex"
+        },
+        "averageStrokeLengthMPerCycle": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Averagestrokelengthmpercycle"
+        },
+        "averageStrokeRateCyclesPerMin": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Averagestrokeratecyclespermin"
+        },
+        "coverageRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Coverageratio",
+          "type": "number"
+        },
+        "qualityFlags": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Qualityflags",
+          "type": "array"
+        },
+        "sampleCount": {
+          "minimum": 0,
+          "title": "Samplecount",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "strokeCountTotal": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strokecounttotal"
+        },
+        "strokeRateTrend": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strokeratetrend"
+        }
+      },
+      "required": [
+        "available",
+        "status",
+        "sampleCount",
+        "coverageRatio"
+      ],
+      "title": "StrokeAnalysis",
+      "type": "object"
+    },
+    "TimingSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "activeDurationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activedurationms"
+        },
+        "elapsedDurationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Elapseddurationms"
+        },
+        "lifecyclePausedDurationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lifecyclepauseddurationms"
+        },
+        "sessionEndMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sessionendms"
+        },
+        "sessionStartMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sessionstartms"
+        },
+        "status": {
+          "$ref": "#/$defs/MetricStatus"
+        },
+        "stoppedDurationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stoppeddurationms"
+        },
+        "wallDurationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Walldurationms"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "TimingSummary",
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.adaptiveswim.dev/session-report-1.1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "coachResetAnalysis": {
+      "$ref": "#/$defs/CoachResetAnalysis"
+    },
+    "continuousCurveAnalysis": {
+      "$ref": "#/$defs/ContinuousCurveAnalysis"
+    },
+    "createdFromLastSeq": {
+      "minimum": 0,
+      "title": "Createdfromlastseq",
+      "type": "integer"
+    },
+    "dataQuality": {
+      "$ref": "#/$defs/ReportDataQuality"
+    },
+    "distanceSummary": {
+      "$ref": "#/$defs/DistanceSummary"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Notes"
+    },
+    "paceProfileContext": {
+      "$ref": "#/$defs/PaceProfileContextV1_1"
+    },
+    "pacingAnalysis": {
+      "$ref": "#/$defs/PacingAnalysis"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ReportProvenance"
+    },
+    "reportGeneratedAtMs": {
+      "minimum": 0,
+      "title": "Reportgeneratedatms",
+      "type": "integer"
+    },
+    "reportId": {
+      "minLength": 1,
+      "title": "Reportid",
+      "type": "string"
+    },
+    "reportVersion": {
+      "minLength": 1,
+      "title": "Reportversion",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": "1.1",
+      "default": "1.1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "sensorAnalysis": {
+      "$ref": "#/$defs/SensorAnalysis"
+    },
+    "sessionId": {
+      "minLength": 1,
+      "title": "Sessionid",
+      "type": "string"
+    },
+    "sessionSummary": {
+      "$ref": "#/$defs/SessionSummary"
+    },
+    "splitAnalysis": {
+      "$ref": "#/$defs/SplitAnalysis"
+    },
+    "stopPauseAnalysis": {
+      "$ref": "#/$defs/StopPauseAnalysis"
+    },
+    "timingSummary": {
+      "$ref": "#/$defs/TimingSummary"
+    },
+    "workoutId": {
+      "minLength": 1,
+      "title": "Workoutid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reportId",
+    "reportVersion",
+    "sessionId",
+    "workoutId",
+    "reportGeneratedAtMs",
+    "createdFromLastSeq",
+    "sessionSummary",
+    "timingSummary",
+    "distanceSummary",
+    "paceProfileContext",
+    "splitAnalysis",
+    "pacingAnalysis",
+    "continuousCurveAnalysis",
+    "stopPauseAnalysis",
+    "coachResetAnalysis",
+    "sensorAnalysis",
+    "dataQuality",
+    "provenance"
+  ],
+  "title": "SessionReportV1_1",
+  "type": "object"
+}

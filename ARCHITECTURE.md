@@ -276,3 +276,65 @@ per-subinterval bound `|a| ≤ max|v| · max|dv/dd|` comes from those closed-for
 same verification runs after reconciliation with each region's pace scale factor applied;
 `physicalBoundsChecked = true` is only written when that post-check passed. Sampling remains
 corroboration, never proof.
+
+---
+
+## Commit 9 — Deterministic analytics and reporting (ADR-040)
+
+The Phase-1 package graph now includes a pure `analytics` layer:
+
+```text
+swimtools > simulator > analytics > persistence > swimcore > contracts
+```
+
+`analytics` consumes `HistoricalSessionState`, typed event envelopes, workout/profile
+contracts, compiled `PaceTimeline` and explicitly supplied trusted observations. It never
+reads mutable live aggregate state, raw datasets or the filesystem, and it cannot import
+simulator/persistence/swimtools. The journal remains authoritative; reports are separate,
+canonical derived artifacts.
+
+`SessionReport` 1.1 adds deterministic identity/provenance, timing and official-distance
+summaries, per-wall target/actual split analysis, aggregate adherence, pacing shape/fade,
+trusted continuous-curve deviation, StopPause and safe-wall reset histories, optional
+advisory HR/stroke summaries and metric-availability statuses. The 1.0 contract/schema is
+unchanged. Simulator invokes the public analytics API and verifies two builds from the same
+journal produce identical bytes/hash.
+
+Corrected Commit 9 treats report identity as content-addressed and records digests for the
+workout, initial profile/timeline, reset profile registry, observations, sensors and analytics
+policy. A coach-reset journal cannot be reported without the replacement profile/timeline
+registry. Input geometry/profile coherence is validated before metrics are built. Trusted
+observations are restricted to the session horizon; smoothed-velocity-only observations are
+supported by deterministic integration without becoming official distance. Resolved
+StopPause and completed wall reconciliation remain separate states.
+
+
+---
+
+## Commit 10 — Phase 1 vertical-slice verification (ADR-041)
+
+The final Phase 1 package graph:
+
+```text
+swimtools > e2e > simulator > analytics > persistence > swimcore > contracts
+```
+
+`e2e` is an orchestration layer with no domain logic. `run_phase1_vertical_slice` compiles
+the case plan with the production compiler, drives the production `SessionAggregate` through
+the simulator harness onto the production `JsonlSessionEventLog`, then **re-reads the journal
+from disk**, replays it with the production reducer and rebuilds the report through the
+public analytics API — the rebuilt bytes must equal the bytes the runtime produced.
+
+`e2e.verification` is the single authoritative cross-component invariant matrix (event,
+state, clock, distance, profile, report and case-expectation groups). `e2e.manifest` emits a
+canonical, content-addressed `Phase1VerificationManifest`. Each case writes a bundle of
+`manifest.json`, `journal.jsonl`, `session-report.json`, `command-outcomes.json` and
+`artifact-sha256.txt` (plus `observations.jsonl` when applicable), all canonical UTF-8 JSON
+with LF endings and no absolute path, timestamp, UUID or raw dataset.
+
+`swimtools.run_e2e` runs the matrix; `swimtools.verify_e2e_bundle` re-proves a bundle from
+its bytes with typed exit codes (0 valid, 2 invalid input, 3 digest mismatch, 4 semantic
+mismatch). Golden bundles under `tests/e2e/goldens/` are the release regression contract.
+
+Determinism: `runId` and `manifestId` are content addressed; the output directory never
+influences artifact bytes; no wall clock, randomness or network is used by the layer.

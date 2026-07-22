@@ -100,3 +100,16 @@ src/ml/
 
 Until then the runtime carries **no** pandas/NumPy dependency and `swimcore` reads no
 dataset at all.
+
+
+## Position after Phase 1 closure (Commit 10)
+
+Phase 1 is complete and contains **no trained model**. The deterministic runtime, the
+simulator, the event journal, historical replay, analytics and the full vertical-slice
+verification are all in place, which is exactly the substrate Phase 5 will need: every model
+proposal must still pass through the deterministic compiler's exact reconciliation, the
+physical-bound verification and the SafetyController, and every claim must be reproducible
+through a canonical report and an e2e verification bundle.
+
+Nothing in Phase 1 grants a dataset production eligibility, and datasets being prepared early
+does not mean Phase 4 is complete.

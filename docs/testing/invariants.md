@@ -119,3 +119,86 @@ their commits (3–10).
 13. No catalogued dataset may be used as a measured continuous-velocity target.
 14. A grouping key (race, athlete, trial, pre/post, crossover unit, time series) never spans
     two partitions, and a forecast label never enters the feature allowlist.
+
+## Commit 9 report invariants (ADR-040)
+
+1. Same inputs produce the same report model, bytes, ID and SHA-256.
+2. Event sequence permutation/duplication is rejected by historical replay validation.
+3. Supplied replay state must equal a fresh fold of the supplied canonical events.
+4. `wall = elapsed + lifecyclePaused`; `elapsed = active + stopped`.
+5. Official completed distance is wall-count × pool length only.
+6. Eligible split count never exceeds official split count.
+7. Excluded splits remain visible but never affect aggregates.
+8. Missing target/observation/sensor values remain `None`, never fabricated zero.
+9. Continuous metrics require finite, monotonic, trusted, in-bounds observations.
+10. StopPause, planned rest, lifecycle pause and coach reset remain separate.
+11. Safe-wall replacement metadata applies only from its effective length onward.
+12. Target and forecast fields remain separate.
+13. Synthetic provenance is never dropped.
+14. Canonical JSON roundtrip is stable and finite-only.
+15. Report schema version is fixed to the concrete 1.1 contract and cannot disagree with provenance.
+16. Any change to effective report content or its workout/profile/timeline/registry/observation/
+    sensor/policy input digests changes `reportId`.
+17. Every coach-reset replacement profile and compiled timeline referenced by replay is supplied
+    explicitly; the initial profile is never used as a fallback.
+18. Workout, profile, timeline and replay-selected profile identities and geometry are coherent.
+19. Trusted curve observations lie inside the session horizon; velocity-only observations require
+    the session start or a trusted position anchor.
+20. Wall reconciliation is counted only after a later official wall event; pending is separate.
+21. Planned-rest observations are excluded from the non-rest quality-ratio denominator.
+22. Report persistence accepts canonical bytes only.
+23. Absent positive/negative split extrema remain `None`, never synthetic zero.
+
+
+## Phase 1 closure invariants (ADR-041)
+
+1. Journal event sequence starts at 1, is contiguous and has no duplicates; event ids are
+   unique; timestamps never decrease; batch bounds are correct; journal line count equals the
+   persisted batch count.
+2. Live aggregate state and historical replay agree on lifecycle, official distance, split
+   count, all selected-profile metadata and all timing axes.
+3. `elapsed = active + stopped` and `wall = elapsed + lifecyclePaused`; stopped equals the sum
+   of completed StopPause intervals; a pace loss or a coach curve reset creates no stopped
+   time.
+4. Official distance equals completed length count × pool length, never exceeds the planned
+   distance, lands only on verified walls, and is never produced by an estimate.
+5. Approved profile, workout and compiled timeline agree on pool, stroke, start mode and
+   distance; the reconciled timeline meets the target total; locked splits are preserved.
+6. Report session id, last sequence, event digest, content-addressed id and canonical bytes
+   all match the journal it was derived from; provenance matches the final replay state.
+7. Target fields and forecast fields stay separate; unavailable metrics stay `None`.
+8. A rejected command persists no event and leaves no sequence gap; a duplicate retry adds no
+   journal line.
+9. The same case and seed produce identical journal, report and manifest bytes; the output
+   directory never changes them.
+10. Migration preserves the compiled target function: totals and endpoints exactly, sampled
+    targets and report split targets within `MIGRATION_TARGET_TOLERANCE_SEC`.
+11. Every emitted artifact is canonical UTF-8 JSON/JSONL with LF endings and contains no
+    absolute path, timestamp, UUID, environment value or raw dataset reference.
+12. Synthetic simulator output is always marked synthetic and is never performance evidence.
+
+## Phase 1 closure test bindings (mechanically checked)
+
+The following twenty bindings are the release-closure index consumed by
+`python -m swimtools.completeness_check`. Each target must remain a real pytest function.
+
+- I-P1-01 -> tests/e2e/test_cross_component_invariants.py::test_event_invariants
+- I-P1-02 -> tests/e2e/test_cross_component_invariants.py::test_live_and_replay_state_agree
+- I-P1-03 -> tests/e2e/test_cross_component_invariants.py::test_clock_axes_stay_separate
+- I-P1-04 -> tests/e2e/test_cross_component_invariants.py::test_official_distance_invariants
+- I-P1-05 -> tests/e2e/test_phase1_vertical_slice.py::test_slice_completes_and_passes_every_invariant
+- I-P1-06 -> tests/e2e/test_phase1_vertical_slice.py::test_journal_is_the_authoritative_input_of_the_report
+- I-P1-07 -> tests/e2e/test_cross_component_invariants.py::test_target_and_forecast_stay_separate
+- I-P1-08 -> tests/e2e/test_failure_atomicity.py::test_a_rejected_command_appends_nothing
+- I-P1-09 -> tests/e2e/test_e2e_determinism.py::test_same_case_same_seed_is_byte_identical
+- I-P1-10 -> tests/e2e/test_phase1_case_matrix.py::test_case_three_migration_equivalence
+- I-P1-11 -> tests/e2e/test_phase1_vertical_slice.py::test_bundle_contains_exactly_the_canonical_members
+- I-P1-12 -> tests/e2e/test_cross_component_invariants.py::test_dataset_evidence_is_not_performance_evidence
+- I-P1-13 -> tests/unit/test_session_atomicity.py::test_failed_command_preserves_runtime_reference_graph
+- I-P1-14 -> tests/e2e/test_e2e_determinism.py::test_run_id_covers_profiles_replacement_and_analytics_policy
+- I-P1-15 -> tests/e2e/test_e2e_bundle_verifier.py::test_recomputed_run_id_is_required
+- I-P1-16 -> tests/e2e/test_e2e_bundle_verifier.py::test_manifest_binds_outcomes_and_observations
+- I-P1-17 -> tests/e2e/test_phase1_case_matrix.py::test_legacy_case_executes_a_real_workout_1_0_source
+- I-P1-18 -> tests/architecture/test_phase1_completeness.py::test_repository_is_mechanically_complete
+- I-P1-19 -> tests/e2e/test_backward_compatibility_matrix.py::test_workout_1_0_still_parses_and_migrates
+- I-P1-20 -> tests/architecture/test_e2e_boundaries.py::test_e2e_layer_order_is_respected

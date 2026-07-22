@@ -1,8 +1,8 @@
 # Test Strategy (Phase 1)
 
 Pyramid: unit → property → state-machine → contract → integration → e2e (headless,
-network-disabled) → replay. Commits arrive in order; later layers are PENDING until their
-commit.
+network-disabled) → replay. All Phase 1 layers now have real targets; the Makefile contains
+no temporary-success or `PENDING` fallback.
 
 ## Commit 2 (this commit) — contracts & schema
 
@@ -245,3 +245,44 @@ unverified or normal pace loss must not reposition the ghost mid-length.
 - **Architecture** (`tests/architecture/test_dataset_boundaries.py`): swimcore reads no
   dataset, contracts do no I/O, the simulator imports no dataset tooling, `src/ml/` does not
   exist, no runtime pandas/numpy, and no raw CSV/ZIP is committed under `data/` or `src/`.
+
+## Commit 9 analytics test layer
+
+`tests/analytics` runs replay-to-report integration, the eight required simulator report
+acceptance cases, builder/verifier CLI smoke tests and canonical golden JSON files. Unit
+tests cover contracts, identity, timing, distance, splits, pacing/fade, trusted curve gates,
+StopPause, sensors, quality, provenance, serialization and the atomic report store. Property
+tests cover deterministic identity/bytes, roundtrip and split metric ranges. Architecture
+tests reject analytics I/O, randomness, network/ML dependencies and reverse imports.
+
+`tests/analytics/test_report_blocker_regressions.py` permanently covers the corrected Commit 9
+blockers: reset-profile CLI registry, content-addressed identity under observation/policy changes,
+fixed schema version, workout/profile/timeline coherence, session-horizon observation rejection,
+smoothed-velocity-only integration, pending wall reconciliation, planned-rest quality denominator,
+canonical report-store enforcement and nullable directional extrema.
+
+
+## Commit 10 — Phase 1 vertical-slice suite (ADR-041)
+
+`tests/e2e/` runs the whole chain with real components. A session-scoped fixture executes
+each case once and caches the result, because one case drives aggregate + journal + replay +
+analytics end to end.
+
+| File | Covers |
+|---|---|
+| `test_phase1_vertical_slice.py` | one slice end to end: bundle members, journal-as-authority, geometry, report content, no path leakage |
+| `test_phase1_case_matrix.py` | all thirteen cases pass every check; per-case expectations for cases 1–10 |
+| `test_cross_component_invariants.py` | every invariant group present; live/replay/report agreement; clock, distance and report invariants |
+| `test_e2e_determinism.py` | same case+seed ⇒ identical bytes; output path irrelevant; seed sensitivity; pure run identity |
+| `test_e2e_manifest.py` | manifest field completeness, canonical JSON, content-addressed id, group flags, no environment values |
+| `test_e2e_bundle_verifier.py` | pristine bundle valid; missing file, one changed byte, pretty JSON, tampered digest and semantic disagreement all rejected with typed exit codes |
+| `test_e2e_cli.py` | `--list`, invalid input, JSON/text output, run→verify round trip |
+| `test_backward_compatibility_matrix.py` | every supported schema still committed; workout 1.0 fixtures still parse and migrate; profile 1.0 runs unmigrated; envelope/batch stay 1.0; report 1.1 is current; no 2.0 bump |
+| `test_failure_atomicity.py` | rejected command persists nothing; duplicate retry changes nothing; corrupt middle journal rejected; no network; missing observations never fabricate metrics |
+| `test_golden_artifacts.py` | committed golden bundles reproduced byte for byte, digests match, no environment content |
+| `tests/property/test_e2e_determinism.py` | Hypothesis: identical artifacts for a case+seed; run id is a pure hash |
+| `tests/property/test_e2e_state_equivalence.py` | Hypothesis: live == replay == report; distance and duration invariants; no raw dataset path in any artifact |
+| `tests/architecture/test_e2e_boundaries.py` | inner layers never import e2e; no forbidden imports; no sleep/wall clock; no duplicated domain logic; layer order |
+
+`make test-e2e` runs the suite. `make e2e-headless` runs the real CLIs over the full matrix
+and then verifies every emitted bundle byte by byte. Both are part of `make ci`.

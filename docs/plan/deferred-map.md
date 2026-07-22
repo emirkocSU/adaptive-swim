@@ -52,3 +52,23 @@ model card; yerel, registry degil).
 | FORM export / pilot personalisation | Phase 5E | consented wearable export available |
 | Phase-aware conditional transformer (ADR-038 long-term target) | after high-resolution continuous data exists | genuine within-length position-time ground truth |
 | Production training on external data | after per-source license verification | `source_license_status = VERIFIED_ALLOWED` |
+
+## Still deferred after Commit 9
+
+- Real forecasting/model training and model registry.
+- Live ML inference or automatic target changes.
+- UI/report visualization, cloud sync and database projections.
+- Device/wearable connectors and official-distance claims from wearable positions.
+- Medical/fatigue diagnosis; Commit 9 collapse/HR relationships are advisory only.
+
+
+## Deferred at Phase 1 closure (ADR-041)
+
+| Item | Deferred to | Trigger |
+|---|---|---|
+| Coach UI, curve editor, PWA | Phase 2 | coach tooling starts |
+| Web/API transport (FastAPI, WebSocket), cloud deployment | Phase 2+ | a remote surface is actually needed |
+| Device / LED adapter, live wearable integration | Phase 3 | pool pilot hardware exists |
+| FORM export production integration | Phase 4 | consented athlete exports available |
+| Real ML training (`src/ml/`) | Phase 5 | Phase 1 closed and validated bundles licensed |
+| Personalization | Phase 6 | pilot data volume justifies it |

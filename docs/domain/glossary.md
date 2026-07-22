@@ -175,3 +175,38 @@
   sha256 of that identity; no timestamp, no UUID).
 - **Swimmer observation** — one immutable per-tick record from the virtual swimmer. Its
   estimated position is a visual observation only and is never official distance.
+
+## Commit 9 report terminology
+
+- **Derived report:** deterministic read artifact computed from the authoritative journal;
+  not a command, event or mutable session state.
+- **Metric availability:** status separate from a numeric value (`AVAILABLE`,
+  `INSUFFICIENT_DATA`, `LOW_QUALITY`, `MISSING_TARGET`, etc.). Missing is not zero.
+- **Official split:** wall-derived session observation. It is not a profile leg or curve
+  phase; one official split can span multiple phases.
+- **Distance deviation:** `actualDistanceM - targetDistanceM`; positive means ahead of the
+  target ghost, negative means behind.
+- **Expected fade / actual fade:** speed change from the initial eligible split reference to
+  the final eligible split. Negative means slower at the end.
+- **Synthetic report:** simulator-derived report carrying `simulatorSynthetic=true`; never
+  real athletic performance evidence.
+
+
+## Phase 1 closure terms (ADR-041)
+
+- **Vertical slice** — one full Phase 1 run from workout + approved profile through
+  compilation, session runtime, journal, replay and analytics to a canonical report and
+  verification manifest, using only real components.
+- **Cross-component invariant** — a check that compares two independently produced facts
+  (e.g. live state vs replayed state, journal vs report) rather than recomputing domain logic.
+- **Verification manifest** — the canonical, content-addressed record of one vertical-slice
+  run: inputs digested, artifacts hashed, every check with its status.
+- **Verification bundle** — the directory of canonical artifacts a run emits
+  (`manifest.json`, `journal.jsonl`, `session-report.json`, `command-outcomes.json`,
+  `artifact-sha256.txt`, optionally `observations.jsonl`).
+- **Golden bundle** — a committed verification bundle that acts as a release regression
+  contract.
+- **Content-addressed identity** — an id that is the SHA-256 of the canonical content it
+  identifies, with only the id field omitted; one changed byte changes the id.
+- **Migration equivalence** — equality of the compiled *target function* (totals and endpoints
+  exact, sampled targets within tolerance), not equality of the interval partition.

@@ -142,14 +142,22 @@ def _raw_intervals(
         length = to_m - from_m
         if length <= _GEOM_TOL:
             continue
-        p_start = _speed_to_pace(evaluable.speed_at(from_m))
-        p_end = _speed_to_pace(evaluable.speed_at(to_m))
+        mid = (from_m + to_m) / 2.0
+        if profile.curve.representation is PaceCurveRepresentation.CONSTANT_SPEED:
+            # Piecewise-constant segments are discontinuous at their shared boundary.
+            # Endpoint sampling would invent a linear ramp across the first interval
+            # after that boundary. The interval midpoint selects its owning segment.
+            pace = _speed_to_pace(evaluable.speed_at(mid))
+            p_start = pace
+            p_end = pace
+        else:
+            p_start = _speed_to_pace(evaluable.speed_at(from_m))
+            p_end = _speed_to_pace(evaluable.speed_at(to_m))
         duration = length * (p_start + p_end) / 200.0
         if not _finite(duration) or duration <= 0.0:
             raise InvalidPaceCurveError(
                 f"interval [{from_m}, {to_m}] produced non-finite/non-positive duration"
             )
-        mid = (from_m + to_m) / 2.0
         intervals.append(
             PaceInterval(
                 fromM=from_m,
